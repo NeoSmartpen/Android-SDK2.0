@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+	<ListPreference
+		android:defaultValue="0"
+		android:entries="@array/opt_auto_power_off_time"
+		android:entryValues="@array/opt_auto_power_off_time"
+		android:key="auto_power_off_time"
+		android:negativeButtonText="@null"
+		android:positiveButtonText="@null"
+		android:title="Auto power off time" />
+
+	<CheckBoxPreference
+		android:defaultValue="false"
+		android:key="pencap_onoff"
+		android:summaryOff="Do not use pencap on"
+		android:summaryOn="use pencap on"
+		android:title="PenCap On/Off" />
+
+	<CheckBoxPreference
+		android:defaultValue="false"
+		android:key="auto_power_onoff"
+		android:summaryOff="Do not use auto power on"
+		android:summaryOn="use auto power on"
+		android:title="Auto Power On/Off" />
+
+	<CheckBoxPreference
+		android:defaultValue="false"
+		android:key="beep_onoff"
+		android:summaryOff="Do not use beep sound"
+		android:summaryOn="use beep sound"
+		android:title="Beep On/Off" />
+
+	<CheckBoxPreference
+		android:defaultValue="false"
+		android:key="offlinedata_save"
+		android:summaryOff="Do not save offlinedata"
+		android:summaryOn="save offlinedata"
+		android:title="OfflineDataSave On/Off" />
+
+	<ListPreference
+	    android:defaultValue="-16777216"
+	    android:entries="@array/opt_pen_color_title"
+	    android:entryValues="@array/opt_pen_color_value"
+	    android:key="pen_color"
+	    android:negativeButtonText="@null"
+	    android:positiveButtonText="@null"
+	    android:title="Pen Color" />
+
+	<ListPreference
+		android:defaultValue="0"
+		android:entries="@array/opt_sensitivity"
+		android:entryValues="@array/opt_sensitivity"
+		android:key="sensitivity"
+		android:negativeButtonText="@null"
+		android:positiveButtonText="@null"
+		android:title="Pen Sensitivity" />
+
+	<EditTextPreference
+	    android:defaultValue="0000"
+	    android:key="password"
+	    android:maxLines="1"
+	    android:selectAllOnFocus="true"
+	    android:singleLine="true"
+	    android:title="Password" />
+
+
+</PreferenceScreen>

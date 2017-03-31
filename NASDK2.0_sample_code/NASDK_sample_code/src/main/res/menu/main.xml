@@ -1,0 +1,31 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+  <item android:id="@+id/action_connect"
+        android:title="@string/connection"
+        android:showAsAction="never" />
+
+  <item android:id="@+id/action_disconnect"
+        android:title="@string/disconnection"
+        android:showAsAction="never" />
+
+  <item android:id="@+id/action_setting"
+        android:title="@string/setting"
+        android:showAsAction="never" />
+  
+  <item android:id="@+id/action_offline_list"
+        android:title="@string/offline_list"
+        android:showAsAction="never" />
+ 
+  <item android:id="@+id/action_upgrade"
+        android:title="@string/upgrade"
+        android:showAsAction="never" />
+  
+  <item android:id="@+id/action_pen_status"
+        android:title="@string/pen_status"
+        android:showAsAction="never" />
+  <item android:id="@+id/action_pen_unpairing"
+        android:title="@string/pen_unpairing"
+        android:showAsAction="never" />
+
+
+</menu>

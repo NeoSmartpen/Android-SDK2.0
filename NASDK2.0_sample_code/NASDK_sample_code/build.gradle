@@ -1,0 +1,27 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 24
+    buildToolsVersion '25.0.0'
+
+    defaultConfig {
+        applicationId "kr.neolab.samplecode"
+        minSdkVersion 19
+        targetSdkVersion 24
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+dependencies {
+
+//    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile "com.android.support:support-v4:24.0.0"
+    compile project(':NASDK')
+    //    compile project(':NeoViewSDK')
+}

@@ -1,0 +1,44 @@
+apply plugin: 'com.android.library'
+android {
+    compileSdkVersion 21
+    buildToolsVersion '25.0.0'
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 23
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+    android {
+        lintOptions {
+            abortOnError false
+        }
+    }
+
+}
+//task to delete the old jar
+task deleteOldJar(type: Delete) {
+
+    delete 'release/nasdk.jar'
+
+}
+//task to export contents as jar
+task exportJar(type: Copy) {
+
+    from('build/intermediates/bundles/release/')
+
+    into('release/')
+
+    include('classes.jar')
+
+    rename('classes.jar', 'nasdk.jar')
+
+}
+exportJar.dependsOn(deleteOldJar, build)
+dependencies {
+}

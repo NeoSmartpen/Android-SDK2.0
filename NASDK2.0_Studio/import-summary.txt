@@ -1,0 +1,311 @@
+ECLIPSE ANDROID PROJECT IMPORT SUMMARY
+======================================
+
+Manifest Merging:
+-----------------
+Your project uses libraries that provide manifests, and your Eclipse
+project did not explicitly turn on manifest merging. In Android Gradle
+projects, manifests are always merged (meaning that contents from your
+libraries' manifests will be merged into the app manifest. If you had
+manually copied contents from library manifests into your app manifest
+you may need to remove these for the app to build correctly.
+
+Ignored Files:
+--------------
+The following files were *not* copied into the new Gradle project; you
+should evaluate whether these are still needed in your project and if
+so manually move them:
+
+From NASDK:
+* .project.bak
+* NASDK_1.01.0003.jar
+* ic_launcher-web.png
+* javadoc\
+* javadoc\allclasses-frame.html
+* javadoc\allclasses-noframe.html
+* javadoc\constant-values.html
+* javadoc\deprecated-list.html
+* javadoc\help-doc.html
+* javadoc\index-files\
+* javadoc\index-files\index-1.html
+* javadoc\index-files\index-10.html
+* javadoc\index-files\index-11.html
+* javadoc\index-files\index-12.html
+* javadoc\index-files\index-13.html
+* javadoc\index-files\index-14.html
+* javadoc\index-files\index-15.html
+* javadoc\index-files\index-16.html
+* javadoc\index-files\index-17.html
+* javadoc\index-files\index-18.html
+* javadoc\index-files\index-19.html
+* javadoc\index-files\index-2.html
+* javadoc\index-files\index-20.html
+* javadoc\index-files\index-21.html
+* javadoc\index-files\index-22.html
+* javadoc\index-files\index-23.html
+* javadoc\index-files\index-24.html
+* javadoc\index-files\index-3.html
+* javadoc\index-files\index-4.html
+* javadoc\index-files\index-5.html
+* javadoc\index-files\index-6.html
+* javadoc\index-files\index-7.html
+* javadoc\index-files\index-8.html
+* javadoc\index-files\index-9.html
+* javadoc\index.html
+* javadoc\javadoc_v1.5.zip
+* javadoc\kr\
+* javadoc\kr\neolab\
+* javadoc\kr\neolab\sdk\
+* javadoc\kr\neolab\sdk\BuildConfig.html
+* javadoc\kr\neolab\sdk\R.attr.html
+* javadoc\kr\neolab\sdk\R.drawable.html
+* javadoc\kr\neolab\sdk\R.html
+* javadoc\kr\neolab\sdk\R.string.html
+* javadoc\kr\neolab\sdk\R.style.html
+* javadoc\kr\neolab\sdk\broadcastreceiver\
+* javadoc\kr\neolab\sdk\broadcastreceiver\BTDuplicateRemoveBroadcasterReceiver.html
+* javadoc\kr\neolab\sdk\broadcastreceiver\class-use\
+* javadoc\kr\neolab\sdk\broadcastreceiver\class-use\BTDuplicateRemoveBroadcasterReceiver.html
+* javadoc\kr\neolab\sdk\broadcastreceiver\package-frame.html
+* javadoc\kr\neolab\sdk\broadcastreceiver\package-summary.html
+* javadoc\kr\neolab\sdk\broadcastreceiver\package-tree.html
+* javadoc\kr\neolab\sdk\broadcastreceiver\package-use.html
+* javadoc\kr\neolab\sdk\class-use\
+* javadoc\kr\neolab\sdk\class-use\BuildConfig.html
+* javadoc\kr\neolab\sdk\class-use\R.attr.html
+* javadoc\kr\neolab\sdk\class-use\R.drawable.html
+* javadoc\kr\neolab\sdk\class-use\R.html
+* javadoc\kr\neolab\sdk\class-use\R.string.html
+* javadoc\kr\neolab\sdk\class-use\R.style.html
+* javadoc\kr\neolab\sdk\graphic\
+* javadoc\kr\neolab\sdk\graphic\Renderer.html
+* javadoc\kr\neolab\sdk\graphic\class-use\
+* javadoc\kr\neolab\sdk\graphic\class-use\Renderer.html
+* javadoc\kr\neolab\sdk\graphic\package-frame.html
+* javadoc\kr\neolab\sdk\graphic\package-summary.html
+* javadoc\kr\neolab\sdk\graphic\package-tree.html
+* javadoc\kr\neolab\sdk\graphic\package-use.html
+* javadoc\kr\neolab\sdk\ink\
+* javadoc\kr\neolab\sdk\ink\structure\
+* javadoc\kr\neolab\sdk\ink\structure\Document.html
+* javadoc\kr\neolab\sdk\ink\structure\Dot.html
+* javadoc\kr\neolab\sdk\ink\structure\DotType.html
+* javadoc\kr\neolab\sdk\ink\structure\Drawable.html
+* javadoc\kr\neolab\sdk\ink\structure\Stroke.html
+* javadoc\kr\neolab\sdk\ink\structure\class-use\
+* javadoc\kr\neolab\sdk\ink\structure\class-use\Document.html
+* javadoc\kr\neolab\sdk\ink\structure\class-use\Dot.html
+* javadoc\kr\neolab\sdk\ink\structure\class-use\DotType.html
+* javadoc\kr\neolab\sdk\ink\structure\class-use\Drawable.html
+* javadoc\kr\neolab\sdk\ink\structure\class-use\Stroke.html
+* javadoc\kr\neolab\sdk\ink\structure\package-frame.html
+* javadoc\kr\neolab\sdk\ink\structure\package-summary.html
+* javadoc\kr\neolab\sdk\ink\structure\package-tree.html
+* javadoc\kr\neolab\sdk\ink\structure\package-use.html
+* javadoc\kr\neolab\sdk\metadata\
+* javadoc\kr\neolab\sdk\metadata\IMetadataCtrl.html
+* javadoc\kr\neolab\sdk\metadata\MetadataCtrl.html
+* javadoc\kr\neolab\sdk\metadata\class-use\
+* javadoc\kr\neolab\sdk\metadata\class-use\IMetadataCtrl.html
+* javadoc\kr\neolab\sdk\metadata\class-use\MetadataCtrl.html
+* javadoc\kr\neolab\sdk\metadata\package-frame.html
+* javadoc\kr\neolab\sdk\metadata\package-summary.html
+* javadoc\kr\neolab\sdk\metadata\package-tree.html
+* javadoc\kr\neolab\sdk\metadata\package-use.html
+* javadoc\kr\neolab\sdk\metadata\structure\
+* javadoc\kr\neolab\sdk\metadata\structure\Symbol.html
+* javadoc\kr\neolab\sdk\metadata\structure\class-use\
+* javadoc\kr\neolab\sdk\metadata\structure\class-use\Symbol.html
+* javadoc\kr\neolab\sdk\metadata\structure\package-frame.html
+* javadoc\kr\neolab\sdk\metadata\structure\package-summary.html
+* javadoc\kr\neolab\sdk\metadata\structure\package-tree.html
+* javadoc\kr\neolab\sdk\metadata\structure\package-use.html
+* javadoc\kr\neolab\sdk\package-frame.html
+* javadoc\kr\neolab\sdk\package-summary.html
+* javadoc\kr\neolab\sdk\package-tree.html
+* javadoc\kr\neolab\sdk\package-use.html
+* javadoc\kr\neolab\sdk\pen\
+* javadoc\kr\neolab\sdk\pen\IPenAdt.html
+* javadoc\kr\neolab\sdk\pen\IPenCtrl.html
+* javadoc\kr\neolab\sdk\pen\PenCtrl.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\
+* javadoc\kr\neolab\sdk\pen\bluetooth\BTAdt.ConnectedThread.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\BTAdt.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\class-use\
+* javadoc\kr\neolab\sdk\pen\bluetooth\class-use\BTAdt.ConnectedThread.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\class-use\BTAdt.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\Command.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\CommandManager.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\EstablishCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\ForceCalibrateCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\FwUpgradeCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\ICommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\PenStatusCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\ResPenOnOffCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\SetTimeCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\ShowTextCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\Command.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\CommandManager.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\EstablishCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\ForceCalibrateCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\FwUpgradeCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\ICommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\PenStatusCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\ResPenOnOffCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\SetTimeCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\class-use\ShowTextCommand.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\package-frame.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\package-summary.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\package-tree.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\cmd\package-use.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\comm\
+* javadoc\kr\neolab\sdk\pen\bluetooth\comm\CommProcessor.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\comm\class-use\
+* javadoc\kr\neolab\sdk\pen\bluetooth\comm\class-use\CommProcessor.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\comm\package-frame.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\comm\package-summary.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\comm\package-tree.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\comm\package-use.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\ByteConverter.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\CMD.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\Chunk.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\Packet.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\ProtocolParser.IParsedPacketListener.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\ProtocolParser.PacketBuilder.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\ProtocolParser.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\class-use\
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\class-use\ByteConverter.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\class-use\CMD.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\class-use\Chunk.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\class-use\Packet.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\class-use\ProtocolParser.IParsedPacketListener.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\class-use\ProtocolParser.PacketBuilder.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\class-use\ProtocolParser.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\package-frame.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\package-summary.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\package-tree.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\lib\package-use.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\package-frame.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\package-summary.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\package-tree.html
+* javadoc\kr\neolab\sdk\pen\bluetooth\package-use.html
+* javadoc\kr\neolab\sdk\pen\class-use\
+* javadoc\kr\neolab\sdk\pen\class-use\IPenAdt.html
+* javadoc\kr\neolab\sdk\pen\class-use\IPenCtrl.html
+* javadoc\kr\neolab\sdk\pen\class-use\PenCtrl.html
+* javadoc\kr\neolab\sdk\pen\filter\
+* javadoc\kr\neolab\sdk\pen\filter\Fdot.html
+* javadoc\kr\neolab\sdk\pen\filter\FilterForFilm.html
+* javadoc\kr\neolab\sdk\pen\filter\FilterForPaper.html
+* javadoc\kr\neolab\sdk\pen\filter\IFilterListener.html
+* javadoc\kr\neolab\sdk\pen\filter\class-use\
+* javadoc\kr\neolab\sdk\pen\filter\class-use\Fdot.html
+* javadoc\kr\neolab\sdk\pen\filter\class-use\FilterForFilm.html
+* javadoc\kr\neolab\sdk\pen\filter\class-use\FilterForPaper.html
+* javadoc\kr\neolab\sdk\pen\filter\class-use\IFilterListener.html
+* javadoc\kr\neolab\sdk\pen\filter\package-frame.html
+* javadoc\kr\neolab\sdk\pen\filter\package-summary.html
+* javadoc\kr\neolab\sdk\pen\filter\package-tree.html
+* javadoc\kr\neolab\sdk\pen\filter\package-use.html
+* javadoc\kr\neolab\sdk\pen\offline\
+* javadoc\kr\neolab\sdk\pen\offline\OfflineFile.html
+* javadoc\kr\neolab\sdk\pen\offline\OfflineFileParser.html
+* javadoc\kr\neolab\sdk\pen\offline\class-use\
+* javadoc\kr\neolab\sdk\pen\offline\class-use\OfflineFile.html
+* javadoc\kr\neolab\sdk\pen\offline\class-use\OfflineFileParser.html
+* javadoc\kr\neolab\sdk\pen\offline\package-frame.html
+* javadoc\kr\neolab\sdk\pen\offline\package-summary.html
+* javadoc\kr\neolab\sdk\pen\offline\package-tree.html
+* javadoc\kr\neolab\sdk\pen\offline\package-use.html
+* javadoc\kr\neolab\sdk\pen\package-frame.html
+* javadoc\kr\neolab\sdk\pen\package-summary.html
+* javadoc\kr\neolab\sdk\pen\package-tree.html
+* javadoc\kr\neolab\sdk\pen\package-use.html
+* javadoc\kr\neolab\sdk\pen\penmsg\
+* javadoc\kr\neolab\sdk\pen\penmsg\IPenMsgListener.html
+* javadoc\kr\neolab\sdk\pen\penmsg\JsonTag.html
+* javadoc\kr\neolab\sdk\pen\penmsg\PenMsg.html
+* javadoc\kr\neolab\sdk\pen\penmsg\PenMsgType.html
+* javadoc\kr\neolab\sdk\pen\penmsg\class-use\
+* javadoc\kr\neolab\sdk\pen\penmsg\class-use\IPenMsgListener.html
+* javadoc\kr\neolab\sdk\pen\penmsg\class-use\JsonTag.html
+* javadoc\kr\neolab\sdk\pen\penmsg\class-use\PenMsg.html
+* javadoc\kr\neolab\sdk\pen\penmsg\class-use\PenMsgType.html
+* javadoc\kr\neolab\sdk\pen\penmsg\package-frame.html
+* javadoc\kr\neolab\sdk\pen\penmsg\package-summary.html
+* javadoc\kr\neolab\sdk\pen\penmsg\package-tree.html
+* javadoc\kr\neolab\sdk\pen\penmsg\package-use.html
+* javadoc\kr\neolab\sdk\util\
+* javadoc\kr\neolab\sdk\util\NLog.html
+* javadoc\kr\neolab\sdk\util\Profiler.ProfileType.html
+* javadoc\kr\neolab\sdk\util\Profiler.html
+* javadoc\kr\neolab\sdk\util\SDKVersion.html
+* javadoc\kr\neolab\sdk\util\class-use\
+* javadoc\kr\neolab\sdk\util\class-use\NLog.html
+* javadoc\kr\neolab\sdk\util\class-use\Profiler.ProfileType.html
+* javadoc\kr\neolab\sdk\util\class-use\Profiler.html
+* javadoc\kr\neolab\sdk\util\class-use\SDKVersion.html
+* javadoc\kr\neolab\sdk\util\package-frame.html
+* javadoc\kr\neolab\sdk\util\package-summary.html
+* javadoc\kr\neolab\sdk\util\package-tree.html
+* javadoc\kr\neolab\sdk\util\package-use.html
+* javadoc\overview-frame.html
+* javadoc\overview-summary.html
+* javadoc\overview-tree.html
+* javadoc\package-list
+* javadoc\script.js
+* javadoc\serialized-form.html
+* javadoc\stylesheet.css
+* nasdk_150904.jar
+* nasdk_151127.jar
+* nasdk_v1.5.jar
+* proguard-project.txt
+From NASDK_sample_code:
+* proguard-project.txt
+
+Replaced Jars with Dependencies:
+--------------------------------
+The importer recognized the following .jar files as third party
+libraries and replaced them with Gradle dependencies instead. This has
+the advantage that more explicit version information is known, and the
+libraries can be updated automatically. However, it is possible that
+the .jar file in your project was of an older version than the
+dependency we picked, which could render the project not compileable.
+You can disable the jar replacement in the import wizard and try again:
+
+android-support-v4.jar => com.android.support:support-v4:18.0.0
+
+Moved Files:
+------------
+Android Gradle projects use a different directory structure than ADT
+Eclipse projects. Here's how the projects were restructured:
+
+In NASDK:
+* AndroidManifest.xml => nASDK\src\main\AndroidManifest.xml
+* assets\ => nASDK\src\main\assets
+* res\ => nASDK\src\main\res\
+* src\ => nASDK\src\main\java\
+* src\nasdk_uml.ucls => nASDK\src\main\resources\nasdk_uml.ucls
+In NASDK_sample_code:
+* AndroidManifest.xml => NASDK_sample_code\src\main\AndroidManifest.xml
+* assets\ => NASDK_sample_code\src\main\assets
+* res\ => NASDK_sample_code\src\main\res\
+* src\ => NASDK_sample_code\src\main\java\
+
+Next Steps:
+-----------
+You can now build the project. The Gradle project needs network
+connectivity to download dependencies.
+
+Bugs:
+-----
+If for some reason your project does not build, and you determine that
+it is due to a bug or limitation of the Eclipse to Gradle importer,
+please file a bug at http://b.android.com with category
+Component-Tools.
+
+(This import summary is for your information only, and can be deleted
+after import once you are satisfied with the results.)

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="200dp"
+    android:background="#ffffff"
+    android:padding="20dp">
+
+	<LinearLayout
+		android:id="@+id/fw_loading_layout"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true"
+		android:layout_centerVertical="true"
+		android:orientation="vertical"
+		android:visibility="invisible">
+
+		<TextView
+			android:id="@+id/fw_loading_text"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:layout_marginBottom="60dp"
+			android:textColor="#000000"
+			android:textSize="16sp"
+			android:text="다운로드중 테스트"/>
+
+		<TextView
+			android:id="@+id/fw_loading_progress_text"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="right"
+			android:layout_marginRight="25dp"
+			android:text="0%"
+			android:textColor="#000000"
+			android:visibility="visible"/>
+
+		<ProgressBar
+			android:id="@+id/fw_loading_progressbar"
+			style="@android:style/Widget.Holo.Light.ProgressBar.Horizontal"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="20dp"
+			android:layout_marginRight="20dp"
+			android:max="100"
+			android:indeterminate="true"
+			android:visibility="visible"/>
+		<View
+			android:layout_width="match_parent"
+			android:layout_height="25dp"/>
+
+	</LinearLayout>
+
+	<LinearLayout
+		android:id="@+id/fw_version_layout"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical"
+		android:gravity="center"
+		android:visibility="visible">
+	    <TextView
+			android:id="@+id/fw_version_server_text"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:gravity="center"
+			android:text="Server version"
+			android:textColor="#000000"
+			android:textSize="20sp" />
+
+		<TextView
+			android:id="@+id/fw_version_local_text"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:gravity="center"
+			android:textColor="#000000"
+			android:text="Local version"
+			android:textSize="20sp" />
+		<View
+			android:layout_width="match_parent"
+			android:layout_height="25dp"/>
+
+		<RelativeLayout
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
+			<Button
+				android:id="@+id/btn_download"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textColor="#000000"
+				android:gravity="center"
+				android:text="Download"
+				android:visibility="invisible"/>
+			<Button
+				android:id="@+id/btn_ok"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textColor="#000000"
+				android:gravity="center"
+				android:text="OK"
+				android:visibility="invisible"/>
+
+		</RelativeLayout>
+	</LinearLayout>
+
+	<LinearLayout
+		android:id="@+id/fw_version_chk_layout"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical"
+		android:gravity="center"
+		android:visibility="visible">
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:gravity="center"
+			android:text="Version Checking..."
+			android:textColor="#000000"
+			android:textSize="20sp" />
+
+		<ProgressBar
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:indeterminate="false"/>
+	</LinearLayout>
+
+	<LinearLayout
+		android:id="@+id/alert_layout"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical"
+		android:gravity="center"
+		android:visibility="invisible">
+		<TextView
+			android:id="@+id/alert_text"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:gravity="center"
+			android:text="Error!!"
+			android:textColor="#000000"
+			android:textSize="20sp" />
+
+		<View
+			android:layout_width="match_parent"
+			android:layout_height="25dp"/>
+
+		<Button
+			android:id="@+id/btn_dismiss"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textColor="#000000"
+			android:gravity="center"
+			android:text="OK" />
+	</LinearLayout>
+
+
+</RelativeLayout>

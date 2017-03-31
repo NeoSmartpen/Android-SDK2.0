@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string-array name="opt_auto_power_off_time">
+	    <item>1</item>
+	    <item>10</item>
+	    <item>20</item>
+	    <item>30</item>
+	    <item>40</item>
+	</string-array>
+	<string-array name="opt_sensitivity">
+	    <item>0</item>
+	    <item>1</item>
+	    <item>2</item>
+	    <item>3</item>
+	</string-array>
+	<string-array name="opt_pen_color_title">
+	    <item>VIOLET</item>
+	    <item>BLUE</item>
+	    <item>GRAY</item>
+	    <item>YELLOW</item>
+	    <item>PINK</item>
+	    <item>MINT</item>
+	    <item>RED</item>
+	    <item>BLACK</item>
+	</string-array>
+	<string-array name="opt_pen_color_value">
+	    <item>-6537267</item>
+	    <item>-12817424</item>
+	    <item>-4342339</item>
+	    <item>-275674</item>
+	    <item>-57212</item>
+	    <item>-14163768</item>
+	    <item>-444912</item>
+	    <item>-16777216</item>
+	</string-array>
+</resources>

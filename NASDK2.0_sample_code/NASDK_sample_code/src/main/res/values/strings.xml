@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NASDK SampleCode</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="connection">Connection</string>
+    <string name="disconnection">Disconnection</string>
+    <string name="setting">Setting</string>
+
+    <string name="export_svg">Export SVG</string>
+    <string name="import_svg">Import SVG</string>
+
+
+    <string name="clearView">ClearView</string>
+    <string name="upgrade">Upgrade Pen</string>
+    <string name="viewDot">ViewDot</string>
+    <string name="offline">Show OfflineData</string>
+ 	<string name="offline_list">OfflineData list</string>
+ 	<string name="pen_status">Pen Status</string>
+ 	<string name="pen_unpairing">Pen Unpairing</string>
+    <string name="log">Log View</string>
+
+
+    <string name="pen_setup_auto_power">Auto Power On/Off</string>
+ 	<string name="pen_setup_beep">Beep On/Off</string>
+ 	<string name="pen_setup_password">Setup Password</string>
+  	<string name="pen_color_1">color1</string>
+ 	<string name="pen_color_2">color2</string>
+ 	
+ 	
+    <!--  DeviceListActivity -->
+    <string name="scanning">scanning for devices</string>
+    <string name="select_device">select a device to connect</string>
+    <string name="none_paired">No devices have been paired</string>
+    <string name="none_found">No devices found</string>
+    <string name="title_paired_devices">Paired Devices</string>
+    <string name="title_other_devices">Other Available Devices</string>
+    <string name="button_scan">Scan for devices</string>
+    <string name="button_le_scan">Scan LE for devices</string>
+</resources>

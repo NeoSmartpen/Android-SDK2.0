@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
@@ -24,6 +25,7 @@ import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import kr.neolab.sdk.broadcastreceiver.BTDuplicateRemoveBroadcasterReceiver;
 import kr.neolab.sdk.pen.IPenAdt;
 import kr.neolab.sdk.pen.bluetooth.cmd.CommandManager;
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor;
@@ -1130,6 +1132,10 @@ public class BTLEAdt implements IPenAdt
                         NLog.d("Connect failed");
                         responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE) );
                         onDisconnected();
+
+						Intent i = new Intent(BTDuplicateRemoveBroadcasterReceiver.ACTION_BT_REQ_CONNECT);
+						i.putExtra(BTDuplicateRemoveBroadcasterReceiver.EXTRA_BT_CONNECT_PACKAGENAME, context.getPackageName());
+						context.sendBroadcast(i);
                     }
                     else
                     {

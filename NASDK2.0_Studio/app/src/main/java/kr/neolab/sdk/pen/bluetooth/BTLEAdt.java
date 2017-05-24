@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import org.json.JSONObject;
 
@@ -220,38 +221,27 @@ public class BTLEAdt implements IPenAdt
     }
 
     @Override
-    public void connect(String address) {
-        if (mBluetoothAdapter == null || address == null) {
-            NLog.w("BluetoothAdapter not initialized or unspecified address.");
-            this.responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
-            return;
-        }
-        // Previously connected device.  Try to reconnect.
-        if (penAddress != null && address.equals(penAddress)
-                && mBluetoothGatt != null) {
-            NLog.d("Trying to use an existing mBluetoothGatt for connection.");
-            if ( penStatus == CONN_STATUS_AUTHORIZED)
-            {
-                responseMsg( new PenMsg( PenMsgType.PEN_ALREADY_CONNECTED));
-                return;
-            }
-            else if ( penStatus != CONN_STATUS_IDLE )
-            {
-                return;
-            }
-            else
-            {
-                if (mBluetoothGatt.connect()) {
-                    onConnectionTry();
-                    return;
-                } else {
-                    this.responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
-                    return;
-                }
-            }
-        }
+    public synchronized void connect(String address) {
+	    if (mBluetoothAdapter == null || address == null) {
+		    NLog.w("BluetoothAdapter not initialized or unspecified address.");
+		    this.responseMsg(new PenMsg(PenMsgType.PEN_CONNECTION_FAILURE));
+		    return;
+	    }
+
+	    if (penAddress != null)
+	    {
+		    if (this.penStatus == CONN_STATUS_AUTHORIZED)
+		    {
+			    responseMsg(new PenMsg(PenMsgType.PEN_ALREADY_CONNECTED));
+			    return;
+		    }
+		    else if (this.penStatus != CONN_STATUS_IDLE)
+		    {
+			    return;
+		    }
+	    }
+
         final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-        this.penAddress = address;
         if (device == null) {
             NLog.w("Device not found.  Unable to connect.");
             this.responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
@@ -265,14 +255,20 @@ public class BTLEAdt implements IPenAdt
             return;
         }
 
-        // We want to directly connect to the device, so we are setting the autoConnect
-        // parameter to false.
+	    if ( this.penStatus != CONN_STATUS_IDLE ) {
+		    responseMsg(new PenMsg(PenMsgType.PEN_CONNECTION_FAILURE));
+		    return;
+	    }
+
+
+	    this.penAddress = address;
         onConnectionTry();
+	    responseMsg(new PenMsg(PenMsgType.PEN_CONNECTION_TRY));
 
         this.penBtName = device.getName();
 
-        watchDog = new Timer();
-        watchDogTask = new TimerTask() {
+        this.watchDog = new Timer();
+        this.watchDogTask = new TimerTask() {
             @Override
             public void run() {
                 watchDogAlreadyCalled = true;
@@ -283,9 +279,15 @@ public class BTLEAdt implements IPenAdt
             }
         };
 
-        watchDogAlreadyCalled = false;
-        mBluetoothGatt = device.connectGatt(context, false, mBluetoothGattCallback);
-        watchDog.schedule(watchDogTask, 3000);  // 3초
+        this.watchDogAlreadyCalled = false;
+        this.mBluetoothGatt = device.connectGatt(context, false, mBluetoothGattCallback);
+	    try {
+		    this.watchDog.schedule(watchDogTask, 3000);  // 3초
+	    }
+	    catch (Exception e)
+	    {
+		    e.printStackTrace();
+	    }
         NLog.d("Trying to create a new connection.");
     }
 
@@ -1132,10 +1134,6 @@ public class BTLEAdt implements IPenAdt
                         NLog.d("Connect failed");
                         responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE) );
                         onDisconnected();
-
-						Intent i = new Intent(BTDuplicateRemoveBroadcasterReceiver.ACTION_BT_REQ_CONNECT);
-						i.putExtra(BTDuplicateRemoveBroadcasterReceiver.EXTRA_BT_CONNECT_PACKAGENAME, context.getPackageName());
-						context.sendBroadcast(i);
                     }
                     else
                     {

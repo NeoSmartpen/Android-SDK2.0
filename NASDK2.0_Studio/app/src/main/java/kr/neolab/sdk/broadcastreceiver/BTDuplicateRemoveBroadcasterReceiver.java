@@ -6,6 +6,7 @@ import android.content.Intent;
 
 import kr.neolab.sdk.pen.IPenAdt;
 import kr.neolab.sdk.pen.PenCtrl;
+import kr.neolab.sdk.pen.penmsg.JsonTag;
 import kr.neolab.sdk.pen.penmsg.PenMsg;
 import kr.neolab.sdk.pen.penmsg.PenMsgType;
 import kr.neolab.sdk.util.NLog;
@@ -53,7 +54,7 @@ public class BTDuplicateRemoveBroadcasterReceiver extends BroadcastReceiver{
 			if(PenCtrl.getInstance().getListener() != null && !connectedPackageName.equals(arg0.getPackageName()))
 			{
 				String connected_packagename = arg1.getStringExtra(EXTRA_BT_CONNECT_PACKAGENAME);
-				PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE_BTDUPLICATE, "packageName", connected_packagename );
+				PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE_BTDUPLICATE, JsonTag.STRING_PACKAGE_NAME, connected_packagename );
 				PenCtrl.getInstance().getListener().onReceiveMessage(msg);
 			}
 

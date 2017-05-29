@@ -1043,7 +1043,7 @@ public class BTAdt implements IPenAdt
 		public void startConnect()
 		{
 			Handler handler = new Handler( Looper.getMainLooper());
-			NLog.d( "~" );
+			NLog.d( "startConnect" );
 			handler.postDelayed(  new Runnable()
 			{
 				@Override

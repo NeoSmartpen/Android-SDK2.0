@@ -204,20 +204,10 @@ public interface IMetadataCtrl
 	public Symbol[] findApplicableSymbols( int noteId, int pageId );
 
 	/**
-	 * Find applicable symbol by index id symbol.
-	 *
-	 * @param indexID the index id
-	 * @param noteId  the note id
-	 * @param pageId  the page id
-	 * @return the symbol
-	 */
-	public Symbol findApplicableSymbolByIndexID( long indexID, int noteId, int pageId );
-
-	/**
 	 * Symbol ID로 Symbol 을 구함.
 	 *
 	 * @param id the id
-	 * @return symbol symbol
+	 * @return symbol
 	 */
 	public Symbol findApplicableSymbol( String id);
 

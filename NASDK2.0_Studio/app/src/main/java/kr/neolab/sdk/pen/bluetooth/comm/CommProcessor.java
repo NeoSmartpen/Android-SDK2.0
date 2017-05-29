@@ -63,9 +63,6 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	private int prevNoteId = 0, prevPageId = 0;
 	private int prevOwnerId = 0, prevSectionId = 0;
 
-    private int pidsNoteId = 0, pidsPageId = 0;
-    private int pidsOwnerId = 0, pidsSectionId = 0;
-
 	private long prevDotTime = 0;
 
 	private int currColor = 0;
@@ -105,10 +102,6 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	private Handler mHandler = new Handler( Looper.getMainLooper());
 
 	private static final int OFFLINE_SEND_FAIL_TIME = 1000*20;
-
-    private boolean isPIDS_On = false;
-
-    private boolean isPIDS_Send = false;
 
 	private class ChkOfflineFailRunnable implements Runnable{
 
@@ -173,6 +166,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	 */
 	private void parsePacket( Packet pack )
 	{
+		NLog.d( "[CommProcessor] received parsePacket = "+pack.getCmd() );
 		/**
 		 * 도트 이외 패킷 처리
 		 */
@@ -199,37 +193,6 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 				// " / pageId = " + pageId + " / timeLong : " + timeLong +
 				// " / timeAdd : " + TIME + " / x : " + X + " / y : " + Y +
 				// " / fx : " + FLOAT_X + " / fy : " + FLOAT_Y);
-
-                NLog.d( "[CommProcessor] received A_DotData() isPIDS_On="+isPIDS_On+",X:"+X+",isPIDS_Send="+isPIDS_Send+",FLOAT_X:"+FLOAT_X+",Y:"+Y+",FLOAT_Y:"+FLOAT_Y);
-                if ( isPIDS_On)
-                {
-                    prevDotTime = timeLong;
-                    if(!isPIDS_Send)
-                    {
-                        long longX = X;
-                        long longY = Y;
-                        long ID = longX << 10;
-                        ID = ID + longY;
-                        try
-                        {
-                            JSONObject job = new JSONObject()
-                                    .put( JsonTag.LONG_PIDS_ID, ID )
-                                    .put( JsonTag.INT_SECTION_ID, pidsSectionId )
-                                    .put( JsonTag.INT_OWNER_ID, pidsOwnerId )
-                                    .put( JsonTag.INT_NOTE_ID, pidsNoteId )
-                                    .put( JsonTag.INT_PAGE_ID, pidsPageId )
-                                    .put( JsonTag.LONG_PIDS_TIMESTAMP, timeLong );
-                            btConnection.onCreateMsg( new PenMsg( PenMsgType.EVENT_PIDS, job ) );
-                        }
-                        catch ( JSONException e )
-                        {
-                            e.printStackTrace();
-                        }
-                        isPIDS_Send = true;
-                    }
-                    return;
-                }
-
 
                 if ( !isStartWithDown || timeLong < 10000 )
 				{
@@ -294,6 +257,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 				}
 
 				int PEN_UP_DOWN = pack.getDataRangeInt( 8, 1 );
+				NLog.d( "[CommProcessor] received RES_EventPenUpDown() command. PEN_UP_DOWN = "+PEN_UP_DOWN );
 
 				// NLog.d("[CommProcessor] new dot noteId = " + noteId + " / pageId = " + pageId + " / timeLong : " + NumberFormat.getInstance().format(MTIME) + " / state : " + PEN_UP_DOWN);
 
@@ -322,7 +286,6 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 					isStartWithDown = false;
 				}
 
-                this.isPIDS_Send = false;
 				this.prevPacket = null;
 
 				break;
@@ -340,6 +303,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 				noteId = pack.getDataRangeInt( 0, 2 );
 				pageId = pack.getDataRangeInt( 2, 2 );
 
+				NLog.d( "[CommProcessor] received A_DotIDChange = "+sectionId+",ownerId="+ownerId+",noteId=" + noteId );
 				break;
 
 			/*
@@ -353,44 +317,6 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 
 				// 노트 페이지 정보가 변경
 				byte[] osbyte = pack.getDataRange( 0, 4 );
-                int tempSection = (int) (osbyte[3] & 0xFF);
-                int tempOwner = ByteConverter.byteArrayToInt( new byte[] { osbyte[0], osbyte[1], osbyte[2], (byte) 0x00 } );
-                int tempNoteId = pack.getDataRangeInt( 4, 4 );
-                int tempPageId = pack.getDataRangeInt( 8, 4 );
-
-                // PIDS Symbol 체크
-                NLog.d( "[CommProcessor] received A_DotIDChange32 tempSection= "+tempSection+",tempOwner="+tempOwner );
-                if(tempSection == 3 && tempOwner >= 512)
-                {
-                    pidsNoteId = tempNoteId;
-                    pidsPageId = tempPageId;
-                    pidsOwnerId = tempOwner - 512;
-                    pidsSectionId = tempSection;
-
-                    // 펜 업처리만
-                    if ( prevPacket != null )
-                    {
-                        // 펜 업 일 경우 바로 이전 도트를 End Dot로 삽입
-                        int pX = prevPacket.getDataRangeInt( 1, 2 );
-                        int pY = prevPacket.getDataRangeInt( 3, 2 );
-                        int pFX = prevPacket.getDataRangeInt( 5, 1 );
-                        int pFY = prevPacket.getDataRangeInt( 6, 1 );
-                        int pFORCE = prevPacket.getDataRangeInt( 7, 1 );
-                        long pTimeLong = prevDotTime;
-
-                        this.processDot( prevSectionId, prevOwnerId, prevNoteId, prevPageId, pTimeLong, pX, pY, pFX, pFY, pFORCE, DotType.PEN_ACTION_UP.getValue(), currColor );
-                        isPrevDotDown = true;
-                        isStartWithDown = true;
-                        prevPacket = null;
-                    }
-                    isPIDS_On = true;
-                    return;
-                }
-                else
-                {
-                    isPIDS_On = false;
-                }
-
 				prevSectionId = sectionId;
 				prevOwnerId = ownerId;
 				prevNoteId = noteId;
@@ -402,6 +328,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 				noteId = pack.getDataRangeInt( 4, 4 );
 				pageId = pack.getDataRangeInt( 8, 4 );
 
+				NLog.d( "[CommProcessor] received A_DotIDChange32 = "+sectionId+",ownerId="+ownerId+",noteId=" + noteId );
 
 				if ( prevPacket != null )
 				{

@@ -59,9 +59,8 @@ param;
 	 * @param top    the top
 	 * @param right  the right
 	 * @param bottom the bottom
-     * @param index_symbol the index symbole
 	 */
-    public Symbol(int noteId, int pageId, String name, String action, String param, float left, float top, float right, float bottom, long index_symbol)
+    public Symbol(int noteId, int pageId, String name, String action, String param, float left, float top, float right, float bottom)
 	{
 		super(left, top, right, bottom);
 		
@@ -70,7 +69,6 @@ param;
 		this.name   = name;
 		this.action = action;
 		this.param  = param;
-        this.index_symbol = index_symbol;
 	}
 
 	/**
@@ -173,15 +171,6 @@ param;
 		return this.height();
 	}
 
-    /**
-     * Gets index symbol
-     * @return the index symbol
-     */
-    public long getIndexSymbol ()
-    {
-        return index_symbol;
-    }
-	
 	public String toString()
 	{
 		return "Symbol => noteId : " + noteId + ", pageId : " + pageId + ", RectF (" + left + "," + top + "," + width() + "," + height() + "), param : " + param;

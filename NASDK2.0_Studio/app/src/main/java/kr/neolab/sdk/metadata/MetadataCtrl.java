@@ -967,38 +967,24 @@ public class MetadataCtrl implements IMetadataCtrl
         }
     }
 
-    @Override
-    public Symbol findApplicableSymbolByIndexID( long indexID, int noteId, int pageId )
-    {
-        ArrayList<Symbol> candidates = this.symbolTable.get( getQueryString( noteId, pageId ) );
-        if(candidates == null)
-            return null;
-        for(Symbol s : candidates)
-        {
-            if(s.getIndexSymbol() == indexID)
-                return s;
-        }
-        return null;
-    }
-
-    @Override
-    public Symbol findApplicableSymbol( String id)
-    {
-        Symbol[] symbols = getSymbols();
-        if(symbols == null)
-            return null;
-        else
-        {
-            for(Symbol s : symbols)
-            {
-                if(s.getId().equals( id ))
-                {
-                    return s;
-                }
-            }
-        }
-        return null;
-    }
+	@Override
+	public Symbol findApplicableSymbol( String id)
+	{
+		Symbol[] symbols = getSymbols();
+		if(symbols == null)
+			return null;
+		else
+		{
+			for(Symbol s : symbols)
+			{
+				if(s.getId().equals( id ))
+				{
+					return s;
+				}
+			}
+		}
+		return null;
+	}
 
 
     @Override
@@ -1164,7 +1150,7 @@ public class MetadataCtrl implements IMetadataCtrl
 
 
 
-                    //캐스터 버전 2.2 ~ 2.3
+                    // 2.2 ~ 2.3
                     if(nprojVersion < 2.31f)
                     {
                         if ( tag.equals( "pages" ) )
@@ -1181,7 +1167,6 @@ public class MetadataCtrl implements IMetadataCtrl
                             page.width = Float.parseFloat( atts.getValue( "x2" ) ) * PIXEL_TO_DOT_SCALE;
                             page.height = Float.parseFloat( atts.getValue( "y2" ) ) * PIXEL_TO_DOT_SCALE;
 
-                            // 페이지 데이터 테이블 추가
                             put( noteId, page.pageId, page );
                         }
                         else if ( tag.equals( "symbol" ) )
@@ -1193,63 +1178,52 @@ public class MetadataCtrl implements IMetadataCtrl
                             float y = Float.parseFloat( atts.getValue( "y" ) ) * PIXEL_TO_DOT_SCALE;
                             float width = Float.parseFloat( atts.getValue( "width" ) ) * PIXEL_TO_DOT_SCALE;
                             float height = Float.parseFloat( atts.getValue( "height" ) ) * PIXEL_TO_DOT_SCALE;
-                            long index_symbol = -1;
-
-                            try
-                            {
-                                index_symbol = Long.parseLong( atts.getValue( "index_symbol" ) );
-                            }catch ( Exception e )
-                            {
-                                if(noteId == 566)
-                                    NLog.d( "index_symbol Err getValue="+atts.getValue( "index_symbol" )+",noteId="+noteId );
-                            }
-//							if(index_symbol != -1)
-                            symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height , index_symbol);
-                        }
-                        else if ( isSymbol && tag.equals( "command" ) )
-                        {
-                            symbol.action = atts.getValue( "action" );
-                            symbol.param = atts.getValue( "param" );
-                        }
-                        else if ( isSymbol && tag.equals( "matching_symbols" ) )
-                        {
-                            symbol.previousId = atts.getValue( "previous" );
-                            symbol.nextId = atts.getValue( "next" );
-                        }
-                    }
-                    //캐스터 버전 2.31f 이상
-                    else
-                    {
-                        if ( tag.equals( "segment_info" ) )
-                        {
-                            String subCode = atts.getValue( "sub_code" );
-                            int totalPageSize = Integer.parseInt( atts.getValue( "total_size" ) );
-                            int segmentPageSize = Integer.parseInt( atts.getValue( "size" ) );
-                            int segmentNumber = Integer.parseInt( atts.getValue( "current_sequence" ) );
-                            int segmentStartPage = Integer.parseInt( atts.getValue( "ncode_start_page" ) );
-                            int segmentEndPage = Integer.parseInt( atts.getValue( "ncode_end_page" ) );
-                            Segment segment = new Segment(sectionCode, ownerCode, noteId, subCode,segmentNumber, segmentStartPage, segmentEndPage, totalPageSize, segmentPageSize );
-                            if(segmentTable.get( ""+sectionCode+"_"+ownerCode+"_"+noteId ) == null)
-                            {
-                                HashMap<String, Segment> map = new HashMap<String, Segment>();
-                                map.put( ""+segmentNumber, segment );
-                                segmentTable.put( ""+sectionCode+"_"+ownerCode+"_"+noteId, map );
-                            }
-                            else
-                            {
-                                segmentTable.get( ""+sectionCode+"_"+ownerCode+"_"+noteId ).put(""+segmentNumber, segment );
-                            }
-                        }
-                        else if ( tag.equals( "pages" ) )
-                        {
-                            totalPage = Integer.parseInt( atts.getValue( "count" ) );
-                        }
-                        else if ( tag.equals( "page_item" ) )
-                        {
-                            float x1 = Float.parseFloat( atts.getValue( "x1" ) ) * PIXEL_TO_DOT_SCALE;
-                            float x2 = Float.parseFloat( atts.getValue( "x2" ) ) * PIXEL_TO_DOT_SCALE;
-                            float y1 = Float.parseFloat( atts.getValue( "y1" ) ) * PIXEL_TO_DOT_SCALE;
-                            float y2 = Float.parseFloat( atts.getValue( "y2" ) ) * PIXEL_TO_DOT_SCALE;
+ 
+							symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height );
+						}
+						else if ( isSymbol && tag.equals( "command" ) )
+						{
+							symbol.action = atts.getValue( "action" );
+							symbol.param = atts.getValue( "param" );
+						}
+						else if ( isSymbol && tag.equals( "matching_symbols" ) )
+						{
+							symbol.previousId = atts.getValue( "previous" );
+							symbol.nextId = atts.getValue( "next" );
+						}
+					}
+					else
+					{
+						if ( tag.equals( "segment_info" ) )
+						{
+							String subCode = atts.getValue( "sub_code" );
+							int totalPageSize = Integer.parseInt( atts.getValue( "total_size" ) );
+							int segmentPageSize = Integer.parseInt( atts.getValue( "size" ) );
+							int segmentNumber = Integer.parseInt( atts.getValue( "current_sequence" ) );
+							int segmentStartPage = Integer.parseInt( atts.getValue( "ncode_start_page" ) );
+							int segmentEndPage = Integer.parseInt( atts.getValue( "ncode_end_page" ) );
+							Segment segment = new Segment(sectionCode, ownerCode, noteId, subCode,segmentNumber, segmentStartPage, segmentEndPage, totalPageSize, segmentPageSize );
+							if(segmentTable.get( ""+sectionCode+"_"+ownerCode+"_"+noteId ) == null)
+							{
+								HashMap<String, Segment> map = new HashMap<String, Segment>();
+								map.put( ""+segmentNumber, segment );
+								segmentTable.put( ""+sectionCode+"_"+ownerCode+"_"+noteId, map );
+							}
+							else
+							{
+								segmentTable.get( ""+sectionCode+"_"+ownerCode+"_"+noteId ).put(""+segmentNumber, segment );
+							}
+						}
+						else if ( tag.equals( "pages" ) )
+						{
+							totalPage = Integer.parseInt( atts.getValue( "count" ) );
+						}
+						else if ( tag.equals( "page_item" ) )
+						{
+							float x1 = Float.parseFloat( atts.getValue( "x1" ) ) * PIXEL_TO_DOT_SCALE;
+							float x2 = Float.parseFloat( atts.getValue( "x2" ) ) * PIXEL_TO_DOT_SCALE;
+							float y1 = Float.parseFloat( atts.getValue( "y1" ) ) * PIXEL_TO_DOT_SCALE;
+							float y2 = Float.parseFloat( atts.getValue( "y2" ) ) * PIXEL_TO_DOT_SCALE;
 
                             String crop = atts.getValue( "crop_margin" );
                             String[] crops = crop.split( "," );
@@ -1268,7 +1242,6 @@ public class MetadataCtrl implements IMetadataCtrl
                             page.margin_right = margin_right;
                             page.margin_bottom = margin_bottom;
 
-                            // 페이지 데이터 테이블 추가
                             put( noteId, page.pageId, page );
                         }
                         else if ( tag.equals( "symbol" ) )
@@ -1281,28 +1254,18 @@ public class MetadataCtrl implements IMetadataCtrl
                             float width = Float.parseFloat( atts.getValue( "width" ) ) * PIXEL_TO_DOT_SCALE;
                             float height = Float.parseFloat( atts.getValue( "height" ) ) * PIXEL_TO_DOT_SCALE;
 
-                            long index_symbol = -1;
-
-                            try
-                            {
-                                index_symbol = Long.parseLong( atts.getValue( "index_symbol" ) );
-                            }catch ( Exception e )
-                            {
-                                if(noteId == 566)
-                                    NLog.d( "index_symbol Err getValue="+atts.getValue( "index_symbol" )+",noteId="+noteId );
-                            }
-                            symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height , index_symbol);
-                        }
-                        else if ( isSymbol && tag.equals( "command" ) )
-                        {
-                            symbol.action = atts.getValue( "action" );
-                            symbol.param = atts.getValue( "param" );
-                        }
-                        else if ( isSymbol && tag.equals( "matching_symbols" ) )
-                        {
-                            symbol.previousId = atts.getValue( "previous" );
-                            symbol.nextId = atts.getValue( "next" );
-                        }
+							symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height );
+						}
+						else if ( isSymbol && tag.equals( "command" ) )
+						{
+							symbol.action = atts.getValue( "action" );
+							symbol.param = atts.getValue( "param" );
+						}
+						else if ( isSymbol && tag.equals( "matching_symbols" ) )
+						{
+							symbol.previousId = atts.getValue( "previous" );
+							symbol.nextId = atts.getValue( "next" );
+						}
 
                     }
 
@@ -1319,7 +1282,6 @@ public class MetadataCtrl implements IMetadataCtrl
 
                     lnkTbl.put( symbol.id, symbol );
 
-                    // 심볼 데이터 테이블 추가
                     put( noteId, symbol.pageId, symbol );
 
                     symbol = null;
@@ -1400,7 +1362,6 @@ public class MetadataCtrl implements IMetadataCtrl
 
         bookTable.put( noteId, nBook );
 
-        // 뽑아낸 심볼들 한번 돌려서 서로 링크 걸린 심볼을 연결
         Set<String> ids = lnkTbl.keySet();
 
         Iterator<String> it = ids.iterator();
@@ -1494,7 +1455,7 @@ public class MetadataCtrl implements IMetadataCtrl
                     }
                     else
                     {
-                        //캐스터 버전 2.2 ~ 2.3
+                        //?????? 2.2 ~ 2.3
                         if(nprojVersion < 2.31f)
                         {
                             if ( tag.equals( "pages" ) )
@@ -1511,7 +1472,7 @@ public class MetadataCtrl implements IMetadataCtrl
                                 page.width = Float.parseFloat( parser.getAttributeValue( nameSpace, "x2" ) ) * PIXEL_TO_DOT_SCALE;
                                 page.height = Float.parseFloat( parser.getAttributeValue( nameSpace, "y2" ) ) * PIXEL_TO_DOT_SCALE;
 
-                                // 페이지 데이터 테이블 추가
+                                // ???? ?????????????
                                 put( noteId, page.pageId, page );
                             }
                             else if ( tag.equals( "symbol" ) )
@@ -1523,60 +1484,53 @@ public class MetadataCtrl implements IMetadataCtrl
                                 float y = Float.parseFloat( parser.getAttributeValue( nameSpace, "y" ) ) * PIXEL_TO_DOT_SCALE;
                                 float width = Float.parseFloat( parser.getAttributeValue( nameSpace, "width" ) ) * PIXEL_TO_DOT_SCALE;
                                 float height = Float.parseFloat( parser.getAttributeValue( nameSpace, "height" ) ) * PIXEL_TO_DOT_SCALE;
-                                long index_symbol = -1;
 
-                                try
-                                {
-                                    index_symbol = Long.parseLong( parser.getAttributeValue( nameSpace,"index_symbol" ) );
-                                }catch ( Exception e )
-                                {
-                                }
-                                symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height , index_symbol);
-                            }
-                            else if ( isSymbol && tag.equals( "command" ) )
-                            {
-                                symbol.action = parser.getAttributeValue( nameSpace, "action" );
-                                symbol.param = parser.getAttributeValue( nameSpace, "param" );
-                            }
-                            else if ( isSymbol && tag.equals( "matching_symbols" ) )
-                            {
-                                symbol.previousId = parser.getAttributeValue( nameSpace, "previous" );
-                                symbol.nextId = parser.getAttributeValue( nameSpace, "next" );
-                            }
-                        }
-                        //캐스터 버전 2.31f 이상
-                        else
-                        {
-                            if ( tag.equals( "segment_info" ) )
-                            {
-                                String subCode = parser.getAttributeValue( nameSpace, "sub_code" );
-                                int totalPageSize = Integer.parseInt( parser.getAttributeValue( nameSpace, "total_size" ) );
-                                int segmentPageSize = Integer.parseInt( parser.getAttributeValue( nameSpace, "size" ) );
-                                int segmentNumber = Integer.parseInt( parser.getAttributeValue( nameSpace, "current_sequence" ) );
-                                int segmentStartPage = Integer.parseInt( parser.getAttributeValue( nameSpace, "ncode_start_page" ) );
-                                int segmentEndPage = Integer.parseInt( parser.getAttributeValue( nameSpace, "ncode_end_page" ) );
-                                Segment segment = new Segment(sectionCode, ownerCode, noteId, subCode,segmentNumber, segmentStartPage, segmentEndPage, totalPageSize, segmentPageSize );
-                                if(segmentTable.get( ""+sectionCode+"_"+ownerCode+"_"+noteId ) == null)
-                                {
-                                    HashMap<String, Segment> map = new HashMap<String, Segment>();
-                                    map.put( ""+segmentNumber, segment );
-                                    segmentTable.put( ""+sectionCode+"_"+ownerCode+"_"+noteId, map );
-                                }
-                                else
-                                {
-                                    segmentTable.get( ""+sectionCode+"_"+ownerCode+"_"+noteId ).put(""+segmentNumber, segment );
-                                }
-                            }
-                            else if ( tag.equals( "pages" ) )
-                            {
-                                totalPage = Integer.parseInt( parser.getAttributeValue( nameSpace, "count" ) );
-                            }
-                            else if ( tag.equals( "page_item" ) )
-                            {
-                                float x1 = Float.parseFloat( parser.getAttributeValue( nameSpace, "x1" ) ) * PIXEL_TO_DOT_SCALE;
-                                float x2 = Float.parseFloat( parser.getAttributeValue( nameSpace, "x2" ) ) * PIXEL_TO_DOT_SCALE;
-                                float y1 = Float.parseFloat( parser.getAttributeValue( nameSpace, "y1" ) ) * PIXEL_TO_DOT_SCALE;
-                                float y2 = Float.parseFloat( parser.getAttributeValue( nameSpace, "y2" ) ) * PIXEL_TO_DOT_SCALE;
+								symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height );
+							}
+							else if ( isSymbol && tag.equals( "command" ) )
+							{
+								symbol.action = parser.getAttributeValue( nameSpace, "action" );
+								symbol.param = parser.getAttributeValue( nameSpace, "param" );
+							}
+							else if ( isSymbol && tag.equals( "matching_symbols" ) )
+							{
+								symbol.previousId = parser.getAttributeValue( nameSpace, "previous" );
+								symbol.nextId = parser.getAttributeValue( nameSpace, "next" );
+							}
+						}
+						//?????? 2.31f ???
+						else
+						{
+							if ( tag.equals( "segment_info" ) )
+							{
+								String subCode = parser.getAttributeValue( nameSpace, "sub_code" );
+								int totalPageSize = Integer.parseInt( parser.getAttributeValue( nameSpace, "total_size" ) );
+								int segmentPageSize = Integer.parseInt( parser.getAttributeValue( nameSpace, "size" ) );
+								int segmentNumber = Integer.parseInt( parser.getAttributeValue( nameSpace, "current_sequence" ) );
+								int segmentStartPage = Integer.parseInt( parser.getAttributeValue( nameSpace, "ncode_start_page" ) );
+								int segmentEndPage = Integer.parseInt( parser.getAttributeValue( nameSpace, "ncode_end_page" ) );
+								Segment segment = new Segment(sectionCode, ownerCode, noteId, subCode,segmentNumber, segmentStartPage, segmentEndPage, totalPageSize, segmentPageSize );
+								if(segmentTable.get( ""+sectionCode+"_"+ownerCode+"_"+noteId ) == null)
+								{
+									HashMap<String, Segment> map = new HashMap<String, Segment>();
+									map.put( ""+segmentNumber, segment );
+									segmentTable.put( ""+sectionCode+"_"+ownerCode+"_"+noteId, map );
+								}
+								else
+								{
+									segmentTable.get( ""+sectionCode+"_"+ownerCode+"_"+noteId ).put(""+segmentNumber, segment );
+								}
+							}
+							else if ( tag.equals( "pages" ) )
+							{
+								totalPage = Integer.parseInt( parser.getAttributeValue( nameSpace, "count" ) );
+							}
+							else if ( tag.equals( "page_item" ) )
+							{
+								float x1 = Float.parseFloat( parser.getAttributeValue( nameSpace, "x1" ) ) * PIXEL_TO_DOT_SCALE;
+								float x2 = Float.parseFloat( parser.getAttributeValue( nameSpace, "x2" ) ) * PIXEL_TO_DOT_SCALE;
+								float y1 = Float.parseFloat( parser.getAttributeValue( nameSpace, "y1" ) ) * PIXEL_TO_DOT_SCALE;
+								float y2 = Float.parseFloat( parser.getAttributeValue( nameSpace, "y2" ) ) * PIXEL_TO_DOT_SCALE;
 
                                 String crop = parser.getAttributeValue( nameSpace, "crop_margin" );
                                 String[] crops = crop.split( "," );
@@ -1595,7 +1549,6 @@ public class MetadataCtrl implements IMetadataCtrl
                                 page.margin_right = margin_right;
                                 page.margin_bottom = margin_bottom;
 
-                                // 페이지 데이터 테이블 추가
                                 put( noteId, page.pageId, page );
                             }
                             else if ( tag.equals( "symbol" ) )
@@ -1607,26 +1560,19 @@ public class MetadataCtrl implements IMetadataCtrl
                                 float y = Float.parseFloat( parser.getAttributeValue( nameSpace, "y" ) ) * PIXEL_TO_DOT_SCALE;
                                 float width = Float.parseFloat( parser.getAttributeValue( nameSpace, "width" ) ) * PIXEL_TO_DOT_SCALE;
                                 float height = Float.parseFloat( parser.getAttributeValue( nameSpace, "height" ) ) * PIXEL_TO_DOT_SCALE;
-                                long index_symbol = -1;
 
-                                try
-                                {
-                                    index_symbol = Long.parseLong( parser.getAttributeValue( nameSpace,"index_symbol" ) );
-                                }catch ( Exception e )
-                                {
-                                }
-                                symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height , index_symbol);
-                            }
-                            else if ( isSymbol && tag.equals( "command" ) )
-                            {
-                                symbol.action = parser.getAttributeValue( nameSpace, "action" );
-                                symbol.param = parser.getAttributeValue( nameSpace, "param");
-                            }
-                            else if ( isSymbol && tag.equals( "matching_symbols" ) )
-                            {
-                                symbol.previousId = parser.getAttributeValue( nameSpace, "previous" );
-                                symbol.nextId = parser.getAttributeValue( nameSpace, "next" );
-                            }
+								symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height );
+							}
+							else if ( isSymbol && tag.equals( "command" ) )
+							{
+								symbol.action = parser.getAttributeValue( nameSpace, "action" );
+								symbol.param = parser.getAttributeValue( nameSpace, "param");
+							}
+							else if ( isSymbol && tag.equals( "matching_symbols" ) )
+							{
+								symbol.previousId = parser.getAttributeValue( nameSpace, "previous" );
+								symbol.nextId = parser.getAttributeValue( nameSpace, "next" );
+							}
 
                         }
                     }
@@ -1694,7 +1640,6 @@ public class MetadataCtrl implements IMetadataCtrl
 
                         lnkTbl.put( symbol.id, symbol );
 
-                        // 심볼 데이터 테이블 추가
                         this.put( noteId, symbol.pageId, symbol );
 
                         symbol = null;
@@ -1718,7 +1663,6 @@ public class MetadataCtrl implements IMetadataCtrl
 
         bookTable.put( noteId, nBook );
 
-        // 뽑아낸 심볼들 한번 돌려서 서로 링크 걸린 심볼을 연결
         Set<String> ids = lnkTbl.keySet();
 
         Iterator<String> it = ids.iterator();

@@ -16,7 +16,7 @@ import java.util.Queue;
 
 import kr.neolab.sdk.ink.structure.DotType;
 import kr.neolab.sdk.ink.structure.Stroke;
-import kr.neolab.sdk.pen.bluetooth.BTAdt;
+import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
 import kr.neolab.sdk.pen.bluetooth.IConnectedThread;
 import kr.neolab.sdk.pen.bluetooth.cmd.CommandManager;
 import kr.neolab.sdk.pen.bluetooth.cmd.FwUpgradeCommand20;
@@ -68,8 +68,6 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	private int prevNoteId = 0, prevPageId = 0;
 	private int prevOwnerId = 0, prevSectionId = 0;
 
-	private int pidsNoteId = 0, pidsPageId = 0;
-	private int pidsOwnerId = 0, pidsSectionId = 0;
 
 	private long prevDotTime = 0;
 
@@ -117,13 +115,6 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 	private int penInfoReceiveCount = 0;
 	private int penInfoRequestCount = 0;
-
-
-	private boolean isPIDS_On = false;
-
-	private boolean isPIDS_Send = false;
-
-
 
 	private class ChkOfflineFailRunnable implements Runnable{
 
@@ -514,7 +505,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				{
 					MTIME = pack.getDataRangeLong( 1, 8 );
 //					MTIME = TimeUtil.convertUTCToLocalTime( MTIME );
-					SimpleDateFormat dayTime = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+					SimpleDateFormat dayTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 					String str = dayTime.format( new Date( MTIME  ) );
 					NLog.d( "[CommProcessor20] received RES_EventPenUpDown() command. PEN_UP_DOWN = "+PEN_UP_DOWN+",str=" + str );
 
@@ -591,7 +582,6 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					this.isStartWithDown = false;
 				}
 
-				this.isPIDS_Send = false;
 				this.prevPacket = null;
 
 				byte[] cbyte = pack.getDataRange( 10, 4 );
@@ -621,78 +611,6 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 				// 노트 페이지 정보가 변경
 				byte[] osbyte = pack.getDataRange( 0, 4 );
-				int tempSection = (int) (osbyte[3] & 0xFF);
-				int tempOwner = ByteConverter.byteArrayToInt( new byte[] { osbyte[0], osbyte[1], osbyte[2], (byte) 0x00 } );
-				int tempNoteId = pack.getDataRangeInt( 4, 4 );
-				int tempPageId = pack.getDataRangeInt( 8, 4 );
-
-				// PIDS Symbol 체크
-				NLog.d( "[CommProcessor] received A_DotIDChange32 tempSection= "+tempSection+",tempOwner="+tempOwner );
-				if(tempSection == 3 && tempOwner >= 512)
-				{
-					pidsNoteId = tempNoteId;
-					pidsPageId = tempPageId;
-					pidsOwnerId = tempOwner - 512;
-					pidsSectionId = tempSection;
-					if ( prevPacket != null )
-					{
-						// 페이지가 바뀌었으나 펜 업이 안온경우 펜 업과 동시에 펜 다운을 처리해준다.
-						int pFORCE = 0;
-						int pX = 0;
-						int pY = 0;
-						int pFX = 0;
-						int pFY = 0;
-						int TILT_X = 0;
-						int TILT_Y = 0;
-						int twist = 0;
-
-						if ( prevPacket.getDotCode() == 1 )
-						{
-							pFORCE = prevPacket.getDataRangeInt( 1, 2 );
-							pX = prevPacket.getDataRangeInt( 3, 2 );
-							pY = prevPacket.getDataRangeInt( 5, 2 );
-							pFX = prevPacket.getDataRangeInt( 7, 1 );
-							pFY = prevPacket.getDataRangeInt( 8, 1 );
-							TILT_X = prevPacket.getDataRangeInt( 9, 1 );
-							TILT_Y = prevPacket.getDataRangeInt( 10, 1 );
-							twist = prevPacket.getDataRangeInt( 11, 2 );
-						}
-						else if ( prevPacket.getDotCode() == 2 )
-						{
-							pFORCE = 1020;
-							pX = prevPacket.getDataRangeInt( 1, 2 );
-							pY = prevPacket.getDataRangeInt( 3, 2 );
-							pFX = prevPacket.getDataRangeInt( 5, 1 );
-							pFY = prevPacket.getDataRangeInt( 6, 1 );
-							TILT_X = 0;
-							TILT_Y = 0;
-							twist = 0;
-						}
-						else if ( prevPacket.getDotCode() == 3 )
-						{
-							pFORCE = 1020;
-							pX = prevPacket.getDataRangeInt( 1, 1 );
-							pY = prevPacket.getDataRangeInt( 2, 1 );
-							pFX = prevPacket.getDataRangeInt( 3, 1 );
-							pFY = prevPacket.getDataRangeInt( 4, 1 );
-							TILT_X = 0;
-							TILT_Y = 0;
-							twist = 0;
-						}
-						long pTimeLong = prevDotTime;
-
-						this.processDot( prevSectionId, prevOwnerId, prevNoteId, prevPageId, pTimeLong, pX, pY, pFX, pFY, pFORCE, DotType.PEN_ACTION_UP.getValue(), currColor, TILT_X, TILT_Y, twist, currPenTipType );
-						isPrevDotDown = true;
-						isStartWithDown = true;
-						prevPacket = null;
-					}
-					isPIDS_On = true;
-					return;
-				}
-				else
-				{
-					isPIDS_On = false;
-				}
 
 				prevSectionId = sectionId;
 				prevOwnerId = ownerId;
@@ -704,6 +622,8 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 				noteId = pack.getDataRangeInt( 4, 4 );
 				pageId = pack.getDataRangeInt( 8, 4 );
+				NLog.d( "[CommProcessor20] received RES_EventIdChange() sectionId = "+sectionId+",ownerId="+ownerId+",noteId=" + noteId );
+
 				if ( prevPacket != null )
 				{
 					// 페이지가 바뀌었으나 펜 업이 안온경우 펜 업과 동시에 펜 다운을 처리해준다.
@@ -783,37 +703,11 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				// " / pageId = " + pageId + " / timeLong : " + timeLong +
 				// " / timeAdd : " + TIME + " / x : " + X + " / y : " + Y +
 				// " / fx : " + FLOAT_X + " / fy : " + FLOAT_Y);
-				if ( isPIDS_On)
-				{
-					prevDotTime = timeLong;
-					if(!isPIDS_Send)
-					{
-						long longX = X;
-						long longY = Y;
-						long ID = longX << 10;
-						ID = ID + longY;
-						try
-						{
-							JSONObject job = new JSONObject()
-									.put( JsonTag.LONG_PIDS_ID, ID )
-									.put( JsonTag.INT_SECTION_ID, pidsSectionId )
-									.put( JsonTag.INT_OWNER_ID, pidsOwnerId )
-									.put( JsonTag.INT_NOTE_ID, pidsNoteId )
-									.put( JsonTag.INT_PAGE_ID, pidsPageId )
-									.put( JsonTag.LONG_PIDS_TIMESTAMP, timeLong );
-							btConnection.onCreateMsg( new PenMsg( PenMsgType.EVENT_PIDS, job ) );
-						}
-						catch ( JSONException e )
-						{
-							e.printStackTrace();
-						}
-						isPIDS_Send = true;
-					}
-					return;
-				}
 
-				if (!isStartWithDown || timeLong < 10000) {
-					NLog.e("[CommProcessor20] this stroke start with middle dot.");
+				NLog.d( "[CommProcessor20] received RES_EventDotData1() sectionId = "+sectionId+",ownerId="+ownerId+",noteId=" + noteId+",X="+X+",Y="+Y+",FLOAT_X="+FLOAT_X+",FLOAT_Y"+FLOAT_Y );
+				if ( !isStartWithDown || timeLong < 10000 )
+				{
+					NLog.e( "[CommProcessor20] this stroke start with middle dot." );
 					return;
 				}
 
@@ -852,46 +746,13 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				int TILT_X = 0;
 				int TILT_Y = 0;
 				int twist = 0;
-				NLog.d( "[CommProcessor20] received RES_EventDotData() isPIDS_On="+isPIDS_On+",isPIDS_Send="+isPIDS_Send+",X:" + X + ",FLOAT_X:" + FLOAT_X + ",Y:" + Y + ",FLOAT_Y:" + FLOAT_Y );
-
-				// NLog.d("[CommProcessor20] new dot noteId = " + noteId +
-				// " / pageId = " + pageId + " / timeLong : " + timeLong +
-				// " / timeAdd : " + TIME + " / x : " + X + " / y : " + Y +
-				// " / fx : " + FLOAT_X + " / fy : " + FLOAT_Y);
-				if ( isPIDS_On)
-				{
-					prevDotTime = timeLong;
-					if(!isPIDS_Send)
-					{
-						long longX = X;
-						long longY = Y;
-						long ID = longX << 10;
-						ID = ID + longY;
-						try
-						{
-							JSONObject job = new JSONObject()
-									.put( JsonTag.LONG_PIDS_ID, ID )
-									.put( JsonTag.INT_SECTION_ID, pidsSectionId )
-									.put( JsonTag.INT_OWNER_ID, pidsOwnerId )
-									.put( JsonTag.INT_NOTE_ID, pidsNoteId )
-									.put( JsonTag.INT_PAGE_ID, pidsPageId )
-									.put( JsonTag.LONG_PIDS_TIMESTAMP, timeLong );
-							btConnection.onCreateMsg( new PenMsg( PenMsgType.EVENT_PIDS, job ) );
-						}
-						catch ( JSONException e )
-						{
-							e.printStackTrace();
-						}
-						isPIDS_Send = true;
-					}
-					return;
-				}
 
 				if ( !isStartWithDown || timeLong < 10000 )
 				{
 					NLog.e( "[CommProcessor20] this stroke start with middle dot." );
 					return;
 				}
+				NLog.d( "[CommProcessor20] received RES_EventDotData2() sectionId = "+sectionId+",ownerId="+ownerId+",noteId=" + noteId+",X="+X+",Y="+Y+",FLOAT_X="+FLOAT_X+",FLOAT_Y"+FLOAT_Y );
 
 				if ( isPrevDotDown )
 				{
@@ -932,40 +793,6 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				int TILT_X = 0;
 				int TILT_Y = 0;
 				int twist = 0;
-				NLog.d( "[CommProcessor20] received RES_EventDotData() isPIDS_On="+isPIDS_On+",isPIDS_Send="+isPIDS_Send+",X:" + X + ",FLOAT_X:" + FLOAT_X + ",Y:" + Y + ",FLOAT_Y:" + FLOAT_Y );
-
-				// NLog.d("[CommProcessor20] new dot noteId = " + noteId +
-				// " / pageId = " + pageId + " / timeLong : " + timeLong +
-				// " / timeAdd : " + TIME + " / x : " + X + " / y : " + Y +
-				// " / fx : " + FLOAT_X + " / fy : " + FLOAT_Y);
-				if ( isPIDS_On)
-				{
-					prevDotTime = timeLong;
-					if(!isPIDS_Send)
-					{
-						long longX = X;
-						long longY = Y;
-						long ID = longX << 10;
-						ID = ID + longY;
-						try
-						{
-							JSONObject job = new JSONObject()
-									.put( JsonTag.LONG_PIDS_ID, ID )
-									.put( JsonTag.INT_SECTION_ID, pidsSectionId )
-									.put( JsonTag.INT_OWNER_ID, pidsOwnerId )
-									.put( JsonTag.INT_NOTE_ID, pidsNoteId )
-									.put( JsonTag.INT_PAGE_ID, pidsPageId )
-									.put( JsonTag.LONG_PIDS_TIMESTAMP, timeLong );
-							btConnection.onCreateMsg( new PenMsg( PenMsgType.EVENT_PIDS, job ) );
-						}
-						catch ( JSONException e )
-						{
-							e.printStackTrace();
-						}
-						isPIDS_Send = true;
-					}
-					return;
-				}
 
 				if ( !isStartWithDown || timeLong < 10000 )
 				{
@@ -973,6 +800,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					return;
 				}
 
+				NLog.d( "[CommProcessor20] received RES_EventDotData3() sectionId = "+sectionId+",ownerId="+ownerId+",noteId=" + noteId+",X="+X+",Y="+Y+",FLOAT_X="+FLOAT_X+",FLOAT_Y"+FLOAT_Y );
 				if ( isPrevDotDown )
 				{
 					// 펜업의 경우 시작 도트로 저장
@@ -1399,6 +1227,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	{
 		parsePacket( packet );
 	}
+
 
 	/**
 	 * 펜 상태 요청

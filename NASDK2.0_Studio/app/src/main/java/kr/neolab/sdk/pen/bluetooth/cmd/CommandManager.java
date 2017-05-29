@@ -101,12 +101,12 @@ abstract public class CommandManager
     abstract public void fill( byte data[], int size );
 
     /**
-     * 펜 상태 요청
+     *reqPenStatus
      */
     abstract public void reqPenStatus();
 
     /**
-     * force calibrate 요청
+     * force calibrate
      */
     abstract public void reqForceCalibrate();
 
@@ -170,7 +170,6 @@ abstract public class CommandManager
 
 //    /**
 //     * Req offline data remove.
-//     * @deprecated Protocol 2.0 에서 삭제, 2.0 에서는 reqOfflineDataRemove( int sectionId, int ownerId, int[] noteIds) 으로 replace
 //     * @param sectionId the section id
 //     * @param ownerId   the owner id
 //     */
@@ -215,7 +214,7 @@ abstract public class CommandManager
     abstract public void reqSetUpPassword( String oldPassword, String newPassword );
 
     /**
-     * 펜 SW 업그레이드 요청
+     * reqPenSwUpgrade
      *
      * @param source the source
      * @param target the target
@@ -228,14 +227,14 @@ abstract public class CommandManager
     abstract public void reqSuspendPenSwUpgrade();
 
 //    /**
-//     * 펜에서 온 펜 SW 전송 요청에 대한 응답
+//     *resPenSwRequest
 //     *
 //     * @param index
 //     */
 //    abstract public void resPenSwRequest( int index );
 //
 //    /**
-//     * 펜 SW 업그레이드 상태에 따른 처리
+//     * resPenSwUpgStatus
 //     *
 //     * @param status
 //     */

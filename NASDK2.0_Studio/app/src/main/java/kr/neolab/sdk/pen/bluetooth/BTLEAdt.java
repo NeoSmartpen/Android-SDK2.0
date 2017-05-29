@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
@@ -51,10 +52,8 @@ import kr.neolab.sdk.util.UseNoteData;
  * protocol version 1을 구현하게 된다면 많이 다른 방식으로 구현이 될것으로 판단됨.
  * (BLE 에서 사용하는 Service와 Characteristic이 크게 다름)
  */
-
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-public class BTLEAdt implements IPenAdt
-{
+public class BTLEAdt implements IPenAdt {
     private static BTLEAdt instance = null;
 
     /**
@@ -260,7 +259,6 @@ public class BTLEAdt implements IPenAdt
 		    return;
 	    }
 
-
 	    this.penAddress = address;
         onConnectionTry();
 	    responseMsg(new PenMsg(PenMsgType.PEN_CONNECTION_TRY));
@@ -295,7 +293,7 @@ public class BTLEAdt implements IPenAdt
     {
         return (penStatus == CONN_STATUS_AUTHORIZED || penStatus == CONN_STATUS_ESTABLISHED);
     }
-    
+
     public String getPenAddress()
     {
         return penAddress;
@@ -854,7 +852,6 @@ public class BTLEAdt implements IPenAdt
             }
         }
 
-
         /**
          * Stop running.
          */
@@ -1043,7 +1040,7 @@ public class BTLEAdt implements IPenAdt
         }
     }
 
-    private Handler mHandler = new Handler()
+    private Handler mHandler = new Handler( Looper.getMainLooper())
     {
         @Override
         public void handleMessage( Message msg )

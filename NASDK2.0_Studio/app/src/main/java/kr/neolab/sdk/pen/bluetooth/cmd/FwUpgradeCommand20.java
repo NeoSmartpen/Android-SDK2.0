@@ -226,7 +226,6 @@ public class FwUpgradeCommand20 extends Command
 
 	public void run()
 	{
-		// 펌웨어 파일 전송
 		this.doUpgrade();
 
 		super.isAlive = false;

@@ -22,6 +22,9 @@ public class JsonTag
 	 */
 	public final static String STRING_SUB_NAME = "sub_name";
 
+	public final static String STRING_PACKAGE_NAME = "packageName";
+
+
 	/**
 	 * The constant BOOL_REGULAR_DISCONNECT.
 	 */

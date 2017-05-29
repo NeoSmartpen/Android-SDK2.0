@@ -210,7 +210,5 @@ public class PenMsgType
 	 */
 	public final static int PEN_CONNECTION_FAILURE_BTDUPLICATE	= 0x54;
 
-
-	public final static int EVENT_PIDS	= 0x70;
 }
 

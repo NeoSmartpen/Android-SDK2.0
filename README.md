@@ -4,7 +4,7 @@ NeoSmartpen SDK 2.0 for Android Platform
 
 javadoc link :https://neosmartpen.github.io/AndroidSDK2.0/docs
  
-SDK Document link :https://neosmartpen.github.io/AndroidSDK2.0/NeoSmartpen_SDK_Android_V2_1_1.pdf
+SDK Document link :https://neosmartpen.github.io/AndroidSDK2.0/NeoSmartpen_SDK_Android_V2_1_2.pdf
 
 ### Finding Bluetooth Devices
 

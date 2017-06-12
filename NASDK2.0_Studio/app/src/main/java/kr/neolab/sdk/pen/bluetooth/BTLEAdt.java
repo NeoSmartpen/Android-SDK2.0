@@ -280,7 +280,7 @@ public class BTLEAdt implements IPenAdt {
         this.watchDogAlreadyCalled = false;
         this.mBluetoothGatt = device.connectGatt(context, false, mBluetoothGattCallback);
 	    try {
-		    this.watchDog.schedule(watchDogTask, 3000);  // 3초
+		    this.watchDog.schedule(watchDogTask, 10000);  // 10 second
 	    }
 	    catch (Exception e)
 	    {

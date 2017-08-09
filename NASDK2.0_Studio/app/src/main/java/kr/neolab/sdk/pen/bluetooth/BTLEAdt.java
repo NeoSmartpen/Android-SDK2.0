@@ -280,7 +280,9 @@ public class BTLEAdt implements IPenAdt {
         this.watchDogAlreadyCalled = false;
         this.mBluetoothGatt = device.connectGatt(context, false, mBluetoothGattCallback);
 	    try {
-		    this.watchDog.schedule(watchDogTask, 10000);  // 10 second
+		    // schedule이 시작전에 connectGatt가 불려서 Cancel이 되어버리는 경우에 대한 exception처리
+		    // 커넥션 이후엔 여기에 문제가 생겨도 지장없음.
+		    this.watchDog.schedule(watchDogTask, 3000);  // 3초
 	    }
 	    catch (Exception e)
 	    {
@@ -370,6 +372,16 @@ public class BTLEAdt implements IPenAdt {
     }
 
     @Override
+    public String getConnectingDevice ()
+    {
+        NLog.d( "getConnectingDevice status="+penStatus );
+        if(penStatus == CONN_STATUS_TRY || penStatus == CONN_STATUS_BINDED|| penStatus == CONN_STATUS_ESTABLISHED)
+            return penAddress;
+        else
+            return null;
+    }
+
+    @Override
     public void inputPassword(String password) {
         if ( !isConnected() )
             return;
@@ -421,7 +433,7 @@ public class BTLEAdt implements IPenAdt {
 
         // TODO 현재는 솔찍히 LE에서 1.0에 대한처리는 하지 않음.
         if(mConnectionThread.getPacketProcessor() instanceof CommProcessor)
-            (mConnectionThread.getPacketProcessor()).reqPenSwUpgrade( fwFile, targetPath);
+            ((CommProcessor)mConnectionThread.getPacketProcessor()).reqPenSwUpgrade( fwFile, targetPath);
         else
         {
             NLog.e( "reqFwUpgrade( File fwFile, String targetPath ) is supported from protocol 1.0 !!!" );
@@ -431,6 +443,11 @@ public class BTLEAdt implements IPenAdt {
 
     @Override
     public void reqFwUpgrade2(File fwFile, String fwVersion) throws ProtocolNotSupportedException {
+        reqFwUpgrade2(fwFile, fwVersion, true);
+    }
+
+    @Override
+    public void reqFwUpgrade2(File fwFile, String fwVersion, boolean isCompress) throws ProtocolNotSupportedException {
         if ( !isConnected() )
             return;
 
@@ -440,13 +457,14 @@ public class BTLEAdt implements IPenAdt {
             return;
         }
         if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
-            (mConnectionThread.getPacketProcessor()).reqPenSwUpgrade( fwFile, fwVersion);
+            ((CommProcessor20)mConnectionThread.getPacketProcessor()).reqPenSwUpgrade( fwFile, fwVersion, isCompress);
         else
         {
             NLog.e( "reqFwUpgrade2( File fwFile, String fwVersion ) is supported from protocol 2.0 !!!" );
             throw new ProtocolNotSupportedException( "reqFwUpgrade2( File fwFile, String fwVersion ) is supported from protocol 2.0 !!!" );
         }
     }
+
 
     @Override
     public void reqSuspendFwUpgrade() {

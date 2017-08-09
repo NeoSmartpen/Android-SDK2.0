@@ -71,8 +71,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	
 	private boolean isDoneInitHandshake = false;
 	
-	private final String defaultPassword = "0000";
-	
+
 	private Chunk chunk = null;
 
 	/**
@@ -102,6 +101,9 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	private Handler mHandler = new Handler( Looper.getMainLooper());
 
 	private static final int OFFLINE_SEND_FAIL_TIME = 1000*20;
+
+	private String currentPassword = "";
+
 
 	private class ChkOfflineFailRunnable implements Runnable{
 
@@ -463,7 +465,18 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 				{
 					isPenAuthenticated = true;
 					btConnection.onAuthorized();
-					btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED ) );
+
+					try
+					{
+						JSONObject job = new JSONObject()
+								.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
+								.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job ) );
+					}
+					catch ( JSONException e )
+					{
+						e.printStackTrace();
+					}
 				}
 
 				String stat_version = pack.getDataRangeString( 0, 1 ).trim();
@@ -843,9 +856,14 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 				break;
 
 			case CMD.A_UsingNoteNotifyResponse:
-
-				NLog.d( "[CommProcessor] A_UsingNoteNotifyResponse : " + pack.getDataRangeInt( 0, 1 ) );
-
+			{
+				int result = pack.getDataRangeInt( 0, 1 );
+				NLog.d( "[CommProcessor] A_UsingNoteNotifyResponse : " + result );
+				if ( result == 0 )
+				{
+					btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_USING_NOTE_SET_FAIL ) );
+				}
+			}
 				break;
 
 			case CMD.A_OfflineDataRemoveResponse:
@@ -875,7 +893,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 			{
 				if ( !isDoneInitHandshake )
 				{
-					reqInputPassword( defaultPassword );
+					reqInputPassword( );
 					NLog.d( "[CommProcessor] InitHandshaking done." );
 					isDoneInitHandshake = true;
 					return;
@@ -1105,13 +1123,33 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 		write( ProtocolParser.buildPenTipColorSetup( color ) );
 	}
 
+
+	private void reqInputPassword()
+	{
+		currentPassword = "";
+		write( ProtocolParser.buildPasswordInput( currentPassword ) );
+
+	}
+
 	public void reqInputPassword( String password )
 	{
-		write( ProtocolParser.buildPasswordInput( password ) );
+        if ( password.equals( "0000" ) )
+        {
+            btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_ILLEGAL_PASSWORD_0000) );
+            return;
+        }
+
+		currentPassword = password;
+        write( ProtocolParser.buildPasswordInput( password ) );
 	}
 
 	public void reqSetUpPassword( String oldPassword, String newPassword )
-	{
+    {
+        if ( newPassword.equals( "0000" ) )
+        {
+            btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_ILLEGAL_PASSWORD_0000) );
+            return;
+        }
 		write( ProtocolParser.buildPasswordSetup( oldPassword, newPassword ) );
 	}
 

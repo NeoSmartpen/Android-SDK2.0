@@ -125,6 +125,13 @@ public interface IPenAdt
     public String getConnectedDevice();
 
     /**
+     * Gets connecting device.
+     *
+     * @return the connecting device
+     */
+    public String getConnectingDevice();
+
+    /**
      * When pen requested password, you can response password by this method.
      *
      * @param password the password
@@ -166,12 +173,23 @@ public interface IPenAdt
     /**
      * Req fw upgrade 2.
      * supported from Protocol 2.0
+     * isCompress default true
      *
      * @param fwFile    the fw file
      * @param fwVersion the fw version
      * @throws ProtocolNotSupportedException the protocol not supported exception
      */
     public void reqFwUpgrade2( File fwFile, String fwVersion) throws ProtocolNotSupportedException;
+
+    /**
+     * Req fw upgrade 2.
+     *
+     * @param fwFile     the fw file
+     * @param fwVersion  the fw version
+     * @param isCompress data compress true, uncompress false
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void reqFwUpgrade2( File fwFile, String fwVersion ,boolean isCompress)  throws ProtocolNotSupportedException;
 
     /**
      * To suspend Upgrading task.

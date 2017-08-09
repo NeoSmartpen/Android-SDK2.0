@@ -178,7 +178,7 @@ public class ProtocolParser20
         {
             escapeBuffer.put( counter, data );
             counter++;
-            NLog.d( "[ProtocolParser20] parseOneByte PKT_END count=" + count + ", dataLength=" + dataLength + ", headerLength=" + headerLength + "Packet:" + PacketBuilder.showPacket( escapeBuffer.array(), counter ) );
+            NLog.d( "[ProtocolParser20] parseOneByte PKT_END count=" + count + ", dataLength=" + dataLength + ", headerLength=" + headerLength +", isEvent="+isEvent+ "Packet:" + PacketBuilder.showPacket( escapeBuffer.array(), counter ) );
             if(count == dataLength + headerLength - 1)
             {
                 this.listener.onCreatePacket( new Packet( escapeBuffer.array(),2 ,isEvent) );
@@ -874,7 +874,7 @@ public class ProtocolParser20
      * @return the byte [ ]
      */
 // 0x31 CMD20.REQ_PenFWUpgrade
-    public static byte[] buildPenSwUpgrade ( String fwVersion, String deviceName, int filesize, byte checkSum)
+    public static byte[] buildPenSwUpgrade ( String fwVersion, String deviceName, int filesize, byte checkSum, boolean isCompress, int packetSize)
     {
         PacketBuilder builder = new PacketBuilder( 16 + 16 + 4 + 4 + 1 + 1 );
 
@@ -882,11 +882,18 @@ public class ProtocolParser20
         builder.write( ByteConverter.stringTobyte( deviceName ), 16 );
         builder.write( ByteConverter.stringTobyte( fwVersion ),16 );
         builder.write( ByteConverter.intTobyte( filesize ) );
-        builder.write( ByteConverter.intTobyte( FwUpgradeCommand20.PACKET_SIZE ) );
+        builder.write( ByteConverter.intTobyte( packetSize ) );
+
+
         // 압축 여부 1:압축 , 0: 압축안함
-        builder.write( (byte) 1 );
+        if(isCompress)
+        {
+            builder.write( (byte) 1 );
+        }
+        else
+            builder.write( (byte) 0 );
         builder.write( checkSum );
-        NLog.d( "[ProtocolParser20] REQ buildPenSwUpgrade :" + builder.showPacket() );
+        NLog.d( "[ProtocolParser20] REQ buildPenSwUpgrade deviceName="+deviceName+":" + builder.showPacket() );
         return builder.getPacket();
     }
 
@@ -925,7 +932,7 @@ public class ProtocolParser20
             else
             {
                 compressData = data;
-                afterCompressSize = 0;
+                afterCompressSize = beforeCompressSize;
             }
 
 

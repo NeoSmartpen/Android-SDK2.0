@@ -81,11 +81,19 @@ public interface IPenCtrl
     public String getConnectedDevice();
 
     /**
+     * Gets connecting device.
+     *
+     * @return the connecting device
+     */
+    public String getConnectingDevice();
+
+    /**
      * Confirm whether or not the MAC address to connect
      * If use ble adapter, throws BLENotSupprtedException
      *
      * @param mac the mac
      * @return true if can use, otherwise false
+     * @throws BLENotSupportedException the ble not supported exception
      */
     public boolean isAvailableDevice( String mac ) throws BLENotSupportedException;
 
@@ -165,12 +173,23 @@ public interface IPenCtrl
     /**
      * fw upgrade 2.
      * supported from Protocol 2.0
+     * isCompress default true
      *
      * @param fwFile    the fw file
      * @param fwVersion the fw version
      * @throws ProtocolNotSupportedException the protocol not supported exception
      */
     public void upgradePen2( File fwFile, String fwVersion) throws ProtocolNotSupportedException;
+
+    /**
+     * Req fw upgrade 2.
+     *
+     * @param fwFile     the fw file
+     * @param fwVersion  the fw version
+     * @param isCompress data compress true, uncompress false
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void upgradePen2( File fwFile, String fwVersion ,boolean isCompress)  throws ProtocolNotSupportedException;
 
     /**
      * To suspend Upgrading task.
@@ -381,6 +400,7 @@ public interface IPenCtrl
     public int getProtocolVersion();
 
     /**
+     * Sets le mode.
      *
      * @param isLeMode true is BLE mode, false is BT mode
      * @return true is success change mode otherwise is fail

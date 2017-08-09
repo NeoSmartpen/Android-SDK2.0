@@ -373,6 +373,16 @@ public class BTAdt implements IPenAdt
 	}
 
 	@Override
+	public String getConnectingDevice ()
+	{
+		NLog.d( "getConnectingDevice status="+status );
+		if(status == CONN_STATUS_TRY || status == CONN_STATUS_BINDED|| status == CONN_STATUS_ESTABLISHED)
+			return penAddress;
+		else
+			return null;
+	}
+
+	@Override
 	public void inputPassword( String password )
 	{
 		if ( !isConnected() )
@@ -449,6 +459,13 @@ public class BTAdt implements IPenAdt
 	@Override
 	public void reqFwUpgrade2( File fwFile, String fwVersion )  throws ProtocolNotSupportedException
 	{
+		reqFwUpgrade2( fwFile, fwVersion , true);
+	}
+
+
+	@Override
+	public void reqFwUpgrade2( File fwFile, String fwVersion , boolean isCompress)  throws ProtocolNotSupportedException
+	{
 		if ( !isConnected() )
 		{
 			return;
@@ -459,16 +476,15 @@ public class BTAdt implements IPenAdt
 			responseMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_FAILURE ) );
 			return;
 		}
+
 		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
-			((CommProcessor20)mConnectionThread.getPacketProcessor()).reqPenSwUpgrade( fwFile, fwVersion);
+			((CommProcessor20)mConnectionThread.getPacketProcessor()).reqPenSwUpgrade( fwFile, fwVersion, isCompress);
 		else
 		{
 			NLog.e( "reqFwUpgrade2( File fwFile, String fwVersion ) is supported from protocol 2.0 !!!" );
 			throw new ProtocolNotSupportedException( "reqFwUpgrade2( File fwFile, String fwVersion ) is supported from protocol 2.0 !!!" );
 		}
 	}
-
-
 
 
 	@Override

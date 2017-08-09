@@ -33,7 +33,7 @@ public class Packet
     /**
      * The Is event.
      */
-    public boolean isEvent = true;
+    public boolean isEvent = false;
 
     /**
      * The Result code.

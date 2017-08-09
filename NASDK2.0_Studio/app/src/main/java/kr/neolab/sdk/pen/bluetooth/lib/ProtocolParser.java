@@ -34,6 +34,7 @@ public class ProtocolParser
 	private boolean isStart = true;
 
 	private IParsedPacketListener listener = null;
+	private static final String DEFAULT_PASSWORD = "0000";
 
 	/**
 	 * Instantiates a new Protocol parser.
@@ -633,6 +634,8 @@ public class ProtocolParser
 	{
 		PacketBuilder sendbyte = new PacketBuilder( 16 );
 		sendbyte.setCommand( CMD.P_PasswordResponse );
+		if(password.length() == 0)
+			password = DEFAULT_PASSWORD;
 		sendbyte.write( ByteConverter.stringTobyte( password ), 16 );
 		NLog.d( "[ProtocolParser] REQ  buildPasswordInput.");
 		sendbyte.showPacket();
@@ -650,7 +653,10 @@ public class ProtocolParser
 	{
 		PacketBuilder sendbyte = new PacketBuilder( 32 );
 		sendbyte.setCommand( CMD.P_PasswordSet );
-
+		if(oldPassword.length() == 0)
+			oldPassword = "0000";
+		if(newPassword.length() == 0)
+			newPassword = "0000";
 		sendbyte.write( ByteConverter.stringTobyte( oldPassword ), 16 );
 		sendbyte.write( ByteConverter.stringTobyte( newPassword ), 16 );
 

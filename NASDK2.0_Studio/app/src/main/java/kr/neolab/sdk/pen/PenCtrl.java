@@ -144,8 +144,14 @@ public class PenCtrl implements IPenCtrl {
     public String getConnectedDevice() 
     {
         return currentAdt.getConnectedDevice();
-    }   
-    
+    }
+
+	@Override
+	public String getConnectingDevice ()
+	{
+		return currentAdt.getConnectingDevice();
+	}
+
 	@Override
 	public void inputPassword( String password )
 	{
@@ -192,7 +198,13 @@ public class PenCtrl implements IPenCtrl {
 	@Override
 	public void upgradePen2 ( File fwFile, String fwVersion ) throws ProtocolNotSupportedException
 	{
-		currentAdt.reqFwUpgrade2( fwFile, fwVersion );
+		upgradePen2 ( fwFile, fwVersion, true );
+	}
+
+	@Override
+	public void upgradePen2 ( File fwFile, String fwVersion, boolean isCompress ) throws ProtocolNotSupportedException
+	{
+		currentAdt.reqFwUpgrade2( fwFile, fwVersion, isCompress );
 	}
 
 	@Override

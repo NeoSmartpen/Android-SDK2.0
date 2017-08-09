@@ -24,6 +24,10 @@ public class JsonTag
 
 	public final static String STRING_PACKAGE_NAME = "packageName";
 
+	public final static String STRING_PEN_MAC_ADDRESS="pen_mac_address";
+
+	public final static String STRING_PEN_PASSWORD="pen_password";
+
 
 	/**
 	 * The constant BOOL_REGULAR_DISCONNECT.

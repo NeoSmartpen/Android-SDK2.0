@@ -1,6 +1,5 @@
 package kr.neolab.sdk.pen.bluetooth.cmd;
 
-import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -213,13 +212,13 @@ abstract public class CommandManager
      */
     abstract public void reqSetUpPassword( String oldPassword, String newPassword );
 
-    /**
-     * reqPenSwUpgrade
-     *
-     * @param source the source
-     * @param target the target
-     */
-    abstract public void reqPenSwUpgrade( File source, String target);
+//    /**
+//     * reqPenSwUpgrade
+//     *
+//     * @param source the source
+//     * @param target the target
+//     */
+//    abstract public void reqPenSwUpgrade( File source, String target);
 
     /**
      * Req suspend pen sw upgrade.

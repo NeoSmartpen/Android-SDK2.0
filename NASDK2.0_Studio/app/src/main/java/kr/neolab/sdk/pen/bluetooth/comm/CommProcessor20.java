@@ -116,6 +116,11 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	private int penInfoReceiveCount = 0;
 	private int penInfoRequestCount = 0;
 
+	private String newPassword = "";
+	private boolean reChkPassword = false;
+
+	private String currentPassword = "";
+
 	private class ChkOfflineFailRunnable implements Runnable{
 
 		@Override
@@ -369,7 +374,18 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 							{
 								isPenAuthenticated = true;
 								btConnection.onAuthorized();
-								btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED ) );
+
+								try
+								{
+									JSONObject job = new JSONObject()
+											.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
+											.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
+									btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job ) );
+								}
+								catch ( JSONException e )
+								{
+									e.printStackTrace();
+								}
 							}
 						}
 
@@ -402,11 +418,31 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 					if(status == 1)
 					{
+						if(reChkPassword)
+						{
+							currentPassword = newPassword;
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.PASSWORD_SETUP_SUCCESS ) );
+							reChkPassword = false;
+							return;
+						}
+
 						if ( !isPenAuthenticated )
 						{
 							isPenAuthenticated = true;
 							btConnection.onAuthorized();
-							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED ) );
+
+
+							try
+							{
+								JSONObject job = new JSONObject()
+										.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
+										.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
+								btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job ) );
+							}
+							catch ( JSONException e )
+							{
+								e.printStackTrace();
+							}
 						}
 					}
 					else
@@ -419,8 +455,15 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 							job = new JSONObject();
 							job.put( JsonTag.INT_PASSWORD_RETRY_COUNT, countRetry );
 							job.put( JsonTag.INT_PASSWORD_RESET_COUNT, countReset );
-
-							btConnection.onCreateMsg( new PenMsg( PenMsgType.PASSWORD_REQUEST, job ) );
+							if(reChkPassword)
+							{
+								reChkPassword = false;
+								btConnection.onCreateMsg( new PenMsg( PenMsgType.PASSWORD_SETUP_FAILURE, job ) );
+							}
+							else
+							{
+								btConnection.onCreateMsg( new PenMsg( PenMsgType.PASSWORD_REQUEST, job ) );
+							}
 						}
 						catch ( JSONException e )
 						{
@@ -456,10 +499,12 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 				if ( result == 0x00 )
 				{
-					btConnection.onCreateMsg( new PenMsg( PenMsgType.PASSWORD_SETUP_SUCCESS ) );
+					reChkPassword = true;
+					write( ProtocolParser20.buildPasswordInput( this.newPassword ));
 				}
 				else
 				{
+					this.newPassword = "";
 					try
 					{
 						JSONObject job = null;
@@ -485,8 +530,12 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			 * ------------------------------------------------------------------
 			 */
 			case CMD20.RES_UsingNoteNotify:
-
+				int result = pack.getResultCode();
 				NLog.d( "[CommProcessor20] RES_UsingNoteNotify :  resultCode =" + pack.getResultCode() );
+				if ( result == 0x00 )
+				{
+					btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_USING_NOTE_SET_FAIL ) );
+				}
 				break;
 
 			/*
@@ -1455,12 +1504,28 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 	public void reqInputPassword( String password )
 	{
+		if ( password.equals( "0000" ) )
+		{
+			btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_ILLEGAL_PASSWORD_0000) );
+			return;
+		}
+		currentPassword = password;
 		write( ProtocolParser20.buildPasswordInput( password ) );
 	}
 
 	public void reqSetUpPassword( String oldPassword, String newPassword )
 	{
-		write( ProtocolParser20.buildPasswordSetup( true, oldPassword, newPassword ) );
+		if ( newPassword.equals( "0000" ) )
+		{
+			btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_ILLEGAL_PASSWORD_0000) );
+			return;
+		}
+
+		this.newPassword = newPassword;
+		boolean use = true;
+		if(newPassword.length() == 0)
+			use = false;
+		write( ProtocolParser20.buildPasswordSetup( use, oldPassword, newPassword ) );
 	}
 
 	/**
@@ -1473,7 +1538,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		write( ProtocolParser20.buildPasswordSetup( false, oldPassword, "" ) );
 	}
 
-	public void reqPenSwUpgrade( File source, String fwVersion )
+	public void reqPenSwUpgrade( File source, String fwVersion , boolean isCompress)
 	{
 		NLog.d( "[CommProcessor20] request pen firmware upgrade." );
 
@@ -1487,7 +1552,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		isUpgradingSuspended = false;
 
 		FwUpgradeCommand20 command = new FwUpgradeCommand20( CMD20.REQ_PenFWUpgrade, this );
-		command.setInfo( source, fwVersion, connectedDeviceName );
+		command.setInfo( source, fwVersion, connectedDeviceName , isCompress);
 		execute( command );
 	}
 

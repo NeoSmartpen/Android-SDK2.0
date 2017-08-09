@@ -17,7 +17,7 @@ public class InputPasswordDialog extends Dialog
 	
 	public EditText edPass;
 	
-	public InputPasswordDialog( Context context, MainActivity p, int retryCount, int resetCount )
+	public InputPasswordDialog( Context context, MainActivity p )
 	{
 		super( context );
 		
@@ -36,15 +36,8 @@ public class InputPasswordDialog extends Dialog
 			@Override
 			public void onClick( View v )
 			{
-				if ( edPass.length() <= 0 )
-				{
-					Toast.makeText( parent, "please input your password !!", Toast.LENGTH_SHORT ).show();
-				}
-				else
-				{
 					submit();
 					cancel();
-				}
 			}
 		} );
 	}

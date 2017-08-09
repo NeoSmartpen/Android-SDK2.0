@@ -522,10 +522,19 @@ public class MainActivity extends Activity
 					e.printStackTrace();
 				}
 
-				inputPassDialog = new InputPasswordDialog( this, this, retryCount, resetCount );
+				if(inputPassDialog == null)
+					inputPassDialog = new InputPasswordDialog( this, this );
 				inputPassDialog.show();
 			}
 				break;
+			case PenMsgType.PEN_ILLEGAL_PASSWORD_0000:
+			{
+				if(inputPassDialog == null)
+					inputPassDialog = new InputPasswordDialog( this, this );
+				inputPassDialog.show();
+			}
+			break;
+
 		}
 	}
 

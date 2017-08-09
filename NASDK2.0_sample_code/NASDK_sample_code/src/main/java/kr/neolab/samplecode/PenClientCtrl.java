@@ -97,11 +97,10 @@ public class PenClientCtrl implements IPenMsgListener
      * @param isLeMode true is Bluetooth LE mode, false is Bluetooth(SPP) mode
      * @return true is success, false is failure
      */
-	public boolean setLeMode(boolean isLeMode)
-	{
-		return iPenCtrl.setLeMode(isLeMode);
-	}
-
+    public boolean setLeMode(boolean isLeMode)
+    {
+        return iPenCtrl.setLeMode(isLeMode);
+    }
 
     /**
      * Gets instance.
@@ -215,7 +214,18 @@ public class PenClientCtrl implements IPenMsgListener
 		}
 	}
 
-    /**
+	public void upgradePen2(File fwFile, String fwVersion, boolean isCompress)
+	{
+		try
+		{
+			iPenCtrl.upgradePen2( fwFile, fwVersion , isCompress);
+		}catch (ProtocolNotSupportedException e )
+		{
+		}
+	}
+
+
+	/**
      * Suspend pen upgrade.
      */
     public void suspendPenUpgrade()
@@ -388,7 +398,18 @@ public class PenClientCtrl implements IPenMsgListener
 			case PenMsgType.PEN_AUTHORIZED:
 
 				isAuthorized = true;
-				Toast.makeText( context, "PEN_AUTHORIZED pen subname : "+mPenSubName, Toast.LENGTH_LONG).show();
+
+				JSONObject obj = penMsg.getContentByJSONObject();
+				try
+				{
+					curPass = obj.getString( JsonTag.STRING_PEN_PASSWORD );
+				}
+				catch ( JSONException e )
+				{
+					e.printStackTrace();
+				}
+
+
 
 				// notify using note
 //				iPenCtrl.reqAddUsingNote( USING_SECTION_ID, USING_OWNER_ID, USING_NOTES );
@@ -421,12 +442,6 @@ public class PenClientCtrl implements IPenMsgListener
 
 					NLog.d("password count : " + count);
 
-					// Initial password is 0000. If you have not changed the transmission apart since 0000
-					if ( count == 0 )
-					{
-						inputPassword(curPass);
-						return;
-					}
 				}
 				catch ( JSONException e )
 				{
@@ -570,6 +585,14 @@ public class PenClientCtrl implements IPenMsgListener
 				}
 			}
 			break;
+
+			case PenMsgType.PEN_ILLEGAL_PASSWORD_0000:
+			{
+				Util.showToast( context, "PassWord do not allow 0000 !!!!" );
+			}
+			break;
+
+
 			case PenMsgType.OFFLINE_DATA_NOTE_LIST:
 
 				try
@@ -665,9 +688,26 @@ public class PenClientCtrl implements IPenMsgListener
 		return mPenFWVersion;
 	}
 
-	public boolean isAvailableDevice( String mac) throws BLENotSupportedException {
-		return iPenCtrl.isAvailableDevice( mac );
-	}
+
+    /**
+     * Confirm whether or not the MAC address to connect
+     * If use ble adapter, throws BLENotSupprtedException
+     *
+     * @param mac the mac
+     * @return true if can use, otherwise false
+     */
+    public boolean isAvailableDevice( String mac) throws BLENotSupportedException {
+        return iPenCtrl.isAvailableDevice( mac );
+    }
+    /**
+     * Confirm whether or not the MAC address to connect
+     * NOTICE
+     * SPP must use mac address bytes
+     * BLE must use advertising full data ( ScanResult.getScanRecord().getBytes() )
+     *
+     * @param mac the mac
+     * @return true if can use, otherwise false
+     */
     public boolean isAvailableDevice( byte[] mac)
     {
         return iPenCtrl.isAvailableDevice( mac );

@@ -209,7 +209,7 @@ public class NeoSampleService extends Service{
 			mBroadcastThread.interrupt();
 //		unRegisterBroadcastReceiver( );
 
-		android.os.Process.killProcess( android.os.Process.myPid() );
+//		android.os.Process.killProcess( android.os.Process.myPid() );
 	}
 
 //	private void registerBroadcastReceiver()
@@ -271,7 +271,7 @@ public class NeoSampleService extends Service{
 	private void broadcastDot ( Dot dot )
 	{
 
-		NLog.d( "broadcastDot send: sectionId:" + dot.sectionId + " ownerId:" + dot.ownerId + " noteId:" + dot.noteId + " pageId:" + dot.pageId + " dotType:" + dot.dotType );
+		NLog.d( "broadcastDot send: sectionId:" + dot.sectionId + " ownerId:" + dot.ownerId + " noteId:" + dot.noteId + " pageId:" + dot.pageId + " dotType:" + dot.dotType+",X="+dot.getX()+",Y="+dot.getY() );
 
 		Intent intent = new Intent( Const.Broadcast.ACTION_PEN_DOT);
 		intent.putExtra( Const.Broadcast.EXTRA_DOT, dot);

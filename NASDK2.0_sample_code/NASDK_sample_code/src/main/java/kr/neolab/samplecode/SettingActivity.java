@@ -52,7 +52,7 @@ public class SettingActivity extends PreferenceActivity implements OnSharedPrefe
 		if ( key.equals( Const.Setting.KEY_PASSWORD ) )
 		{
 			String oldPassword = penClient.getCurrentPassword();
-			String newPassword = sharedPreferences.getString( Const.Setting.KEY_PASSWORD, "0000" );
+			String newPassword = sharedPreferences.getString( Const.Setting.KEY_PASSWORD, "" );
 
 			penClient.reqSetupPassword( oldPassword, newPassword );
 		}

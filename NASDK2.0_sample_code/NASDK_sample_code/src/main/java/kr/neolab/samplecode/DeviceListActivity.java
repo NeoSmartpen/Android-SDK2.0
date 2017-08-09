@@ -53,7 +53,7 @@ public class DeviceListActivity extends Activity
 {
     // Return Intent extra
     public static String EXTRA_DEVICE_ADDRESS = "device_address";
-    public static String EXTRA_IS_BLUETOOTH_LE= "is_blueotooth_le";
+    public static String EXTRA_IS_BLUETOOTH_LE = "is_bluetooth_le";
 
     // Member fields
     private BluetoothAdapter mBtAdapter;
@@ -85,21 +85,12 @@ public class DeviceListActivity extends Activity
                 /**
                  * setting pen client control for ble
                  */
-//                PenClientCtrl.getInstance( getApplicationContext() ).setLeMode(true);
-//                if(PenClientCtrl.getInstance( getApplicationContext() ).isAvailableDevice(result.getScanRecord().getBytes()))
-//                {
                     if(!temp.contains( device.getAddress() ))
                     {
                         NLog.d( "ACTION_FOUND onLeScan : " +device.getName() + " address : "+ device.getAddress()+", COD:" + device.getBluetoothClass());
                         temp.add( device.getAddress());
                         mNewDevicesArrayAdapter.add(msg);
                     }
-                    else
-                    {
-                        // 여기서 rssi 혹은 추가 정보를 update할 수 있다.
-                        // 하지만 그러려면 구조를 바꿔야 할 듯
-                    }
-//                }
             }
         }
 
@@ -169,12 +160,9 @@ public class DeviceListActivity extends Activity
                     scanLEButton.setText( R.string.button_le_scan );
                     scanButton.setVisibility( View.VISIBLE );
                     if (Build.VERSION.SDK_INT < 21) {
-                    } else {
                         mLeScanner.stopScan(mScanCallback);
                     }
-//                    mBtAdapter.stopLeScan( callback );
                 }
-//                scanLEButton.setVisibility( View.GONE );
             }
         });
 
@@ -376,15 +364,7 @@ public class DeviceListActivity extends Activity
                 {
                     NLog.d( "ACTION_FOUND SPP : " +device.getName() + " address : "+ device.getAddress()+", COD:" + device.getBluetoothClass());
 
-//                    if(PenClientCtrl.getInstance( context ).isAvailableDevice(device.getAddress()))
-//                    {
-//                        Toast.makeText( context, "ACTION_FOUND SPP try Connect: " +device.getName() + " address : "+ device.getAddress(), Toast.LENGTH_SHORT).show();
-//                        PenClientCtrl.getInstance( context ).connect( device.getAddress() );
-//                    }
-
-
-//                    if(PenClientCtrl.getInstance( context ).isAvailableDevice(device.getAddress()))
-                        mNewDevicesArrayAdapter.add(device.getName() + "\n" + "[RSSI : "+rssi +"dBm] " + device.getAddress());
+                    mNewDevicesArrayAdapter.add(device.getName() + "\n" + "[RSSI : "+rssi +"dBm] " + device.getAddress());
 //                    mNewDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress()+"\n Major"+device.getBluetoothClass().toString()+"\nDeviceClass()"+device.getBluetoothClass().getDeviceClass()+"device="+device.getType());
 
                 }

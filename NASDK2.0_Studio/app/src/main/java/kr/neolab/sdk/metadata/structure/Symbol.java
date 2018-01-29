@@ -42,10 +42,14 @@ action, /**
  */
 param;
 
-    /**
-     * The Index Symbol
-     */
-    public long index_symbol;
+	/**
+	 * The Points.
+	 */
+	public String points;
+	/**
+	 * The Index Symbol
+	 */
+	public long index_symbol;
 
 	/**
 	 * Instantiates a new Symbol.
@@ -60,7 +64,7 @@ param;
 	 * @param right  the right
 	 * @param bottom the bottom
 	 */
-    public Symbol(int noteId, int pageId, String name, String action, String param, float left, float top, float right, float bottom)
+	public Symbol(int noteId, int pageId, String name, String action, String param, float left, float top, float right, float bottom)
 	{
 		super(left, top, right, bottom);
 		

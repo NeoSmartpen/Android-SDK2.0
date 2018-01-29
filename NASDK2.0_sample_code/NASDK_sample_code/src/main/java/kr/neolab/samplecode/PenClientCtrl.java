@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -82,8 +81,6 @@ public class PenClientCtrl implements IPenMsgListener
 		// inPath = this.getFilesDir().getAbsolutePath();
 		// iPenCtrl.setOfflineDataLocation(inPath);
 
-		// start up pen controller
-		iPenCtrl.startup();
 
 		// regist callback interface
 		iPenCtrl.setListener( this );
@@ -164,7 +161,13 @@ public class PenClientCtrl implements IPenMsgListener
 		return isConnected;
 	}
 
-    /**
+
+	public boolean isSupportPenProfile()
+	{
+		return iPenCtrl.isSupportPenProfile();
+	}
+
+	/**
      * Connect.
      *
      * @param address the address
@@ -382,7 +385,7 @@ public class PenClientCtrl implements IPenMsgListener
 //	}
 
 	@Override
-	public void onReceiveMessage( PenMsg penMsg )
+	public void onReceiveMessage( String macAddress, PenMsg penMsg )
 	{
 		NLog.d( "PenClientCtrl onReceiveMessage penMsg="+penMsg.getPenMsgType()+",getContent:"+penMsg.getContent() );
 		switch ( penMsg.penMsgType )
@@ -390,19 +393,28 @@ public class PenClientCtrl implements IPenMsgListener
 			// Pens when the connection is complete (that is still going through the certification process state)
 			case PenMsgType.PEN_CONNECTION_SUCCESS:
 
+				NLog.d( "PenClientCtrl PEN_CONNECTION_SUCCESS getConnectingDevice"+getConnectingDevice() );
 				isConnected = true;
 
 				break;
 
 			// Fired when ready to use pen
 			case PenMsgType.PEN_AUTHORIZED:
-
+				NLog.d( "PenClientCtrl PEN_AUTHORIZED getConnectDevice"+getConnectDevice() );
 				isAuthorized = true;
 
 				JSONObject obj = penMsg.getContentByJSONObject();
+				mPref = PreferenceManager.getDefaultSharedPreferences( context );
+
+				SharedPreferences.Editor edit = mPref.edit();
+
 				try
 				{
 					curPass = obj.getString( JsonTag.STRING_PEN_PASSWORD );
+					String macaddress = obj.getString( JsonTag.STRING_PEN_MAC_ADDRESS);
+					edit.putString( Const.Setting.KEY_PASSWORD, getCurrentPassword() );
+					edit.putString(Const.Setting.KEY_MAC_ADDRESS,  macaddress );
+					edit.commit();
 				}
 				catch ( JSONException e )
 				{
@@ -518,7 +530,6 @@ public class PenClientCtrl implements IPenMsgListener
 					editor.putBoolean( Const.Setting.KEY_HOVER_MODE, stat_hovermode );
 					editor.putBoolean( Const.Setting.KEY_PEN_CAP_ON, pencap_on );
 					editor.putBoolean( Const.Setting.KEY_OFFLINE_DATA_SAVE, stat_offlinesave );
-					editor.putString( Const.Setting.KEY_PASSWORD, getCurrentPassword() );
 
 					editor.commit();
 				}
@@ -619,12 +630,13 @@ public class PenClientCtrl implements IPenMsgListener
 				break;
 		}
 
-		sendPenMsgByBroadcast( penMsg );
+		sendPenMsgByBroadcast( macAddress,  penMsg );
 	}
 
-	private void sendPenMsgByBroadcast( PenMsg penMsg )
+	private void sendPenMsgByBroadcast(String macAddress, PenMsg penMsg )
 	{
 		Intent i = new Intent( Const.Broadcast.ACTION_PEN_MESSAGE );
+		i.putExtra( Const.Broadcast.PEN_ADDRESS, macAddress );
 		i.putExtra( Const.Broadcast.MESSAGE_TYPE, penMsg.getPenMsgType() );
 		i.putExtra( Const.Broadcast.CONTENT, penMsg.getContent() );
 
@@ -671,7 +683,22 @@ public class PenClientCtrl implements IPenMsgListener
 		return this.iPenCtrl.getProtocolVersion();
 	}
 
-    /**
+	public String getConnectDevice()
+	{
+		return this.iPenCtrl.getConnectedDevice();
+	}
+
+	public IPenCtrl getIPenCtrl()
+	{
+		return this.iPenCtrl;
+	}
+
+	public String getConnectingDevice()
+	{
+		return this.iPenCtrl.getConnectingDevice();
+	}
+
+	/**
      * Gets device name.
      * Notice!! Not Support Protocol 1.0
      * Protocol 1.0 return null;
@@ -681,6 +708,12 @@ public class PenClientCtrl implements IPenMsgListener
     public String getDeviceName()
 	{
 		return mPenName;
+	}
+
+
+	public String getSubName()
+	{
+		return mPenSubName;
 	}
 
 	public String getPenFWVersion()
@@ -712,5 +745,11 @@ public class PenClientCtrl implements IPenMsgListener
     {
         return iPenCtrl.isAvailableDevice( mac );
     }
+
+	public boolean unpairDevice(String address)
+	{
+		return iPenCtrl.unpairDevice(address);
+	}
+
 
 }

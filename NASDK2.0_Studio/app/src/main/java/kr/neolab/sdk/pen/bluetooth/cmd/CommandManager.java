@@ -29,24 +29,24 @@ abstract public class CommandManager
      *
      * @param command the command
      */
-    public void execute(ICommand command)
+    public void execute ( ICommand command )
     {
-        if ( !commands.containsKey(command.getId()) )
+        if ( !commands.containsKey( command.getId() ) )
         {
-            commands.put(command.getId(), command);
+            commands.put( command.getId(), command );
             command.excute();
             return;
         }
 
-        if ( commands.get(command.getId()).isAlive() )
+        if ( commands.get( command.getId() ).isAlive() )
         {
-            NLog.e("[CommandManager] Command is still excuting.");
+            NLog.e( "[CommandManager] Command is still excuting." );
             command = null;
             return;
         }
-        
-        commands.remove(command.getId());
-        commands.put(command.getId(), command);
+
+        commands.remove( command.getId() );
+        commands.put( command.getId(), command );
         command.excute();
     }
 
@@ -55,10 +55,10 @@ abstract public class CommandManager
      *
      * @param key the key
      */
-    public void kill(int key)
+    public void kill ( int key )
     {
-        ICommand command = commands.get(key);
-        
+        ICommand command = commands.get( key );
+
         if ( command != null )
         {
             command.finish();
@@ -70,26 +70,26 @@ abstract public class CommandManager
      *
      * @param buffer the buffer
      */
-    abstract public void write( byte[] buffer );
+    abstract public void write ( byte[] buffer );
 
     /**
      * Gets conn.
      *
      * @return the conn
      */
-    abstract public IConnectedThread getConn();
+    abstract public IConnectedThread getConn ();
 
     /**
      * Sets chunk.
      *
      * @param chunk the chunk
      */
-    abstract public void setChunk( Chunk chunk );
+    abstract public void setChunk ( Chunk chunk );
 
     /**
      * Finish upgrade.
      */
-    abstract public void finishUpgrade();
+    abstract public void finishUpgrade ();
 
     /**
      * Fill.
@@ -97,31 +97,31 @@ abstract public class CommandManager
      * @param data the data
      * @param size the size
      */
-    abstract public void fill( byte data[], int size );
+    abstract public void fill ( byte data[], int size );
 
     /**
-     *reqPenStatus
+     * reqPenStatus
      */
-    abstract public void reqPenStatus();
+    abstract public void reqPenStatus ();
 
     /**
      * force calibrate
      */
-    abstract public void reqForceCalibrate();
+    abstract public void reqForceCalibrate ();
 
     /**
      * Req set auto shutdown time.
      *
      * @param min the min
      */
-    abstract public void reqSetAutoShutdownTime( short min );
+    abstract public void reqSetAutoShutdownTime ( short min );
 
     /**
      * Req set pen sensitivity.
      *
      * @param sensitivity the sensitivity
      */
-    abstract public void reqSetPenSensitivity( short sensitivity );
+    abstract public void reqSetPenSensitivity ( short sensitivity );
 
     /**
      * Req add using note.
@@ -130,7 +130,7 @@ abstract public class CommandManager
      * @param ownerId   the owner id
      * @param noteIds   the note ids
      */
-    abstract public void reqAddUsingNote( int sectionId, int ownerId, int[] noteIds );
+    abstract public void reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds );
 
     /**
      * Req add using note.
@@ -138,7 +138,7 @@ abstract public class CommandManager
      * @param sectionId the section id
      * @param ownerId   the owner id
      */
-    abstract public void reqAddUsingNote( int sectionId, int ownerId );
+    abstract public void reqAddUsingNote ( int sectionId, int ownerId );
 
     /**
      * Req add using note.
@@ -146,12 +146,12 @@ abstract public class CommandManager
      * @param sectionId the section id
      * @param ownerId   the owner id
      */
-    abstract public void reqAddUsingNote( int[] sectionId, int[] ownerId );
+    abstract public void reqAddUsingNote ( int[] sectionId, int[] ownerId );
 
     /**
      * Req add using note all.
      */
-    abstract public void reqAddUsingNoteAll();
+    abstract public void reqAddUsingNoteAll ();
 
     /**
      * Req offline data.
@@ -160,49 +160,40 @@ abstract public class CommandManager
      * @param ownerId   the owner id
      * @param noteId    the note id
      */
-    abstract public void reqOfflineData( int sectionId, int ownerId, int noteId );
+    abstract public void reqOfflineData ( int sectionId, int ownerId, int noteId );
 
     /**
      * Req offline data list.
      */
-    abstract public void reqOfflineDataList();
-
-//    /**
-//     * Req offline data remove.
-//     * @param sectionId the section id
-//     * @param ownerId   the owner id
-//     */
-//    abstract public void reqOfflineDataRemove( int sectionId, int ownerId );
-//
-//    abstract public void reqOfflineDataRemove( int sectionId, int ownerId, int[] noteIds);
+    abstract public void reqOfflineDataList ();
 
     /**
      * Req auto power setup on off.
      *
      * @param isOn the is on
      */
-    abstract public void reqAutoPowerSetupOnOff( boolean isOn );
+    abstract public void reqAutoPowerSetupOnOff ( boolean isOn );
 
     /**
      * Req pen beep setup.
      *
      * @param isOn the is on
      */
-    abstract public void reqPenBeepSetup( boolean isOn );
+    abstract public void reqPenBeepSetup ( boolean isOn );
 
     /**
      * Req setup pen tip color.
      *
      * @param color the color
      */
-    abstract public void reqSetupPenTipColor( int color );
+    abstract public void reqSetupPenTipColor ( int color );
 
     /**
      * Req input password.
      *
      * @param password the password
      */
-    abstract public void reqInputPassword( String password );
+    abstract public void reqInputPassword ( String password );
 
     /**
      * Req set up password.
@@ -210,33 +201,68 @@ abstract public class CommandManager
      * @param oldPassword the old password
      * @param newPassword the new password
      */
-    abstract public void reqSetUpPassword( String oldPassword, String newPassword );
-
-//    /**
-//     * reqPenSwUpgrade
-//     *
-//     * @param source the source
-//     * @param target the target
-//     */
-//    abstract public void reqPenSwUpgrade( File source, String target);
+    abstract public void reqSetUpPassword ( String oldPassword, String newPassword );
 
     /**
      * Req suspend pen sw upgrade.
      */
-    abstract public void reqSuspendPenSwUpgrade();
+    abstract public void reqSuspendPenSwUpgrade ();
 
-//    /**
-//     *resPenSwRequest
-//     *
-//     * @param index
-//     */
-//    abstract public void resPenSwRequest( int index );
-//
-//    /**
-//     * resPenSwUpgStatus
-//     *
-//     * @param status
-//     */
-//    abstract public void resPenSwUpgStatus( int status );
+    /**
+     * Is support pen profile boolean.
+     *
+     * @return the boolean
+     */
+    abstract public boolean isSupportPenProfile ();
+
+    /**
+     * Create profile.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     */
+    abstract public void createProfile ( String proFileName, byte[] password );
+
+    /**
+     * Delete profile.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     */
+    abstract public void deleteProfile ( String proFileName, byte[] password );
+
+    /**
+     * Write profile value.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     * @param keys        the keys
+     * @param data        the data
+     */
+    abstract public void writeProfileValue ( String proFileName, byte[] password, String[] keys, byte[][] data );
+
+    /**
+     * Read profile value.
+     *
+     * @param proFileName the pro file name
+     * @param keys        the keys
+     */
+    abstract public void readProfileValue ( String proFileName, String[] keys );
+
+    /**
+     * Delete profile value.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     * @param keys        the keys
+     */
+    abstract public void deleteProfileValue ( String proFileName, byte[] password, String[] keys );
+
+    /**
+     * Gets profile info.
+     *
+     * @param proFileName the pro file name
+     */
+    abstract public void getProfileInfo ( String proFileName );
 
 }

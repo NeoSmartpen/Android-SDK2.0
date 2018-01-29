@@ -10,7 +10,7 @@ import kr.neolab.sdk.pen.penmsg.PenMsg;
 
 public interface IConnectedThread {
     /**
-     * Unbind
+     * Unbind.
      */
     void unbind();
 
@@ -34,6 +34,7 @@ public interface IConnectedThread {
      * @return mac address (string)
      */
     String getMacAddress();
+
     /**
      * Set established status.
      */
@@ -57,8 +58,9 @@ public interface IConnectedThread {
      * @param msg the pen message
      */
     void onCreateMsg(PenMsg msg);
+
     /**
-     *  On create dot.
+     * On create dot.
      *
      * @param dot the dot data
      */
@@ -73,10 +75,6 @@ public interface IConnectedThread {
 
     /**
      * Get allowOffline
-     * Adapter에서 static변수로 사용하던 allowOffline을 가져오는 함수
-     * static으로 사용할 경우 여러가지 문제가 있으며, processor에서 접근에도 문제가 있기 때문에
-     * 아래의 함수를 만들어 받아올 수 있도록 함 by jychoi
-     *
      * @return allowOffline status
      */
     boolean getAllowOffline();

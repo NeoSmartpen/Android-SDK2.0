@@ -18,6 +18,9 @@
  	<string name="offline_list">OfflineData list</string>
  	<string name="pen_status">Pen Status</string>
  	<string name="pen_unpairing">Pen Unpairing</string>
+    <string name="pen_profile">Pen Profile Test</string>
+
+
     <string name="log">Log View</string>
 
 

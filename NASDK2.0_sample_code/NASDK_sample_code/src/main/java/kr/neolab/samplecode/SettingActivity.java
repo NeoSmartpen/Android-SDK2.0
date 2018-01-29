@@ -28,18 +28,35 @@ public class SettingActivity extends PreferenceActivity implements OnSharedPrefe
 	private EditTextPreference mPasswordPref;
 	
 	private PenClientCtrl penClient;
+	private MultiPenClientCtrl multiPenClient;
+	private String address = null;
+	private boolean isSingleConnectionMode = true;
 	
 	@Override
 	protected void onCreate( Bundle savedInstanceState )
 	{
 		super.onCreate( savedInstanceState );
-		penClient = PenClientCtrl.getInstance( getApplicationContext() );
-		if(penClient.getProtocolVersion() == 1)
-			addPreferencesFromResource( R.xml.pref_settings );
+		address = getIntent().getStringExtra( "pen_address" );
+		if(address == null)
+			isSingleConnectionMode = true;
 		else
-			addPreferencesFromResource( R.xml.pref_settings2 );
-
-
+			isSingleConnectionMode = false;
+		if(isSingleConnectionMode)
+		{
+			penClient = PenClientCtrl.getInstance( getApplicationContext() );
+			if(penClient.getProtocolVersion() == 1)
+				addPreferencesFromResource( R.xml.pref_settings );
+			else
+				addPreferencesFromResource( R.xml.pref_settings2 );
+		}
+		else
+		{
+			multiPenClient = MultiPenClientCtrl.getInstance( getApplicationContext() );
+			if(multiPenClient.getProtocolVersion(address) == 1)
+				addPreferencesFromResource( R.xml.pref_settings );
+			else
+				addPreferencesFromResource( R.xml.pref_settings2 );
+		}
 
 		mPasswordPref = (EditTextPreference) getPreferenceScreen().findPreference( Const.Setting.KEY_PASSWORD );
 
@@ -51,45 +68,96 @@ public class SettingActivity extends PreferenceActivity implements OnSharedPrefe
 	{
 		if ( key.equals( Const.Setting.KEY_PASSWORD ) )
 		{
-			String oldPassword = penClient.getCurrentPassword();
+			String oldPassword ="";
 			String newPassword = sharedPreferences.getString( Const.Setting.KEY_PASSWORD, "" );
 
-			penClient.reqSetupPassword( oldPassword, newPassword );
+			if(isSingleConnectionMode)
+			{
+				oldPassword = penClient.getCurrentPassword();
+				penClient.reqSetupPassword( oldPassword, newPassword );
+			}
+			else
+			{
+				oldPassword = multiPenClient.getCurrentPassword(address);
+				multiPenClient.reqSetupPassword(address, oldPassword, newPassword );
+			}
+
 		}
 		else if ( key.equals( Const.Setting.KEY_AUTO_POWER_ON ) )
 		{
 			boolean value = sharedPreferences.getBoolean( Const.Setting.KEY_AUTO_POWER_ON, true );
 
-			penClient.reqSetupAutoPowerOnOff( value );
+			if(isSingleConnectionMode)
+			{
+				penClient.reqSetupAutoPowerOnOff( value );
+			}
+			else
+			{
+				multiPenClient.reqSetupAutoPowerOnOff( address, value );
+			}
 		}
 		else if ( key.equals( Const.Setting.KEY_BEEP ) )
 		{
 			boolean value = sharedPreferences.getBoolean( Const.Setting.KEY_BEEP, true );
-			
-			penClient.reqSetupPenBeepOnOff( value );
+
+			if(isSingleConnectionMode)
+			{
+				penClient.reqSetupPenBeepOnOff( value );
+			}
+			else
+			{
+				multiPenClient.reqSetupPenBeepOnOff( address, value );
+			}
 		}
 		else if ( key.equals( Const.Setting.KEY_AUTO_POWER_OFF_TIME ) )
 		{
 			short value = Short.parseShort( sharedPreferences.getString( Const.Setting.KEY_AUTO_POWER_OFF_TIME, "10" ) );
 
-			penClient.reqSetupAutoShutdownTime( value );
+			if(isSingleConnectionMode)
+			{
+				penClient.reqSetupAutoShutdownTime( value );
+			}
+			else
+			{
+				multiPenClient.reqSetupAutoShutdownTime( address, value );
+			}
 		}
 		else if ( key.equals( Const.Setting.KEY_SENSITIVITY ) )
 		{
 			short value = Short.parseShort( sharedPreferences.getString( Const.Setting.KEY_SENSITIVITY, "0" ) );
 
-			penClient.reqSetupPenSensitivity( value );
+			if(isSingleConnectionMode)
+			{
+				penClient.reqSetupPenSensitivity( value );
+			}
+			else
+			{
+				multiPenClient.reqSetupPenSensitivity( address, value );
+			}
 		}
 		else if ( key.equals( Const.Setting.KEY_PEN_COLOR ) )
 		{
 			int value = Integer.parseInt(sharedPreferences.getString( Const.Setting.KEY_PEN_COLOR, "-15198184" ) );
-
-			penClient.reqSetupPenTipColor( value );
+			if(isSingleConnectionMode)
+			{
+				penClient.reqSetupPenTipColor( value );
+			}
+			else
+			{
+				multiPenClient.reqSetupPenTipColor( address, value );
+			}
 		}
 		else if ( key.equals( Const.Setting.KEY_PEN_CAP_ON ) )
 		{
 			boolean value = sharedPreferences.getBoolean( Const.Setting.KEY_PEN_CAP_ON, true );
-			penClient.reqSetupPenCapOnOff( value );
+			if(isSingleConnectionMode)
+			{
+				penClient.reqSetupPenCapOnOff( value );
+			}
+			else
+			{
+				multiPenClient.reqSetupPenCapOnOff( address, value );
+			}
 		}
 //		else if ( key.equals( Const.Setting.KEY_HOVER_MODE ) )
 //		{
@@ -99,7 +167,14 @@ public class SettingActivity extends PreferenceActivity implements OnSharedPrefe
 		else if ( key.equals( Const.Setting.KEY_OFFLINE_DATA_SAVE ) )
 		{
 			boolean value = sharedPreferences.getBoolean( Const.Setting.KEY_OFFLINE_DATA_SAVE, true );
-			penClient.setAllowOfflineData( value );
+			if(isSingleConnectionMode)
+			{
+				penClient.setAllowOfflineData( value );
+			}
+			else
+			{
+				multiPenClient.setAllowOfflineData( address, value );
+			}
 		}
 
 	}

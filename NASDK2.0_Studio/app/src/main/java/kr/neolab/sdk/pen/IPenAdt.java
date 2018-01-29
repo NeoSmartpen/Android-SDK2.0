@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
+import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IOfflineDataListener;
 import kr.neolab.sdk.pen.penmsg.IPenDotListener;
@@ -22,7 +23,6 @@ import kr.neolab.sdk.util.UseNoteData;
  */
 public interface IPenAdt
 {
-    // 아래 값들은 BTAdt와 BTLEAdt에서 공통으로 사용하며, IPenAdt에서 접근할 수 있어야하는 부분이 있으므로 IPenAdt로 위치를 변경함
     /**
      * The constant CONN_STATUS_IDLE.
      */
@@ -43,6 +43,7 @@ public interface IPenAdt
      * The constant CONN_STATUS_TRY.
      */
     int CONN_STATUS_TRY = 0x05;
+
     /**
      * set up listener of message from pen
      *
@@ -93,16 +94,12 @@ public interface IPenAdt
     public void disconnect();
 
     /**
-     * Wait for connections from a pen.
-     */
-    public void startListen();
-
-    /**
      * Confirm whether or not the MAC address to connect
      * If use ble adapter, throws BLENotSupprtedException
      *
      * @param mac the mac
      * @return true if can use, otherwise false
+     * @throws BLENotSupportedException the ble not supported exception
      */
     public boolean isAvailableDevice( String mac ) throws BLENotSupportedException;
 
@@ -364,6 +361,20 @@ public interface IPenAdt
     public void reqSetupPenSensitivity( short level );
 
     /**
+     * Notice!!
+     * This is API for hardware developer!
+     * Software developers should never use this API.
+     * <p>
+     * Setup Sensitivity level of pen using FSC press sensor
+     * <p>
+     * supported from Protocol 2.0
+     *
+     * @param level sensitivity level (0~4)
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void reqSetupPenSensitivityFSC (  short level ) throws ProtocolNotSupportedException;
+
+    /**
      * Req set pen cap on off.
      * supported from Protocol 2.0
      *
@@ -376,8 +387,9 @@ public interface IPenAdt
      * Req setup pen hover.
      *
      * @param on the on
+     * @throws ProtocolNotSupportedException the protocol not supported exception
      */
-    public void reqSetupPenHover ( boolean on );
+    public void reqSetupPenHover ( boolean on ) throws ProtocolNotSupportedException;
 
     /**
      * set Context
@@ -430,5 +442,112 @@ public interface IPenAdt
      * @return the bt name
      */
     public String getPenBtName();
+
+    /**
+     * Gets press sensor type.
+     *
+     * @return the press sensor type
+     */
+    public int getPressSensorType();
+
+    /**
+     * Gets connect device name.
+     * supported from Protocol 2.0
+     *
+     * @return the connect device name
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getConnectDeviceName () throws ProtocolNotSupportedException;
+
+    /**
+     * Gets connect sub name.
+     * supported from Protocol 2.0
+     *
+     * @return the connect sub name
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getConnectSubName () throws ProtocolNotSupportedException;
+
+    /**
+     * Create profile.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void createProfile ( String proFileName , byte[] password) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Delete profile.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void deleteProfile ( String proFileName, byte[] password ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Write profile value.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     * @param keys        the keys
+     * @param data        the data
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void writeProfileValue ( String proFileName, byte[] password ,String[] keys, byte[][] data ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Read profile value.
+     *
+     * @param proFileName the pro file name
+     * @param keys        the keys
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void readProfileValue ( String proFileName, String[] keys ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Delete profile value.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     * @param keys        the keys
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void deleteProfileValue ( String proFileName, byte[] password, String[] keys) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Gets profile info.
+     *
+     * @param proFileName the pro file name
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void getProfileInfo ( String proFileName) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Is support pen profile boolean.
+     *
+     * @return the boolean
+     */
+    public boolean isSupportPenProfile();
+
+    /**
+     * Unpair device boolean.
+     *
+     * @param address the address
+     * @return if success, return true
+     */
+    public boolean unpairDevice(String address);
+
+    /**
+     * Req set current time.
+     */
+    public void reqSetCurrentTime ();
 
 }

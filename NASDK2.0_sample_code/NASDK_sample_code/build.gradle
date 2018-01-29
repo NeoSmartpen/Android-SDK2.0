@@ -8,6 +8,8 @@ android {
         applicationId "kr.neolab.samplecode"
         minSdkVersion 19
         targetSdkVersion 24
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -19,9 +21,12 @@ android {
 }
 
 dependencies {
-
-//    compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile "com.android.support:support-v4:24.0.0"
-    compile project(':NASDK')
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.android.support:support-v4:24.0.0'
+    androidTestCompile 'com.android.support:support-annotations:24.0.0'
+    androidTestCompile 'com.android.support.test:runner:0.5'
+    androidTestCompile 'com.android.support.test:rules:0.5'
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
+    //compile project(':NASDK')
     //    compile project(':NeoViewSDK')
 }

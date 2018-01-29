@@ -45,18 +45,30 @@ public class OfflineByteParser implements IFilterListener
 
     private final static int STROKE_HEADER_LENGTH = 27;
     private final static int BYTE_DOT_SIZE = 16;
+    private float[] factor = null;
+    private int maxPress = 0;
 
     /**
      * Instantiates a new Offline byte parser.
      *
      * @param buffer the buffer
      */
-    public OfflineByteParser(byte[] buffer)
+    public OfflineByteParser(byte[] buffer, int maxPressValue)
     {
-        // 필터 등록
         this.filterPaper = new FilterForPaper( this );
         this.filterFilm = new FilterForFilm( this );
         this.buffer = buffer;
+        this.maxPress = maxPressValue;
+    }
+
+    /**
+     * Sets calibrate.
+     *
+     * @param factor the factor
+     */
+    public void setCalibrate ( float[] factor )
+    {
+        this.factor = factor;
     }
 
     /**
@@ -73,16 +85,16 @@ public class OfflineByteParser implements IFilterListener
         strokes.clear();
 
 
-       // 헤더파싱
+       // Header parsing
         NLog.i( "[OfflineByteParser] process parseHeader" );
         this.parseHeader();
 
-            // 파일병합
+            // Merge files
         NLog.i( "[OfflineByteParser] process loadData" );
         this.loadData();
 
 
-        // 본문파싱
+        // Body parsing
         NLog.i( "[OfflineByteParser] process parseBody" );
         this.parseBody();
 
@@ -105,7 +117,7 @@ public class OfflineByteParser implements IFilterListener
         try
         {
             NLog.d( "[OfflineByteParser] isCompressed="+isCompressed +";sizeAfterCompress="+sizeAfterCompress+"sizeBeforeCompress="+sizeBeforeCompress);
-            //buffer 에는 SOF/EOF/CMD/LENGTH 가 빠져있다.
+            //buffer is missing SOF / EOF / CMD / LENGTH.
             if(isCompressed)
             {
 
@@ -145,7 +157,7 @@ public class OfflineByteParser implements IFilterListener
         int lhDotTotal = 0;
         byte lhCheckSum = 0;
 
-
+        //The dot of the current line
         ArrayList<Fdot> tempDots = new ArrayList<Fdot>();
         int strokeIndex = 0;
         for(int i = 0; i < strokeCount; i++)
@@ -168,7 +180,7 @@ public class OfflineByteParser implements IFilterListener
             int dotCount =  ByteConverter.byteArrayToInt( Packet.copyOfRange( data, 25 + strokeIndex, 2 ) );
             NLog.d( "dotCount : " + dotCount );
 
-            // 펌웨어 이주연 선임요청으로 도트가 없는경우도 에러 발생하지 않게 처리
+            // Firmware Lee's request does not cause an error even if there is no dot
             if(dotCount == 0)
             {
                 stroke = new Stroke( sectionId, ownerId, noteId, pageId, lhPenTipColor );
@@ -186,7 +198,6 @@ public class OfflineByteParser implements IFilterListener
 
                 long time = (int) (data[strokeIndex + dotIndex + 0] & 0xFF);
                 int pressure =  ByteConverter.byteArrayToInt( Packet.copyOfRange( data, strokeIndex + dotIndex + 1, 2 ) );
-
                 int x = ByteConverter.byteArrayToShort( Packet.copyOfRange( data, strokeIndex + dotIndex + 3, 2 ) );
                 int y = ByteConverter.byteArrayToShort( Packet.copyOfRange( data, strokeIndex + dotIndex + 5, 2 ) );
 
@@ -224,8 +235,13 @@ public class OfflineByteParser implements IFilterListener
 
                 }
                 dotIndex += BYTE_DOT_SIZE;
-                // max 1024 에서 256 으로 다운 스케일
-                pressure = pressure /4;
+                // Down scale from maxPressValue to 256
+                if(maxPress == 0)
+                    pressure = pressure /4;
+                else
+                    pressure = (pressure * 255)/maxPress ;
+                if(factor != null)
+                    pressure = (int)factor[pressure];
                 Fdot dot = new Fdot((x + (float) (fx * 0.01)), (y + (float) (fy * 0.01)), pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color,lhPenTipType ,tiltX, tiltY, twist);
                 tempDots.add( dot );
 

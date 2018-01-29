@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="kr.neolab.sdk"
-    android:versionCode="4"
-    android:versionName="2.0.6" >
+    android:versionCode="5"
+    android:versionName="2.1.1" >
 
     <uses-sdk
         android:minSdkVersion="16"
@@ -22,7 +22,6 @@
     <!--  http://stackoverflow.com/questions/11240767/android-bluetooth-service-program-i-wrote-crashes -->
     <uses-feature android:name="android.hardware.bluetooth" />
     <!-- add for ble -->
-    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
     <!-- Needed only if your app targets Android 5.0 (API level 21) or higher. -->
     <uses-feature android:name="android.hardware.location.gps" />
     <application

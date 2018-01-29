@@ -10,11 +10,12 @@ public interface IOfflineDataListener
     /**
      * On receive offline strokes.
      *
-     * @param strokes   the strokes
-     * @param sectionId the section id
-     * @param ownerId   the owner id
-     * @param noteId    the note id
+     * @param penAddress the pen address
+     * @param strokes    the strokes
+     * @param sectionId  the section id
+     * @param ownerId    the owner id
+     * @param noteId     the note id
      */
-    public void onReceiveOfflineStrokes(Stroke[] strokes,int sectionId, int ownerId, int noteId);
+    public void onReceiveOfflineStrokes(String penAddress, Stroke[] strokes,int sectionId, int ownerId, int noteId);
 
 }

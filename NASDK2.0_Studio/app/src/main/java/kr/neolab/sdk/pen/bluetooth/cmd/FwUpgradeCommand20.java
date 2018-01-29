@@ -63,6 +63,7 @@ public class FwUpgradeCommand20 extends Command
 	 * @param source     the source
 	 * @param fwVersion  the fw version
 	 * @param deviceName the device name
+	 * @param isCompress the is compress
 	 */
 	public void setInfo( File source, String fwVersion,  String deviceName, boolean isCompress)
 	{
@@ -73,7 +74,7 @@ public class FwUpgradeCommand20 extends Command
 
 		if(this.isCompress)
 		{
-			// E100,D100,C200,P201 은 무조건 비압축으로 한다.
+			// E100,D100,C200,P201 uncompressed
 			if(deviceName.equals( "NEP-E100" ) || deviceName.equals( "NSP-D100" ) || deviceName.equals( "NSP-D101" ) || deviceName.equals( "NSP-C200") || deviceName.equals( "NPP-P201" ))
 				this.isCompress = false;
 			else

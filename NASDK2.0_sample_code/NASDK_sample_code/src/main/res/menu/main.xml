@@ -27,5 +27,8 @@
         android:title="@string/pen_unpairing"
         android:showAsAction="never" />
 
+  <item android:id="@+id/action_profile_test"
+        android:title="@string/pen_profile"
+        android:showAsAction="never" />
 
 </menu>

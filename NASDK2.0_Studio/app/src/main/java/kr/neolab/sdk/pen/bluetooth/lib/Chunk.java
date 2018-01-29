@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * binary 파일을 Chunk로 분리
+ * Separate binary files as chunks
  *
  * @author CHY
  */
@@ -18,8 +18,6 @@ public class Chunk
     /**
      * The Size.
      */
-// chunk size is 16k
-    // 실제 연동 후 FW 팀과 조절하기로 함
     public int size = 512;
     private int rows;
     

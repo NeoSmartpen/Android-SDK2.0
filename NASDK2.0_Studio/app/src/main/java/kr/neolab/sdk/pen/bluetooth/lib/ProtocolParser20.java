@@ -8,10 +8,16 @@ import java.util.Arrays;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
-import kr.neolab.sdk.pen.bluetooth.cmd.FwUpgradeCommand20;
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20;
 import kr.neolab.sdk.util.NLog;
 import kr.neolab.sdk.util.UseNoteData;
+
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_CREATE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_DELETE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_DELETE_VALUE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_INFO;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_READ_VALUE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_WRITE_VALUE;
 
 /**
  * The type Protocol parser 20.
@@ -24,6 +30,7 @@ public class ProtocolParser20
      * The constant PKT_RESULT_SUCCESS.
      */
     public static final int PKT_RESULT_SUCCESS = 0x00;
+
     /**
      * The constant PKT_RESULT_FAIL.
      */
@@ -284,12 +291,12 @@ public class ProtocolParser20
 
     /**
      * Build req pen info byte [ ].
+     * 0x01 CMD20.REQ_PenInfo
      *
      * @param appVer    the app ver
      * @param masterKey the master key
      * @return the byte [ ]
      */
-// 0x01 CMD20.REQ_PenInfo
     public static byte[] buildReqPenInfo ( String appVer )
     {
 
@@ -300,7 +307,7 @@ public class ProtocolParser20
         builder.write( ByteConverter.stringTobyte( "" ), 16 );
         // type Android
         builder.write( ByteConverter.shortTobyte( (short) 0x1101 ), 2 );
-        // App version 상황에 따라 빈값 일수도 있다.(Context 세팅 유무에 따라)
+        // It may be empty depending on the situation (depending on whether Context is set).
         builder.write( ByteConverter.stringTobyte( appVer ), 16 );
         NLog.d( "[ProtocolParser20] REQ  buildReqPenInfo. appVer=" + appVer + "Packet:" + builder.showPacket());
         return builder.getPacket();
@@ -308,11 +315,11 @@ public class ProtocolParser20
 
     /**
      * Build password input byte [ ].
+     * 0x02 CMD20.REQ_Password
      *
      * @param password the password
      * @return the byte [ ]
      */
-// 0x02 CMD20.REQ_Password
     public static byte[] buildPasswordInput ( String password )
     {
 
@@ -325,13 +332,13 @@ public class ProtocolParser20
 
     /**
      * Build password setup byte [ ].
+     * 0x03 CMD20.REQ_PasswordSet
      *
      * @param isUse       the is use
      * @param oldPassword the old password
      * @param newPassword the new password
      * @return the byte [ ]
      */
-// 0x03 CMD20.REQ_PasswordSet
     public static byte[] buildPasswordSetup(boolean isUse, String oldPassword, String newPassword )
     {
         PacketBuilder sendbyte = new PacketBuilder( 32 +1);
@@ -346,10 +353,10 @@ public class ProtocolParser20
 
     /**
      * Build pen status data byte [ ].
+     * 0x04 CMD20.REQ_PenStatus
      *
      * @return the byte [ ]
      */
-// 0x04 CMD20.REQ_PenStatus
     public static byte[] buildPenStatusData ()
     {
         PacketBuilder builder = new PacketBuilder( 0 );
@@ -361,10 +368,10 @@ public class ProtocolParser20
 
     /**
      * Build set current time data byte [ ].
+     * 0x04 CMD20.REQ_PenStatus  0x01 REQ_PenStatusChange_TYPE_CurrentTimeSet
      *
      * @return the byte [ ]
      */
-// 0x04 CMD20.REQ_PenStatus  0x01 REQ_PenStatusChange_TYPE_CurrentTimeSet
     public static byte[] buildSetCurrentTimeData ()
     {
         PacketBuilder sendbyte = new PacketBuilder( 9 );
@@ -379,11 +386,11 @@ public class ProtocolParser20
 
     /**
      * Build auto shutdown time setup byte [ ].
+     * 0x04 CMD20.REQ_PenStatus  0x02 REQ_PenStatusChange_TYPE_AutoShutdownTime
      *
      * @param shutdownTime the shutdown time
      * @return the byte [ ]
      */
-// 0x04 CMD20.REQ_PenStatus  0x02 REQ_PenStatusChange_TYPE_AutoShutdownTime
     public static byte[] buildAutoShutdownTimeSetup ( short shutdownTime )
     {
         PacketBuilder sendbyte = new PacketBuilder( 3 );
@@ -396,11 +403,11 @@ public class ProtocolParser20
 
     /**
      * Build pen cap on off setup byte [ ].
+     * 0x04 CMD20.REQ_PenStatus  0x03 REQ_PenStatusChange_TYPE_PenCapOnOff
      *
      * @param on the on
      * @return the byte [ ]
      */
-// 0x04 CMD20.REQ_PenStatus  0x03 REQ_PenStatusChange_TYPE_PenCapOnOff
     public static byte[] buildPenCapOnOffSetup ( boolean on )
     {
         PacketBuilder sendbyte = new PacketBuilder( 2 );
@@ -414,11 +421,11 @@ public class ProtocolParser20
 
     /**
      * Build pen auto power setup byte [ ].
+     * 0x04 CMD20.REQ_PenStatus  0x04 REQ_PenStatusChange_TYPE_AutoPowerOnSet
      *
      * @param on the on
      * @return the byte [ ]
      */
-// 0x04 CMD20.REQ_PenStatus  0x04 REQ_PenStatusChange_TYPE_AutoPowerOnSet
     public static byte[] buildPenAutoPowerSetup ( boolean on )
     {
         PacketBuilder sendbyte = new PacketBuilder( 2 );
@@ -432,11 +439,11 @@ public class ProtocolParser20
 
     /**
      * Build pen beep setup byte [ ].
+     * 0x04 CMD20.REQ_PenStatus  0x05 REQ_PenStatusChange_TYPE_BeepOnOff
      *
      * @param on the on
      * @return the byte [ ]
      */
-// 0x04 CMD20.REQ_PenStatus  0x05 REQ_PenStatusChange_TYPE_BeepOnOff
     public static byte[] buildPenBeepSetup ( boolean on )
     {
         PacketBuilder sendbyte = new PacketBuilder( 2 );
@@ -449,11 +456,11 @@ public class ProtocolParser20
 
     /**
      * Build pen hover setup byte [ ].
+     * 0x04 CMD20.REQ_PenStatus  0x06 REQ_PenStatusChange_TYPE_HoverOnOff
      *
      * @param on the on
      * @return the byte [ ]
      */
-// 0x04 CMD20.REQ_PenStatus  0x06 REQ_PenStatusChange_TYPE_HoverOnOff
     public static byte[] buildPenHoverSetup ( boolean on )
     {
         PacketBuilder sendbyte = new PacketBuilder( 2 );
@@ -466,11 +473,11 @@ public class ProtocolParser20
 
     /**
      * Build pen offline data save setup byte [ ].
+     * 0x04 CMD20.REQ_PenStatus  0x07 REQ_PenStatusChange_TYPE_OfflineDataSaveOnOff
      *
      * @param on the on
      * @return the byte [ ]
      */
-// 0x04 CMD20.REQ_PenStatus  0x07 REQ_PenStatusChange_TYPE_OfflineDataSaveOnOff
     public static byte[] buildPenOfflineDataSaveSetup ( boolean on )
     {
         PacketBuilder sendbyte = new PacketBuilder( 2 );
@@ -483,11 +490,11 @@ public class ProtocolParser20
 
     /**
      * Build pen tip color setup byte [ ].
+     * 0x04 CMD20.REQ_PenStatus  0x08 REQ_PenStatusChange_TYPE_LEDColorSet
      *
      * @param color the color
      * @return the byte [ ]
      */
-// 0x04 CMD20.REQ_PenStatus  0x08 REQ_PenStatusChange_TYPE_LEDColorSet
     public static byte[] buildPenTipColorSetup ( int color )
     {
         byte[] cbyte = ByteConverter.intTobyte( color );
@@ -511,11 +518,11 @@ public class ProtocolParser20
 
     /**
      * Build pen sensitivity setup byte [ ].
+     * 0x04 CMD20.REQ_PenStatus  0x09 REQ_PenStatusChange_TYPE_SensitivitySet
      *
      * @param sensitivity the sensitivity
      * @return the byte [ ]
      */
-// 0x04 CMD20.REQ_PenStatus  0x09 REQ_PenStatusChange_TYPE_SensitivitySet
     public static byte[] buildPenSensitivitySetup ( short sensitivity )
     {
         PacketBuilder sendbyte = new PacketBuilder( 2 );
@@ -526,6 +533,21 @@ public class ProtocolParser20
         return sendbyte.getPacket();
     }
 
+    /**
+     * Build pen sensitivity setup fsc byte [ ].
+     *
+     * @param sensitivity the sensitivity
+     * @return the byte [ ]
+     */
+    public static byte[] buildPenSensitivitySetupFSC ( short sensitivity )
+    {
+        PacketBuilder sendbyte = new PacketBuilder( 2 );
+        sendbyte.setCommand( CMD20.REQ_PenStatusChange );
+        sendbyte.write( ByteConverter.intTobyte( CMD20.REQ_PenStatusChange_TYPE_SensitivitySet_FSC ), 1 );
+        sendbyte.write( ByteConverter.shortTobyte( sensitivity ), 1 );
+        NLog.d( "[ProtocolParser20] REQ buildPenSensitivitySetupFSC." + "Packet:" + sendbyte.showPacket() );
+        return sendbyte.getPacket();
+    }
 
 
 //    public static final int USING_NOTE_TYPE_NOTE = 1;
@@ -742,10 +764,9 @@ public class ProtocolParser20
 
         PacketBuilder sendbyte = new PacketBuilder( 14 );
         sendbyte.setCommand( CMD20.REQ_OfflineDataRequest );
-        // 오프라인 데이터 전송여부 , 전송한 데이터 삭제 : 1 , 안함 2
         sendbyte.write( (byte) 1 );
 
-        // 데이터 압축 여부  1:압축  0:압축안함
+        // isCompress  1:compress  0:uncompress
         sendbyte.write( (byte) 1 );
 
         sendbyte.write( ownerByte[0] );
@@ -753,7 +774,7 @@ public class ProtocolParser20
         sendbyte.write( ownerByte[2] );
         sendbyte.write( (byte) sectionId );
         sendbyte.write( ByteConverter.intTobyte( noteId ) );
-        //페이지 개수 0 이면 노트 전체
+        //if pages count is  0 , all Note
         sendbyte.write( ByteConverter.intTobyte( 0 ) );
 
         NLog.d( "[ProtocolParser20] REQ buildReqOfflineData sectionId=" + sectionId + ";ownerId=" + ownerId + ";noteId=" + noteId + "Packet:" + sendbyte.showPacket() );
@@ -780,10 +801,9 @@ public class ProtocolParser20
 
         PacketBuilder sendbyte = new PacketBuilder( 14 + pageCount * 4);
         sendbyte.setCommand( CMD20.REQ_OfflineDataRequest );
-        // 오프라인 데이터 전송여부 , 전송한 데이터 삭제안함
         sendbyte.write( (byte) 1 );
 
-        // 데이터 압축 여부  1:압축  0:압축안함
+        // isCompress  1:compress  0:uncompress
         sendbyte.write( (byte) 1 );
 
         sendbyte.write( ownerByte[0] );
@@ -792,7 +812,7 @@ public class ProtocolParser20
         sendbyte.write( (byte) sectionId );
         sendbyte.write( ByteConverter.intTobyte( noteId ) );
 
-        //페이지 개수 0 이면 노트 전체
+        //if pages count is  0 , all Note
         sendbyte.write( ByteConverter.intTobyte( pageCount ) );
         if(pageCount != 0)
         {
@@ -805,13 +825,13 @@ public class ProtocolParser20
 
     /**
      * Build offline chunk response byte [ ].
+     * 0x44 CMD20.P_OfflineChunkResponse
      *
      * @param errorCode the error code
      * @param packetId  the packet id
      * @param position  the position
      * @return the byte [ ]
      */
-// 0x44 CMD20.P_OfflineChunkResponse
     public static byte[] buildOfflineChunkResponse ( int errorCode, int packetId, int position )
     {
         PacketBuilder builder = new PacketBuilder( 3,  errorCode);
@@ -861,19 +881,18 @@ public class ProtocolParser20
         return sendbyte.getPacket();
     }
 
-
-//    여기부터
-
     /**
      * Build pen sw upgrade byte [ ].
+     * 0x31 CMD20.REQ_PenFWUpgrade
      *
      * @param fwVersion  the fw version
      * @param deviceName the device name
      * @param filesize   the filesize
      * @param checkSum   the check sum
+     * @param isCompress the is compress
+     * @param packetSize the packet size
      * @return the byte [ ]
      */
-// 0x31 CMD20.REQ_PenFWUpgrade
     public static byte[] buildPenSwUpgrade ( String fwVersion, String deviceName, int filesize, byte checkSum, boolean isCompress, int packetSize)
     {
         PacketBuilder builder = new PacketBuilder( 16 + 16 + 4 + 4 + 1 + 1 );
@@ -885,7 +904,7 @@ public class ProtocolParser20
         builder.write( ByteConverter.intTobyte( packetSize ) );
 
 
-        // 압축 여부 1:압축 , 0: 압축안함
+        // 1:Compress , 0: Uncompress
         if(isCompress)
         {
             builder.write( (byte) 1 );
@@ -899,6 +918,7 @@ public class ProtocolParser20
 
     /**
      * Build pen sw upload chunk byte [ ].
+     * 0xB2 ACK_UploadPenFWChunk
      *
      * @param offset     the offset
      * @param data       the data
@@ -907,10 +927,9 @@ public class ProtocolParser20
      * @return the byte [ ]
      * @throws IOException the io exception
      */
-// 0xB2 ACK_UploadPenFWChunk
     public static byte[] buildPenSwUploadChunk( int offset, byte[] data ,int status, boolean isCompress) throws IOException
     {
-//        status 가 에러면 에러코드까지만 보냄
+//        If status is error, only error code is sent.
         if(status == CommProcessor20.FwPacketInfo.STATUS_ERROR)
         {
             PacketBuilder sendbyte = new PacketBuilder(0, 1 );
@@ -948,6 +967,176 @@ public class ProtocolParser20
             return sendbyte.getPacket();
 
         }
+    }
+
+    /////////////////////////   Profile   ///////////////////////////////////
+
+    /**
+     * Build profile create byte [ ].
+     *
+     * @param filename the filename
+     * @param pass     the pass
+     * @return the byte [ ]
+     */
+    public static byte[] buildProfileCreate( String filename, byte[] pass )
+    {
+        PacketBuilder sendbyte = new PacketBuilder( 8+1+8+2+2 );
+        sendbyte.setCommand( CMD20.REQ_PenProfile );
+        // Profile filename
+        sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+        // request type
+        sendbyte.write(PROFILE_CREATE );
+        // Profile password
+        sendbyte.write(pass,8 );
+
+        // sector size
+        sendbyte.write( ByteConverter.shortTobyte( (short)32 ),2 );
+        // sector count(2^N Currently fixed 2^8)
+        sendbyte.write( ByteConverter.shortTobyte( (short)8 ),2 );
+        NLog.d( "[ProtocolParser20] REQ  buildProfileCreate.showPacket"+sendbyte.showPacket());
+        sendbyte.showPacket();
+        return sendbyte.getPacket();
+    }
+
+    /**
+     * Build profile delete byte [ ].
+     *
+     * @param filename the filename
+     * @param pass     the pass
+     * @return the byte [ ]
+     */
+    public static byte[] buildProfileDelete( String filename, byte[] pass )
+    {
+        PacketBuilder sendbyte = new PacketBuilder( 8+1+8 );
+        sendbyte.setCommand( CMD20.REQ_PenProfile );
+        // Profile filename
+        sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+        // request type
+        sendbyte.write(PROFILE_DELETE );
+        // Profile password
+        sendbyte.write(pass,8 );
+        NLog.d( "[ProtocolParser20] REQ  buildProfileDelete.showPacket"+sendbyte.showPacket());
+        sendbyte.showPacket();
+        return sendbyte.getPacket();
+    }
+
+    /**
+     * Build profile info byte [ ].
+     *
+     * @param filename the filename
+     * @return the byte [ ]
+     */
+    public static byte[] buildProfileInfo( String filename )
+    {
+        PacketBuilder sendbyte = new PacketBuilder( 8+1);
+        sendbyte.setCommand( CMD20.REQ_PenProfile );
+        // Profile filename
+        sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+        // request type
+        sendbyte.write(PROFILE_INFO );
+        NLog.d( "[ProtocolParser20] REQ  buildProfileInfo. showPacket"+sendbyte.showPacket());
+        sendbyte.showPacket();
+        return sendbyte.getPacket();
+    }
+
+    /**
+     * Build profile read value byte [ ].
+     *
+     * @param filename the filename
+     * @param keys     the keys
+     * @return the byte [ ]
+     */
+    public static byte[] buildProfileReadValue(String filename, String[] keys)
+    {
+        PacketBuilder sendbyte = new PacketBuilder( 8+1+1+16*keys.length );
+        sendbyte.setCommand( CMD20.REQ_PenProfile );
+        // Profile filename
+        sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+        // request type
+        sendbyte.write(PROFILE_READ_VALUE );
+        // key count
+        sendbyte.write((byte)keys.length );
+        for(int i = 0; i < keys.length; i++)
+        {
+            // key
+            sendbyte.write(ByteConverter.stringTobyte( keys[i] ),16 );
+        }
+        NLog.d( "[ProtocolParser20] REQ  buildProfileReadValue.showPacket"+sendbyte.showPacket());
+        sendbyte.showPacket();
+        return sendbyte.getPacket();
+    }
+
+    /**
+     * Build profile write value byte [ ].
+     *
+     * @param filename the filename
+     * @param pass     the pass
+     * @param key      the key
+     * @param data     the data
+     * @return the byte [ ]
+     */
+    public static byte[] buildProfileWriteValue(String filename, byte[] pass, String[] key, byte[][] data)
+    {
+        int data_len = 0;
+        for(int i = 0; i < data.length; i++)
+        {
+            data_len += 16;
+            data_len += 2;
+            data_len += data[i].length;
+        }
+
+        PacketBuilder sendbyte = new PacketBuilder( 8+1+8+1+ data_len);
+        sendbyte.setCommand( CMD20.REQ_PenProfile );
+        // Profile filename
+        sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+        // request type
+        sendbyte.write(PROFILE_WRITE_VALUE );
+        // Profile password
+        sendbyte.write(pass,8 );
+        // key count
+        sendbyte.write((byte)data.length );
+
+        for(int i = 0; i < data.length; i++)
+        {
+            // key
+            sendbyte.write(ByteConverter.stringTobyte( key[i] ),16 );
+            sendbyte.write(ByteConverter.shortTobyte( (short) data[i].length ),2 );
+            sendbyte.write(data[i] );
+        }
+
+        NLog.d( "[ProtocolParser20] REQ  buildProfileWriteValue.showPacket"+sendbyte.showPacket());
+        sendbyte.showPacket();
+        return sendbyte.getPacket();
+    }
+
+    /**
+     * Build profile delete value byte [ ].
+     *
+     * @param filename the filename
+     * @param pass     the pass
+     * @param keys     the keys
+     * @return the byte [ ]
+     */
+    public static byte[] buildProfileDeleteValue( String filename, byte[] pass, String[] keys)
+    {
+        PacketBuilder sendbyte = new PacketBuilder( 8+1+8+1+16*keys.length );
+        sendbyte.setCommand( CMD20.REQ_PenProfile );
+        // Profile filename
+        sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+        // request type
+        sendbyte.write(PROFILE_DELETE_VALUE );
+        // Profile password
+        sendbyte.write(pass,8 );
+        // key count
+        sendbyte.write((byte)keys.length );
+        for(int i = 0; i < keys.length; i++)
+        {
+            // key
+            sendbyte.write(ByteConverter.stringTobyte( keys[i] ),16 );
+        }
+        NLog.d( "[ProtocolParser20] REQ  buildProfileDeleteValue.showPacket"+sendbyte.showPacket());
+        sendbyte.showPacket();
+        return sendbyte.getPacket();
     }
 
 

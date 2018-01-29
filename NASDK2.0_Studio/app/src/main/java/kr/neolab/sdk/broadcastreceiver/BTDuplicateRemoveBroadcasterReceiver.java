@@ -55,7 +55,7 @@ public class BTDuplicateRemoveBroadcasterReceiver extends BroadcastReceiver{
 			{
 				String connected_packagename = arg1.getStringExtra(EXTRA_BT_CONNECT_PACKAGENAME);
 				PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE_BTDUPLICATE, JsonTag.STRING_PACKAGE_NAME, connected_packagename );
-				PenCtrl.getInstance().getListener().onReceiveMessage(msg);
+				PenCtrl.getInstance().getListener().onReceiveMessage((PenCtrl.getInstance().getConnectingDevice()==null? "": PenCtrl.getInstance().getConnectingDevice()),msg);
 			}
 
 		}

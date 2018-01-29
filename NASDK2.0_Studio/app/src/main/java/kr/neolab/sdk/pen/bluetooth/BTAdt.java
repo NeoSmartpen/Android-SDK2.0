@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -25,6 +26,8 @@ import kr.neolab.sdk.pen.IPenAdt;
 import kr.neolab.sdk.pen.bluetooth.cmd.CommandManager;
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor;
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20;
+import kr.neolab.sdk.pen.bluetooth.lib.PenProfile;
+import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.filter.Fdot;
 import kr.neolab.sdk.pen.offline.OfflineByteData;
@@ -112,23 +115,15 @@ public class BTAdt implements IPenAdt
 	 * The constant QUEUE_OFFLINE.
 	 */
 	public static final int QUEUE_OFFLINE = 3;
-	
+
 	private Context context;
 
 	private boolean mIsRegularDisconnect = false;
 
-	/**
-	 * Instantiates a new Bt adt.
-	 */
-// Multi Pend르 사용하기 위해서 public로 바꿈 2016.03.11  Aram
-//	private BTAdt()
-//	{
-//		mAdapter = BluetoothAdapter.getDefaultAdapter();
-//	}
+
 	public BTAdt()
 	{
 		mAdapter = BluetoothAdapter.getDefaultAdapter();
-		//TODO 아래에 myInstance를 사용한 부분 수정 필요함
 	}
 
 	/**
@@ -154,7 +149,7 @@ public class BTAdt implements IPenAdt
 		this.context = context;
 
 	}
-	
+
 	@Override
 	public Context getContext()
 	{
@@ -280,6 +275,267 @@ public class BTAdt implements IPenAdt
     }
 
 	@Override
+	public int getPressSensorType ()
+	{
+		if ( !isConnected() )
+		{
+			return -1;
+		}
+
+		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+			return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getPressSensorType();
+		else
+		{
+			return ((CommProcessor)mConnectionThread.getPacketProcessor()).getPressSensorType();
+//			NLog.e( "getPressSensorType( ) is supported from protocol 2.0 !!!" );
+//			throw new ProtocolNotSupportedException( "getPressSensorType( ) is supported from protocol 2.0 !!!");
+		}
+	}
+
+	@Override
+	public String getConnectDeviceName () throws ProtocolNotSupportedException
+	{
+		if ( !isConnected() )
+		{
+			return null;
+		}
+
+		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+			return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getConnectDeviceName( );
+		else
+		{
+			NLog.e( "getConnectDeviceName( ) is supported from protocol 2.0 !!!" );
+			throw new ProtocolNotSupportedException( "getConnectDeviceName( ) is supported from protocol 2.0 !!!");
+		}
+	}
+
+	@Override
+	public String getConnectSubName () throws ProtocolNotSupportedException
+	{
+		if ( !isConnected() )
+		{
+			return null;
+		}
+
+		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+			return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getConnectSubName( );
+		else
+		{
+			NLog.e( "getConnectSubName( ) is supported from protocol 2.0 !!!" );
+			throw new ProtocolNotSupportedException( "getConnectSubName( ) is supported from protocol 2.0 !!!");
+		}
+	}
+
+	@Override
+	public void createProfile ( String proFileName, byte[] password ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		if ( !isConnected() )
+		{
+			return;
+		}
+
+		if(mConnectionThread.getPacketProcessor().isSupportPenProfile())
+		{
+			if(proFileName.getBytes().length > PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME)
+				throw new ProfileKeyValueLimitException("ProFileName byte length is over limit !! ProFileName byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME  );
+			else if(password.length > PenProfile.LIMIT_BYTE_LENGTH_PASSWORD)
+				throw new ProfileKeyValueLimitException("Password byte length is over limit !! Password byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PASSWORD  );
+
+			mConnectionThread.getPacketProcessor().createProfile( proFileName, password );
+		}
+		else
+		{
+			NLog.e( "createProfile ( String proFileName, String password ) is not supported at this pen firmware version!!" );
+			throw new ProtocolNotSupportedException( "createProfile ( String proFileName, String password ) is not supported at this pen firmware version!!");
+		}
+	}
+
+	@Override
+	public void deleteProfile ( String proFileName, byte[] password ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		if ( !isConnected() )
+		{
+			return;
+		}
+
+		if(mConnectionThread.getPacketProcessor().isSupportPenProfile())
+		{
+			if(proFileName.getBytes().length > PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME)
+				throw new ProfileKeyValueLimitException("ProFileName byte length is over limit !! ProFileName byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME  );
+			else if(password.length > PenProfile.LIMIT_BYTE_LENGTH_PASSWORD)
+				throw new ProfileKeyValueLimitException("Password byte length is over limit !! Password byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PASSWORD  );
+			mConnectionThread.getPacketProcessor().deleteProfile( proFileName, password );
+		}
+		else
+		{
+			NLog.e( "deleteProfile ( String proFileName, String password ) is not supported at this pen firmware version!!" );
+			throw new ProtocolNotSupportedException( "deleteProfile ( String proFileName, String password ) is not supported at this pen firmware version!!");
+		}
+
+	}
+
+	@Override
+	public void writeProfileValue ( String proFileName, byte[] password, String[] keys, byte[][] data ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		if ( !isConnected() )
+		{
+			return;
+		}
+
+		if(mConnectionThread.getPacketProcessor().isSupportPenProfile())
+		{
+			if(proFileName.getBytes().length > PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME)
+				throw new ProfileKeyValueLimitException("ProFileName byte length is over limit !! ProFileName byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME  );
+			else if(password.length > PenProfile.LIMIT_BYTE_LENGTH_PASSWORD)
+				throw new ProfileKeyValueLimitException("Password byte length is over limit !! Password byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PASSWORD  );
+			else
+			{
+				for(int i = 0; i < keys.length; i++)
+				{
+					if(keys[i].getBytes().length > PenProfile.LIMIT_BYTE_LENGTH_KEY)
+					{
+
+						throw new ProfileKeyValueLimitException("key("+keys[i]+" ) byte length is over limit !! ProFileName byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME  );
+					}
+					else
+					{
+						if(keys[i].equals( PenProfile.KEY_PEN_NAME ) && data[i].length > PenProfile.LIMIT_BYTE_LENGTH_PEN_NAME)
+						{
+							throw new ProfileKeyValueLimitException("Value byte length of key("+keys[i]+" ) is over limit !! Value byte limit of key("+keys[i]+" ) is "+PenProfile.LIMIT_BYTE_LENGTH_PEN_NAME  );
+						}
+						else if(keys[i].equals( PenProfile.KEY_PEN_STROKE_THICKNESS_LEVEL ) && data[i].length > PenProfile.LIMIT_BYTE_LENGTH_PEN_STROKE_THICKNESS)
+						{
+							throw new ProfileKeyValueLimitException("Value byte length of key("+keys[i]+" ) is over limit !! Value byte limit of key("+keys[i]+" ) is "+PenProfile.LIMIT_BYTE_LENGTH_PEN_STROKE_THICKNESS  );
+						}
+						else if(keys[i].equals( PenProfile.KEY_PEN_COLOR_INDEX ) && data[i].length > PenProfile.LIMIT_BYTE_LENGTH_PEN_COLOR_INDEX)
+						{
+							throw new ProfileKeyValueLimitException("Value byte length of key("+keys[i]+" ) is over limit !! Value byte limit of key("+keys[i]+" ) is "+PenProfile.LIMIT_BYTE_LENGTH_PEN_STROKE_THICKNESS  );
+						}
+						else if(keys[i].equals( PenProfile.KEY_PEN_COLOR_AND_HISTORY ) && data[i].length > PenProfile.LIMIT_BYTE_LENGTH_PEN_COLOR_AND_HISTORY)
+						{
+							throw new ProfileKeyValueLimitException("Value byte length of key("+keys[i]+" ) is over limit !! Value byte limit of key("+keys[i]+" ) is "+PenProfile.LIMIT_BYTE_LENGTH_PEN_COLOR_AND_HISTORY  );
+						}
+						else if(keys[i].equals( PenProfile.KEY_USER_CALIBRATION ) && data[i].length > PenProfile.LIMIT_BYTE_LENGTH_USER_CALIBRATION)
+						{
+							throw new ProfileKeyValueLimitException("Value byte length of key("+keys[i]+" ) is over limit !! Value byte limit of key("+keys[i]+" ) is "+PenProfile.LIMIT_BYTE_LENGTH_USER_CALIBRATION  );
+						}
+						else if(keys[i].equals( PenProfile.KEY_PEN_BRUSH_TYPE ) && data[i].length > PenProfile.LIMIT_BYTE_LENGTH_PEN_BRUSH_TYPE)
+						{
+							throw new ProfileKeyValueLimitException("Value byte length of key("+keys[i]+" ) is over limit !! Value byte limit of key("+keys[i]+" ) is "+PenProfile.LIMIT_BYTE_LENGTH_PEN_BRUSH_TYPE  );
+						}
+						else if(keys[i].equals( PenProfile.KEY_PEN_TIP_TYPE ) && data[i].length > PenProfile.LIMIT_BYTE_LENGTH_PEN_TIP_TYPE)
+						{
+							throw new ProfileKeyValueLimitException("Value byte length of key("+keys[i]+" ) is over limit !! Value byte limit of key("+keys[i]+" ) is "+PenProfile.LIMIT_BYTE_LENGTH_PEN_TIP_TYPE  );
+						}
+
+					}
+				}
+			}
+			mConnectionThread.getPacketProcessor().writeProfileValue( proFileName, password ,keys ,data);
+		}
+		else
+		{
+			NLog.e( "writeProfileValue ( String proFileName, String password, String[] keys, byte[][] data ) is not supported at this pen firmware version!!" );
+			throw new ProtocolNotSupportedException( "writeProfileValue ( String proFileName, String password, String[] keys, byte[][] data ) is not supported at this pen firmware version!!");
+		}
+
+	}
+
+	@Override
+	public void readProfileValue ( String proFileName, String[] keys ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		if ( !isConnected() )
+		{
+			return;
+		}
+
+		if(mConnectionThread.getPacketProcessor().isSupportPenProfile())
+		{
+			if(proFileName.getBytes().length > PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME)
+				throw new ProfileKeyValueLimitException("ProFileName byte length is over limit !! ProFileName byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME  );
+			else
+			{
+				for(int i = 0; i < keys.length; i++)
+				{
+					if(keys[i].getBytes().length > PenProfile.LIMIT_BYTE_LENGTH_KEY)
+					{
+						throw new ProfileKeyValueLimitException("key("+keys[i]+" ) byte length is over limit !! ProFileName byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME  );
+					}
+				}
+			}
+			mConnectionThread.getPacketProcessor().readProfileValue( proFileName, keys);
+		}
+		else
+		{
+			NLog.e( "readProfileValue ( String proFileName, String[] keys ) is not supported at this pen firmware version!!" );
+			throw new ProtocolNotSupportedException( "readProfileValue ( String proFileName, String[] keys ) is not supported at this pen firmware version!!");
+		}
+
+	}
+
+	@Override
+	public void deleteProfileValue ( String proFileName, byte[] password, String[] keys ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		if ( !isConnected() )
+		{
+			return;
+		}
+
+		if(mConnectionThread.getPacketProcessor().isSupportPenProfile())
+		{
+			if(proFileName.getBytes().length > PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME)
+				throw new ProfileKeyValueLimitException("ProFileName byte length is over limit !! ProFileName byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME  );
+			else if(password.length > PenProfile.LIMIT_BYTE_LENGTH_PASSWORD)
+				throw new ProfileKeyValueLimitException("Password byte length is over limit !! Password byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PASSWORD  );
+			else
+			{
+				for(int i = 0; i < keys.length; i++)
+				{
+					if(keys[i].getBytes().length > PenProfile.LIMIT_BYTE_LENGTH_KEY)
+					{
+						throw new ProfileKeyValueLimitException("key("+keys[i]+" ) byte length is over limit !! ProFileName byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME  );
+					}
+				}
+			}
+			mConnectionThread.getPacketProcessor().deleteProfileValue( proFileName, password,  keys);
+		}
+		else
+		{
+			NLog.e( "deleteProfileValue ( String proFileName, String password, String[] keys )is not supported at this pen firmware version!!" );
+			throw new ProtocolNotSupportedException( "deleteProfileValue ( String proFileName, String password, String[] keys ) is not supported at this pen firmware version!!");
+		}
+
+	}
+
+	@Override
+	public void getProfileInfo ( String proFileName ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		if ( !isConnected() )
+		{
+			return;
+		}
+
+		if(mConnectionThread.getPacketProcessor().isSupportPenProfile())
+		{
+			if(proFileName.getBytes().length > PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME)
+				throw new ProfileKeyValueLimitException("ProFileName byte length is over limit !! ProFileName byte limit is "+PenProfile.LIMIT_BYTE_LENGTH_PROFILE_NAME  );
+			mConnectionThread.getPacketProcessor().getProfileInfo( proFileName);
+		}
+		else
+		{
+			NLog.e( "getProfileInfo ( String proFileName )is not supported at this pen firmware version!!" );
+			throw new ProtocolNotSupportedException( "getProfileInfo ( String proFileName ) is not supported at this pen firmware version!!");
+		}
+
+	}
+
+	@Override
+	public boolean isSupportPenProfile ()
+	{
+		return mConnectionThread.getPacketProcessor().isSupportPenProfile();
+	}
+
+	@Override
 	public synchronized void disconnect()
 	{
 		NLog.i( "[BTAdt] disconnect device" );
@@ -290,23 +546,6 @@ public class BTAdt implements IPenAdt
 		}
 	}
 
-	@Override
-	public synchronized void startListen()
-	{
-		// F100 에서 사용하던
-//		NLog.i( "[BTAdt] start listen" );
-//
-//		if ( myInstance.getBluetoothAdapter().isEnabled() && status == CONN_STATUS_IDLE )
-//		{
-//			if ( mListenThread != null )
-//			{
-//				mListenThread.cancel();
-//			}
-//
-//			mListenThread = new ListenThread();
-//			mListenThread.start();
-//		}
-	}
 
 	private synchronized void stopListen()
 	{
@@ -442,7 +681,7 @@ public class BTAdt implements IPenAdt
 			return;
 		}
 
-		if ( !fwFile.exists() || !fwFile.canRead() )
+		if ( fwFile == null || !fwFile.exists() || !fwFile.canRead() )
 		{
 			responseMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_FAILURE ) );
 			return;
@@ -471,7 +710,7 @@ public class BTAdt implements IPenAdt
 			return;
 		}
 
-		if ( !fwFile.exists() || !fwFile.canRead() )
+		if ( fwFile == null || !fwFile.exists() || !fwFile.canRead() )
 		{
 			responseMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_FAILURE ) );
 			return;
@@ -497,7 +736,7 @@ public class BTAdt implements IPenAdt
 
 		mConnectionThread.getPacketProcessor().reqSuspendPenSwUpgrade();
 	}
-	
+
 	@Override
 	public void reqForceCalibrate()
 	{
@@ -511,9 +750,9 @@ public class BTAdt implements IPenAdt
 
 	/**
 	 * Listen(Accept) Thread
-	 * 
+	 *
 	 * @author CHY
-	 * 
+	 *
 	 */
 	private class ListenThread extends Thread
 	{
@@ -600,7 +839,6 @@ public class BTAdt implements IPenAdt
 
 						bindConnection( socket );
 
-						// socket binding 되면 listen 중지
 						stopListen();
 					}
 				}
@@ -632,9 +870,9 @@ public class BTAdt implements IPenAdt
 
 	/**
 	 * Connect Thread
-	 * 
+	 *
 	 * @author CHY
-	 * 
+	 *
 	 */
 	private class ConnectThread extends Thread
 	{
@@ -778,7 +1016,7 @@ public class BTAdt implements IPenAdt
 			}
 			else
 			{
-				listener.onReceiveMessage( msg );
+				listener.onReceiveMessage( penAddress, msg );
 			}
 		}
 	}
@@ -795,7 +1033,7 @@ public class BTAdt implements IPenAdt
 			}
 			else
 			{
-				offlineDataListener.onReceiveOfflineStrokes( offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId );
+				offlineDataListener.onReceiveOfflineStrokes( penAddress,  offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId );
 			}
 		}
 	}
@@ -811,14 +1049,14 @@ public class BTAdt implements IPenAdt
 			else
 			{
 				if(dotListener != null)
-					dotListener.onReceiveDot(dot.toDot() );
+					dotListener.onReceiveDot(penAddress, dot.toDot() );
 			}
 		}
 	}
 
 	/**
-	 * Connection 바인드
-	 * 
+	 * Connection bind
+	 *
 	 * @param socket
 	 */
 	private void bindConnection( BluetoothSocket socket )
@@ -870,7 +1108,6 @@ public class BTAdt implements IPenAdt
 		}
 
 		mIsRegularDisconnect = false;
-		this.startListen();
 	}
 
 	private void onBinded( )
@@ -970,7 +1207,6 @@ public class BTAdt implements IPenAdt
 				mmOutStream = socket.getOutputStream();
 
 				this.isRunning = true;
-				// 펜 연결 후 맨 처음 펜정보를 요청한다.(프로토콜 2.0)
 				startConnect();
 				return true;
 			}
@@ -1074,9 +1310,6 @@ public class BTAdt implements IPenAdt
 			}, 500 );
 		}
 
-		/**
-		 * 접속후 연결되었을때 호출
-		 */
 		public void onEstablished()
 		{
 			onConnectionEstablished( );
@@ -1117,6 +1350,14 @@ public class BTAdt implements IPenAdt
 					bytes = mmInStream.read( buffer );
 					NLog.d( "[BTAdt/ConnectedThread] TimeCheck read bytes="+bytes );
 
+                    StringBuffer buff = new StringBuffer();
+					for(int i=0;i < bytes;i++) {
+                        byte item = buffer[i];
+                        int int_data = (int) ( item & 0xFF );
+                        buff.append( Integer.toHexString( int_data ) + ", " );
+                    }
+                    NLog.d( "[BTAdt/ConnectedThread] read bytes data = "+ buff.toString() );
+
 					if ( bytes > 0 )
 					{
 						processor.fill( buffer, bytes );
@@ -1138,7 +1379,7 @@ public class BTAdt implements IPenAdt
 		}
 
 		/**
-		 * output stream 에 buffer 기록한다. (한번에 기록하는 단위를 정해서 펜의 read 속도와 맞춤)
+		 * write buffer at output stream.
 		 *
 		 * @param buffer the buffer
 		 */
@@ -1207,7 +1448,7 @@ public class BTAdt implements IPenAdt
 					Fdot dot = (Fdot) msg.obj;
 					dot.mac_address = penAddress;
 					if(dotListener != null)
-						dotListener.onReceiveDot(dot  );
+						dotListener.onReceiveDot(penAddress, dot);
 				}
 				break;
 
@@ -1220,14 +1461,14 @@ public class BTAdt implements IPenAdt
 						NLog.d( "[BTAdt/mHandler] PenMsgType.PEN_DISCONNECTED" );
 						penAddress = null;
 					}
-					listener.onReceiveMessage( pmsg );
+					listener.onReceiveMessage(pmsg.mac_address, pmsg );
 				}
 					break;
 
 				case QUEUE_OFFLINE:
 				{
 					OfflineByteData offlineByteData = (OfflineByteData) msg.obj;
-					offlineDataListener.onReceiveOfflineStrokes(offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId);
+					offlineDataListener.onReceiveOfflineStrokes(penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId);
 				}
 				break;
 
@@ -1458,6 +1699,26 @@ public class BTAdt implements IPenAdt
 		mConnectionThread.getPacketProcessor().reqSetPenSensitivity( level );
 	}
 
+
+	@Override
+	public void reqSetupPenSensitivityFSC( short level ) throws ProtocolNotSupportedException
+	{
+		if ( !isConnected() )
+		{
+			return;
+		}
+		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+			((CommProcessor20)mConnectionThread.getPacketProcessor()).reqSetPenSensitivityFSC( level );
+		else
+		{
+			NLog.e( "reqSetupPenSensitivityFSC ( boolean on ) is supported from protocol 2.0 !!!" );
+			throw new ProtocolNotSupportedException( "reqSetupPenSensitivityFSC ( boolean on ) is supported from protocol 2.0 !!!" );
+
+		}
+	}
+
+
+
 	@Override
 	public void reqSetupPenCapOff ( boolean on ) throws ProtocolNotSupportedException
 	{
@@ -1479,7 +1740,7 @@ public class BTAdt implements IPenAdt
 
 
 	@Override
-	public void reqSetupPenHover ( boolean on )
+	public void reqSetupPenHover ( boolean on ) throws ProtocolNotSupportedException
 	{
 		if ( !isConnected() )
 		{
@@ -1489,11 +1750,42 @@ public class BTAdt implements IPenAdt
 		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
 			((CommProcessor20)mConnectionThread.getPacketProcessor()).reqSetPenHover( on );
 		else
+		{
 			NLog.e( "reqSetupPenHover ( boolean on ) is supported from protocol 2.0 !!!" );
-
+			throw new ProtocolNotSupportedException( "reqSetupPenHover ( boolean on ) is supported from protocol 2.0 !!!" );
+		}
 	}
 
+	public boolean unpairDevice(String address)
+	{
+		boolean ret = false;
+		BluetoothDevice bluetoothDevice = mAdapter.getRemoteDevice( address );
+		try {
+			Method method = bluetoothDevice.getClass().getMethod("removeBond", (Class[]) null);
+			method.invoke(bluetoothDevice, (Object[]) null);
+			ret = true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			ret = false;
+		}
+		return ret;
+	}
 
+	@Override
+	public void reqSetCurrentTime ()
+	{
+		if ( !isConnected() )
+		{
+			return;
+		}
 
+		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor)
+			((CommProcessor)mConnectionThread.getPacketProcessor()).reqSetCurrentTime( );
+		else
+		{
+			((CommProcessor20)mConnectionThread.getPacketProcessor()).reqSetCurrentTime( );
+		}
+
+	}
 
 }

@@ -30,19 +30,24 @@ public class CMD20
      * The constant RES_EventDotData.
      */
     public static final int RES_EventDotData = 0x65;
-	// RES_EventDotData2, RES_EventDotData3 는 전송이 느린 BT(ex D100)를 위해 추가된 프로토콜
-	// 필기 데이터는 RES_EventDotData, RES_EventDotData2, RES_EventDotData3 중 한개로 넘어온다.
-	public static final int RES_EventDotData2 = 0x66;
-	public static final int RES_EventDotData3 = 0x67;
+    /**
+     * The constant RES_EventDotData2.
+     */
+    public static final int RES_EventDotData2 = 0x66;
+    /**
+     * The constant RES_EventDotData3.
+     */
+    public static final int RES_EventDotData3 = 0x67;
     /**
      * The constant RES_EventUploadPenFWChunk.
      */
     public static final int RES_EventUploadPenFWChunk = 0x32;
 
+
+// normal CMD
     /**
      * The constant REQ_PenInfo.
      */
-// 일반 CMD
     public static final int REQ_PenInfo = 0x01;
     /**
      * The constant RES_PenInfo.
@@ -122,6 +127,11 @@ public class CMD20
     public static final int REQ_PenStatusChange_TYPE_SensitivitySet = 0x09;
 
     /**
+     * The constant REQ_PenStatusChange_TYPE_SensitivitySet_FSC.
+     */
+    public static final int REQ_PenStatusChange_TYPE_SensitivitySet_FSC = 0x0D;
+
+    /**
      * The constant REQ_UsingNoteNotify.
      */
     public static final int REQ_UsingNoteNotify = 0x11;
@@ -186,6 +196,16 @@ public class CMD20
     public static final int ACK_UploadPenFWChunk = 0xB2;
 
     /**
+     * The constant REQ_PenProfile.
+     */
+    public static final int REQ_PenProfile = 0x41;
+
+    /**
+     * The constant RES_PenProfile.
+     */
+    public static final int RES_PenProfile = 0xC1;
+
+    /**
      * Is event cmd boolean.
      *
      * @param cmd the cmd
@@ -194,11 +214,15 @@ public class CMD20
     public static boolean isEventCMD ( int cmd )
     {
         int CMD = (int) cmd;
-		if ( cmd == CMD20.RES_EventBattery || cmd == CMD20.RES_EventDotData || cmd == CMD20.RES_EventDotData2 || cmd == CMD20.RES_EventDotData3 || cmd == CMD20.RES_EventIdChange || cmd == CMD20.RES_EventPenUpDown || cmd == CMD20.RES_EventPowerOff  || cmd == CMD20.RES_OfflineChunk || cmd == CMD20.RES_EventUploadPenFWChunk )
-        {
+        if((CMD >= 0x60 && CMD <= 0x6F) ||  CMD == CMD20.RES_OfflineChunk || CMD == CMD20.RES_EventUploadPenFWChunk)
             return true;
-        }
-        return false;
+        else
+            return false;
+//        if ( cmd == CMD20.RES_EventBattery || cmd == CMD20.RES_EventDotData || cmd == CMD20.RES_EventDotData2 || cmd == CMD20.RES_EventDotData3 || cmd == CMD20.RES_EventIdChange || cmd == CMD20.RES_EventPenUpDown || cmd == CMD20.RES_EventPowerOff || cmd == CMD20.RES_OfflineChunk || cmd == CMD20.RES_EventUploadPenFWChunk )
+//        {
+//            return true;
+//        }
+//        return false;
 
     }
 

@@ -1,5 +1,6 @@
 package kr.neolab.sdk.metadata;
 
+import android.content.Context;
 import android.graphics.PointF;
 import android.util.SparseArray;
 import android.util.Xml;
@@ -129,6 +130,24 @@ public class MetadataCtrl implements IMetadataCtrl
 
         this.parseBySAX( is );
     }
+
+    @Override
+    public void loadFileAsset( Context context, String filePath ) throws XmlPullParserException, IOException, SAXException, ParserConfigurationException
+    {
+        NLog.d( "[MetadataCtrl] load asset file : " + filePath );
+        if ( !filePath.endsWith( ".nproj" ) )
+        {
+            return;
+        }
+
+        InputStream is = context.getAssets().open( filePath );
+		if ( is == null )
+		{
+            return;
+		}
+        this.parseBySAX( is );
+    }
+
 
     @Override
     public void loadFiles( String fileDirectoryPath )
@@ -959,7 +978,7 @@ public class MetadataCtrl implements IMetadataCtrl
 
         if ( result.size() > 0 )
         {
-            return result.toArray( new Symbol[1] );
+            return result.toArray( new Symbol[result.size()] );
         }
         else
         {
@@ -1005,17 +1024,21 @@ public class MetadataCtrl implements IMetadataCtrl
             {
                 Dot pf = nstr.get( i );
 
-                if ( e.contains( pf.x, pf.y ) )
+                if(e.points != null && e.points.length() > 0)
+                {
+                    if(inSideCustomshape(e, pf.x, pf.y) && !result.contains( e ))
+                        result.add( e );
+                }
+                else if ( e.contains( pf.x, pf.y ) && !result.contains( e ))
                 {
                     result.add( e );
-                    break;
                 }
             }
         }
 
         if ( result.size() > 0 )
         {
-            return result.toArray( new Symbol[1] );
+            return result.toArray( new Symbol[result.size()] );
         }
         else
         {
@@ -1039,13 +1062,22 @@ public class MetadataCtrl implements IMetadataCtrl
         {
             if ( pageId == e.pageId && e.contains( x, y ) )
             {
-                result.add( e );
+
+                if(e.points != null && e.points.length() > 0)
+                {
+                    if(inSideCustomshape(e, x, y))
+                        result.add( e );
+                }
+                else if(e.contains( x, y ))
+                {
+                    result.add( e );
+                }
             }
         }
 
         if ( result.size() > 0 )
         {
-            return result.toArray( new Symbol[1] );
+            return result.toArray( new Symbol[result.size()] );
         }
         else
         {
@@ -1072,7 +1104,7 @@ public class MetadataCtrl implements IMetadataCtrl
 
         if ( result.size() > 0 )
         {
-            return result.toArray( new Symbol[1] );
+            return result.toArray( new Symbol[result.size()] );
         }
         else
         {
@@ -1103,6 +1135,63 @@ public class MetadataCtrl implements IMetadataCtrl
         else
             return list.toArray( new Segment[list.size()] );
     }
+
+    private boolean inSideCustomshape(Symbol s, float x,  float y)
+    {
+        String customshape = s.points;
+        if(customshape == null || customshape.length() == 0)
+            return true;
+
+        String[] points = customshape.split( "," );
+        if(points.length % 2 ==1 )
+            return false;
+        ArrayList<PointF> polygon = new ArrayList<PointF>();
+        float tempX = 0f;
+        float tempY = 0f;
+
+        for(int i = 0; i < points.length; i++)
+        {
+            if( i % 2 == 0)
+            {
+                try
+                {
+                    tempX = s.getX() + s.getWidth() * Float.parseFloat( points[i] );
+                }catch ( Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+            else
+            {
+                try
+                {
+                    tempY = s.getY() + s.getHeight() * Float.parseFloat( points[i] );
+                }catch ( Exception e)
+                {
+                    e.printStackTrace();
+                }
+                PointF tempPointF = new PointF();
+                tempPointF.x = tempX;
+                tempPointF.y = tempY;
+                polygon.add( tempPointF );
+            }
+        }
+
+        int crosses = 0;
+        for(int i = 0 ; i < polygon.size() ; i++){
+            int j = (i+1)%polygon.size();
+            if((polygon.get(i).y > y) != (polygon.get(j).y > y) ){
+                double atX = (polygon.get(j).x- polygon.get(i).x)*(y-polygon.get(i).y)/(polygon.get(j).y-polygon.get(i).y)+polygon.get(i).x;
+                if(x < atX)
+                    crosses++;
+            }
+        }
+        return crosses % 2 > 0;
+    }
+
+
+
+
 
     private int noteId = 0, ownerCode = 0, sectionCode = 0,totalPage = 0, kind = 0, startPage = 0;
     private String bookTitle = "", tag = "", extra_info = "";
@@ -1344,6 +1433,12 @@ public class MetadataCtrl implements IMetadataCtrl
                         symbol.name = charsToString( ch, 0, length );
                         tag = null;
                     }
+                    else if ( tag.equals( "points" ) )
+                    {
+                        symbol.points = charsToString( ch, 0, length );
+                        tag = null;
+                    }
+
                 }
             }
 
@@ -1455,7 +1550,7 @@ public class MetadataCtrl implements IMetadataCtrl
                     }
                     else
                     {
-                        //?????? 2.2 ~ 2.3
+                        //caster version 2.2 ~ 2.3
                         if(nprojVersion < 2.31f)
                         {
                             if ( tag.equals( "pages" ) )
@@ -1472,7 +1567,6 @@ public class MetadataCtrl implements IMetadataCtrl
                                 page.width = Float.parseFloat( parser.getAttributeValue( nameSpace, "x2" ) ) * PIXEL_TO_DOT_SCALE;
                                 page.height = Float.parseFloat( parser.getAttributeValue( nameSpace, "y2" ) ) * PIXEL_TO_DOT_SCALE;
 
-                                // ???? ?????????????
                                 put( noteId, page.pageId, page );
                             }
                             else if ( tag.equals( "symbol" ) )
@@ -1498,7 +1592,7 @@ public class MetadataCtrl implements IMetadataCtrl
 								symbol.nextId = parser.getAttributeValue( nameSpace, "next" );
 							}
 						}
-						//?????? 2.31f ???
+						//caster version >= 2.31f
 						else
 						{
 							if ( tag.equals( "segment_info" ) )

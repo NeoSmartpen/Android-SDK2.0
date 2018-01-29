@@ -88,9 +88,22 @@ public class PenMsgType
     public final static int PEN_SETUP_PEN_COLOR_RESULT     = 0x18;
 
     /**
-     * The constant PEN_USING_NOTE_SET_FAIL.
+     * The constant PEN_SETUP_SENSITIVITY_RESULT_FSC.
      */
-    public final static int PEN_USING_NOTE_SET_FAIL     = 0x19;
+    public final static int PEN_SETUP_SENSITIVITY_RESULT_FSC   = 0x19;
+
+    /**
+     * The constant PEN_USING_NOTE_SET_FAIL.
+     * This Msg was deprecated in 2.00.0009 . See PEN_USING_NOTE_SET_RESULT
+     */
+    @Deprecated
+//    public final static int PEN_USING_NOTE_SET_FAIL     = 0x19;
+
+
+    /**
+     * The constant PEN_USING_NOTE_SET_RESULT.
+     */
+    public final static int PEN_USING_NOTE_SET_RESULT     = 0x1a;
 
     /**
      * The constant PEN_SETUP_PEN_CAP_OFF.
@@ -123,14 +136,14 @@ public class PenMsgType
     /**
      * Events that occur when you start the pressure-adjusting
      *
-     * @deprecated Protocol 2.0 에서 삭제
+     * @deprecated Protocol 2.0 
      */
     public final static int PEN_CALIBRATION_START		= 0x20;
 
     /**
      * Events that occur when you finish the pressure-adjusting
      *
-     * @deprecated Protocol 2.0 에서 삭제
+     * @deprecated Protocol 2.0 
      */
     public final static int PEN_CALIBRATION_FINISH		= 0x21;
 
@@ -153,6 +166,11 @@ public class PenMsgType
      * When the firmware upgrade is suspended, the pen events that occur
      */
     public final static int PEN_FW_UPGRADE_SUSPEND		= 0x25;
+
+    /**
+     * The constant PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE.
+     */
+    public final static int PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE = 0x27;
 
     /**
      * Pen gesture detection events that occur when
@@ -219,6 +237,46 @@ public class PenMsgType
      * Pens when the connection fails cause duplicate BT connection, an event that occurs
      */
     public final static int PEN_CONNECTION_FAILURE_BTDUPLICATE	= 0x54;
+
+    /**
+     * The constant ERROR_DOT_NO_DOWN.
+     */
+    public final static int ERROR_DOT_NO_DOWN	= 0x70;
+
+    /**
+     * The constant PROFILE_FAILURE.
+     */
+    public final static int PROFILE_FAILURE			= 0x41;
+
+    /**
+     * The constant PROFILE_CREATE.
+     */
+    public final static int PROFILE_CREATE			= 0x42;
+
+    /**
+     * The constant PROFILE_DELETE.
+     */
+    public final static int PROFILE_DELETE			= 0x43;
+
+    /**
+     * The constant PROFILE_INFO.
+     */
+    public final static int PROFILE_INFO			= 0x44;
+
+    /**
+     * The constant PROFILE_READ_VALUE.
+     */
+    public final static int PROFILE_READ_VALUE			= 0x45;
+
+    /**
+     * The constant PROFILE_WRITE_VALUE.
+     */
+    public final static int PROFILE_WRITE_VALUE			= 0x46;
+
+    /**
+     * The constant PROFILE_DELETE_VALUE.
+     */
+    public final static int PROFILE_DELETE_VALUE			= 0x47;
 
 }
 

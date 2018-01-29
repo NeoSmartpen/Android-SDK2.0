@@ -44,7 +44,7 @@ public class Stroke implements Parcelable
 
 
 	/*
-	 * Stroke을 둘러싸는 사각형의 영역
+	 * The area of the rectangle surrounding the stroke
 	 */
 	private RectF rectArea = null;
 

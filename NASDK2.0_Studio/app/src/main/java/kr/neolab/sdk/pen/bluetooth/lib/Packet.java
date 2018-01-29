@@ -41,18 +41,27 @@ public class Packet
     public byte resultCode = ProtocolParser20.PKT_RESULT_SUCCESS;
     private int protocolVer = 1;
 
-	public int getDotCode ()
+    /**
+     * Gets dot code.
+     *
+     * @return the dot code
+     */
+    public int getDotCode ()
 	{
 		return dotCode;
 	}
 
-	public void setDotCode ( int dotCode )
+    /**
+     * Sets dot code.
+     *
+     * @param dotCode the dot code
+     */
+    public void setDotCode ( int dotCode )
 	{
 		this.dotCode = dotCode;
 	}
 
 	private int dotCode = 1;
-
 
     /**
      * Instantiates a new Packet.

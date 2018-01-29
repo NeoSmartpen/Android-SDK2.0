@@ -2,12 +2,15 @@ package kr.neolab.sdk.pen.bluetooth.comm;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Base64;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,6 +28,7 @@ import kr.neolab.sdk.pen.bluetooth.lib.ByteConverter;
 import kr.neolab.sdk.pen.bluetooth.lib.CMD20;
 import kr.neolab.sdk.pen.bluetooth.lib.Chunk;
 import kr.neolab.sdk.pen.bluetooth.lib.Packet;
+import kr.neolab.sdk.pen.bluetooth.lib.PenProfile;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolParser20;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolParser20.IParsedPacketListener;
 import kr.neolab.sdk.pen.filter.Fdot;
@@ -39,22 +43,31 @@ import kr.neolab.sdk.pen.penmsg.PenMsgType;
 import kr.neolab.sdk.util.NLog;
 import kr.neolab.sdk.util.UseNoteData;
 
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.KEY_DEFAULT_CALIBRATION;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_CREATE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_DELETE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_DELETE_VALUE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_INFO;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_READ_VALUE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_STATUS_SUCCESS;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_WRITE_VALUE;
+
 /**
- * BT 각 Connection in/out 패킷 처리
+ * BT Connection in/out packet process
  *
  * @author Moo
  */
 public class CommProcessor20 extends CommandManager implements IParsedPacketListener, IFilterListener
 {
 	/**
-	 * 펜업 플래그
+	 * Pen Up Flag
 	 */
 	private boolean isPrevDotDown = false;
 
 	private boolean isStartWithDown = false;
 
 	/**
-	 * 이전 패킷 (펜업 도트 저장용)
+	 * Previous packet (for storing pen-up dots)
 	 */
 	private Packet prevPacket;
 
@@ -75,6 +88,8 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	private int currPenTipType = 0;
 
 	private boolean isPenAuthenticated = false;
+
+	private boolean requestOnDefaultCalibration = false;
 
 	private Chunk chunk = null;
 
@@ -102,7 +117,10 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	private int oTotalDataSize = 0, oRcvDataSize = 0;
 	private String appVer = "";
 	private String receiveProtocolVer = "";
+	private String FW_VER = "";
+
 	private String connectedDeviceName = "";
+	private String connectedSubName = "";
 	private int fwPacketRetryCount = 0;
 
 	private ArrayList<Stroke> offlineStrokes = new ArrayList<Stroke>();
@@ -112,6 +130,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	private static final int OFFLINE_SEND_FAIL_TIME = 1000*20;
 
 	private static final int PENINFO_SEND_FAIL_TIME = 1000 * 5;
+	private static final int PENINFO_SEND_FAIL_TRY_COUNT = 3;
 
 	private int penInfoReceiveCount = 0;
 	private int penInfoRequestCount = 0;
@@ -121,11 +140,23 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 	private String currentPassword = "";
 
+	private int sensorType = 0;
+
+	private int maxPress = 0;
+
+	private float[] factor = null;
+
+	/**
+	 * The constant PEN_PROFILE_SUPPORT_PROTOCOL_VERSION.
+	 */
+	public static final float PEN_PROFILE_SUPPORT_PROTOCOL_VERSION = 2.10f;
+
+
 	private class ChkOfflineFailRunnable implements Runnable{
 
 		@Override
 		public void run() {
-			// 실패 처리
+			// fail process
 			NLog.d( "[CommProcessor20] ChkOfflineFailRunnable Fail!!" );
 
 			if ( offlineStrokes.size() != 0 )
@@ -144,20 +175,20 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 		@Override
 		public void run() {
-			// 실패 처리
+			// fail process
 			NLog.d( "[CommProcessor20] ChkPenInfoFailRunnable Fail!!" );
 			reqPenInfo( );
 		}
 	}
 
-//	private ChkPenInfoFailRunnable mChkPenInfoFailRunnable;
+	private ChkPenInfoFailRunnable mChkPenInfoFailRunnable;
 
 	private ChkOfflineFailRunnable mChkOfflineFailRunnable;
 
 	/**
 	 * Instantiates a new Comm processor 20.
 	 *
-	 * @param conn	the conn
+	 * @param conn    the conn
 	 * @param version the version
 	 */
 	public CommProcessor20 (IConnectedThread conn , String version)
@@ -169,10 +200,9 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		this.dotFilterFilm = new FilterForFilm( this );
 		this.mChkOfflineFailRunnable = new ChkOfflineFailRunnable();
 
-//		this.mChkPenInfoFailRunnable = new ChkPenInfoFailRunnable();
+		this.mChkPenInfoFailRunnable = new ChkPenInfoFailRunnable();
 
-		// 프로토콜 2.0 부터 펜에서 응답오기를 기다리지 않고 App이 펜정보를 요청하는 형태이기 때문에 대기 하는 모듈은 필요가 없어짐.
-		// Connection후 Establish가 안 되는 경우 Connection 해제
+		// Since protocol 2.0, the app does not wait for a response from the pen but requests the pen information.
 //		this.checkEstablish();
 	}
 
@@ -193,7 +223,12 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		}
 
 		mHandler.removeCallbacks( mChkOfflineFailRunnable );
-//		mHandler.removeCallbacks( mChkPenInfoFailRunnable );
+		mHandler.removeCallbacks( mChkPenInfoFailRunnable );
+		penInfoReceiveCount = 0;
+	}
+	private void reqCalibrate2 ( float[] factor )
+	{
+		this.factor = factor;
 	}
 
 	public IConnectedThread getConn()
@@ -202,7 +237,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	}
 
 	/**
-	 * 연결된 채널에서 오는 버퍼를 저장
+	 * save buffer in connected channel
 	 * 
 	 * @param data
 	 * @param size
@@ -213,7 +248,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	}
 
 	/**
-	 * 연결된 채널로 버퍼를 기록한다.
+	 * record buffer with connected channel.
 	 * 
 	 * @param buffer
 	 */
@@ -223,7 +258,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	}
 
 	/**
-	 * 들어온 패킷 분석
+	 * Incoming packet analysis
 	 * 
 	 * @param pack
 	 */
@@ -231,8 +266,9 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	{
 
 		int resultCode;
+		NLog.d( "[CommProcessor20] parsePacket= "+pack. getCmd());
 		/**
-		 * 도트 이외 패킷 처리
+		 * Packet processing other than dot
 		 */
 		switch ( pack. getCmd() )
 		{
@@ -249,7 +285,8 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				resultCode = pack.getResultCode();
 				NLog.d( "[CommProcessor20] received RES_PenInfo(0x81) command. resultCode="+resultCode +"penInfoCount="+penInfoReceiveCount);
 
-//				mHandler.removeCallbacks( mChkPenInfoFailRunnable );
+                penInfoReceiveCount = 0;
+				mHandler.removeCallbacks( mChkPenInfoFailRunnable );
 //				if(penInfoReceiveCount > 1)
 //				{
 //					return;
@@ -257,14 +294,23 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				if ( resultCode == 0x00)
 				{
 					NLog.d( "[CommProcessor20] connection is establised." );
-					// 펜 SW 버전 내려줌
-					String deviceName = pack.getDataRangeString( 0, 16 ).trim();
-					connectedDeviceName = deviceName;
-					String FW_VER = pack.getDataRangeString( 16, 16 ).trim();
+					// Get the Pen Firmware Version
+					connectedDeviceName = pack.getDataRangeString( 0, 16 ).trim();
+					FW_VER = pack.getDataRangeString( 16, 16 ).trim();
 					receiveProtocolVer = pack.getDataRangeString( 32, 8 ).trim();
-					String subName = pack.getDataRangeString( 40, 16 ).trim();
+					connectedSubName = pack.getDataRangeString( 40, 16 ).trim();
 
-					NLog.d( "[CommProcessor20] version of connected pen is " + FW_VER +";deviceName is"+deviceName+";subName is "+subName+";receiveProtocolVer is "+receiveProtocolVer);
+
+					sensorType = 0;
+					try
+					{
+						sensorType = pack.getDataRangeInt( 64, 1 );
+					}catch ( Exception e )
+					{
+						e.printStackTrace();
+					}
+
+					NLog.d( "[CommProcessor20] version of connected pen is " + FW_VER +";deviceName is"+connectedDeviceName+";subName is "+connectedSubName+";receiveProtocolVer is "+receiveProtocolVer+",sensorType="+sensorType);
 
 					try
 					{
@@ -272,8 +318,9 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 								.put( JsonTag.STRING_PEN_FW_VERSION, FW_VER );
 
 						job.put(  JsonTag.STRING_PROTOCOL_VERSION, "2");
-						job.put(  JsonTag.STRING_DEVICE_NAME, deviceName);
-						job.put(  JsonTag.STRING_SUB_NAME, subName);
+						job.put(  JsonTag.STRING_DEVICE_NAME, connectedDeviceName);
+						job.put(  JsonTag.STRING_SUB_NAME, connectedSubName);
+						job.put(  JsonTag.INT_PRESS_SENSOR_TYPE, sensorType);
 
 						btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_FW_VERSION, job ) );
 					}
@@ -315,26 +362,24 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					long stat_timestamp = pack.getDataRangeLong( 3, 8 );
 //					stat_timestamp = TimeUtil.convertUTCToLocalTime( stat_timestamp );
 					int stat_autopower_off_time = pack.getDataRangeInt( 11, 2 );
-					int stat_forcemax = pack.getDataRangeInt( 13, 2 );
+					maxPress = pack.getDataRangeInt( 13, 2 );
 					int stat_usedmem = pack.getDataRangeInt( 15, 1 );
 					boolean stat_pencap_off = pack.getDataRangeInt( 16, 1 ) == 0 ? false : true;
 					boolean stat_autopower = pack.getDataRangeInt( 17, 1 ) == 0 ? false : true;
 					boolean stat_beep = pack.getDataRangeInt( 18, 1 ) == 0 ? false : true;
 					boolean stat_hovermode = pack.getDataRangeInt( 19, 1 ) == 0 ? false : true;
 					int stat_battery = pack.getDataRangeInt( 20, 1 );
-					NLog.d( "[CommProcessor20] received RES_PenStatus(0x84) command. stat_battery="+stat_battery +",isLock="+isLock);
 
-					boolean stat_offlinedata_save = pack.getDataRangeInt( 21, 1 ) == 2 ? false : true;
+					boolean stat_offlinedata_save = pack.getDataRangeInt( 21, 1 ) == 0 ? false : true;
+					NLog.d( "[CommProcessor20] received RES_PenStatus(0x84) command. stat_battery="+stat_battery +",isLock="+isLock+",stat_offlinedata_save="+stat_offlinedata_save);
 					int stat_sensitivity = pack.getDataRangeInt( 22, 1 );
-					// 일단 임시로
-//					int countRetry = pack.getDataRangeInt( 25, 1 );
 
 
 					try
 					{
 						JSONObject job = new JSONObject().put( JsonTag.STRING_PROTOCOL_VERSION, "2" )
 								.put( JsonTag.LONG_TIMETICK, stat_timestamp )
-								.put( JsonTag.INT_MAX_FORCE, stat_forcemax )
+								.put( JsonTag.INT_MAX_FORCE, maxPress )
 								.put( JsonTag.INT_BATTERY_STATUS, stat_battery )
 								.put( JsonTag.INT_MEMORY_STATUS, stat_usedmem )
 								.put( JsonTag.BOOL_PENCAP_OFF, stat_pencap_off )
@@ -374,17 +419,26 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 							{
 								isPenAuthenticated = true;
 								btConnection.onAuthorized();
-
-								try
+								if(isSupportPenProfile())
 								{
-									JSONObject job = new JSONObject()
-											.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
-											.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
-									btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job ) );
+									requestOnDefaultCalibration = true;
+									requestDefaultCalibration();
 								}
-								catch ( JSONException e )
+								else
 								{
-									e.printStackTrace();
+									try
+									{
+
+										JSONObject job = new JSONObject()
+												.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
+												.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
+										btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job ) );
+									}
+									catch ( JSONException e )
+									{
+										e.printStackTrace();
+									}
+
 								}
 							}
 						}
@@ -393,8 +447,11 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				}
 				else
 				{
-					NLog.d( "[CommProcessor20] RES_PenStatus received error. pen will be shutdown." );
-					btConnection.unbind();
+					if(!isPenAuthenticated)
+					{
+						NLog.d( "[CommProcessor20] RES_PenStatus received error. pen will be shutdown." );
+						btConnection.unbind();
+					}
 				}
 				break;
 
@@ -431,18 +488,28 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 							isPenAuthenticated = true;
 							btConnection.onAuthorized();
 
+							if(isSupportPenProfile())
+							{
+								requestOnDefaultCalibration = true;
+								requestDefaultCalibration();
+							}
+							else
+							{
+								try
+								{
 
-							try
-							{
-								JSONObject job = new JSONObject()
-										.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
-										.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
-								btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job ) );
+									JSONObject job = new JSONObject()
+											.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
+											.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
+									btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job ) );
+								}
+								catch ( JSONException e )
+								{
+									e.printStackTrace();
+								}
+
 							}
-							catch ( JSONException e )
-							{
-								e.printStackTrace();
-							}
+
 						}
 					}
 					else
@@ -530,12 +597,20 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			 * ------------------------------------------------------------------
 			 */
 			case CMD20.RES_UsingNoteNotify:
+			{
 				int result = pack.getResultCode();
 				NLog.d( "[CommProcessor20] RES_UsingNoteNotify :  resultCode =" + pack.getResultCode() );
-				if ( result == 0x00 )
+				boolean isSuccess = result == 1 ? true : false;
+				try
 				{
-					btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_USING_NOTE_SET_FAIL ) );
+					JSONObject job = new JSONObject().put( JsonTag.BOOL_RESULT, isSuccess );
+					btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_USING_NOTE_SET_RESULT, job ) );
 				}
+				catch ( Exception e )
+				{
+					e.printStackTrace();
+				}
+			}
 				break;
 
 			/*
@@ -566,7 +641,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				currPenTipType = pack.getDataRangeInt( 9, 1 );
 				if ( PEN_UP_DOWN == 0 )
 				{
-					// 펜 다운 일 경우 Start Dot의 timestamp 설정
+					// In case of pen down, set the timestamp of the Start Dot
 					this.prevDotTime = MTIME;
 					this.isPrevDotDown = true;
 					this.isStartWithDown = true;
@@ -575,7 +650,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				{
 					if ( prevPacket != null )
 					{
-						// 펜 업 일 경우 바로 이전 도트를 End Dot로 삽입
+						// In case of pen-up, Insert previous dots as End Dots
 						int pFORCE = 0;
 						int pX = 0;
 						int pY = 0;
@@ -622,7 +697,6 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 						this.processDot( sectionId, ownerId, noteId, pageId, pTimeLong, pX, pY, pFX, pFY, pFORCE, DotType.PEN_ACTION_UP.getValue(), currColor ,TILT_X, TILT_Y,  twist, currPenTipType);
 					}
-					// 도트데이터 없는 경우를 찾기위한 테스트 코드
 //					else
 //					{
 //						this.processDot( sectionId, ownerId, noteId, pageId, 0, 0, 0, 0, 0, 0, DotType.PEN_ACTION_DOWN.getValue(), currColor ,0, 0,  0, currPenTipType);
@@ -641,11 +715,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 				currColor = ByteConverter.byteArrayToInt( new byte[]{ cbyte[0], cbyte[1], cbyte[2], cbyte[3] } );
 
-
-
 				// NLog.d("[CommProcessor20] new dot noteId = " + noteId + " / pageId = " + pageId + " / timeLong : " + NumberFormat.getInstance().format(MTIME) + " / state : " + PEN_UP_DOWN);
-
-
 				break;
 
 
@@ -658,7 +728,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			 */
 			case CMD20.RES_EventIdChange:
 
-				// 노트 페이지 정보가 변경
+				// Change note page information
 				byte[] osbyte = pack.getDataRange( 0, 4 );
 
 				prevSectionId = sectionId;
@@ -675,7 +745,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 				if ( prevPacket != null )
 				{
-					// 페이지가 바뀌었으나 펜 업이 안온경우 펜 업과 동시에 펜 다운을 처리해준다.
+					// If the page is changed but the Pen Up signal is not turned on, it handles the pen-down process simultaneously with the pen-up.
 					int pFORCE = 0;
 					int pX = 0;
 					int pY = 0;
@@ -761,11 +831,11 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				}
 
 				if (isPrevDotDown) {
-					// 펜업의 경우 시작 도트로 저장
+					// In case of pen-up, save as start dot
 					this.isPrevDotDown = false;
 					this.processDot(sectionId, ownerId, noteId, pageId, timeLong, X, Y, FLOAT_X, FLOAT_Y, FORCE, DotType.PEN_ACTION_DOWN.getValue(), currColor, TILT_X, TILT_Y, twist, currPenTipType);
 				} else {
-					// 펜업이 아닌 경우 미들 도트로 저장
+					// If it is not a pen-up, save it as a middle dot.
 					this.processDot(sectionId, ownerId, noteId, pageId, timeLong, X, Y, FLOAT_X, FLOAT_Y, FORCE, DotType.PEN_ACTION_MOVE.getValue(), currColor, TILT_X, TILT_Y, twist, currPenTipType);
 				}
 
@@ -785,13 +855,13 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			{
 				long TIME = pack.getDataRangeInt( 0, 1 );
 				long timeLong = prevDotTime + TIME;
-				// max값
+				// max value
 				int FORCE = 1020;
 				int X = pack.getDataRangeInt( 1, 2 );
 				int Y = pack.getDataRangeInt( 3, 2 );
 				int FLOAT_X = pack.getDataRangeInt( 5, 1 );
 				int FLOAT_Y = pack.getDataRangeInt( 6, 1 );
-				// default 값
+				// default values
 				int TILT_X = 0;
 				int TILT_Y = 0;
 				int twist = 0;
@@ -805,13 +875,13 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 				if ( isPrevDotDown )
 				{
-					// 펜업의 경우 시작 도트로 저장
+					// In case of pen-up, save as start dot
 					this.isPrevDotDown = false;
 					this.processDot( sectionId, ownerId, noteId, pageId, timeLong, X, Y, FLOAT_X, FLOAT_Y, FORCE, DotType.PEN_ACTION_DOWN.getValue(), currColor, TILT_X, TILT_Y, twist, currPenTipType );
 				}
 				else
 				{
-					// 펜업이 아닌 경우 미들 도트로 저장
+					// If it is not a pen-up, save it as a middle dot.
 					this.processDot( sectionId, ownerId, noteId, pageId, timeLong, X, Y, FLOAT_X, FLOAT_Y, FORCE, DotType.PEN_ACTION_MOVE.getValue(), currColor, TILT_X, TILT_Y, twist, currPenTipType );
 				}
 
@@ -832,13 +902,13 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			{
 				long TIME = pack.getDataRangeInt( 0, 1 );
 				long timeLong = prevDotTime + TIME;
-				// max값
+				// max value
 				int FORCE = 1020;
 				int X = pack.getDataRangeInt( 1, 1 );
 				int Y = pack.getDataRangeInt( 2, 1 );
 				int FLOAT_X = pack.getDataRangeInt( 3, 1 );
 				int FLOAT_Y = pack.getDataRangeInt( 4, 1 );
-				// default 값
+				// default value
 				int TILT_X = 0;
 				int TILT_Y = 0;
 				int twist = 0;
@@ -852,13 +922,13 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				NLog.d( "[CommProcessor20] received RES_EventDotData3() sectionId = "+sectionId+",ownerId="+ownerId+",noteId=" + noteId+",X="+X+",Y="+Y+",FLOAT_X="+FLOAT_X+",FLOAT_Y"+FLOAT_Y );
 				if ( isPrevDotDown )
 				{
-					// 펜업의 경우 시작 도트로 저장
+					// In case of pen-up, save as start dot
 					this.isPrevDotDown = false;
 					this.processDot( sectionId, ownerId, noteId, pageId, timeLong, X, Y, FLOAT_X, FLOAT_Y, FORCE, DotType.PEN_ACTION_DOWN.getValue(), currColor, TILT_X, TILT_Y, twist, currPenTipType );
 				}
 				else
 				{
-					// 펜업이 아닌 경우 미들 도트로 저장
+					// If it is not a pen-up, save it as a middle dot.
 					this.processDot( sectionId, ownerId, noteId, pageId, timeLong, X, Y, FLOAT_X, FLOAT_Y, FORCE, DotType.PEN_ACTION_MOVE.getValue(), currColor, TILT_X, TILT_Y, twist, currPenTipType );
 				}
 
@@ -930,9 +1000,29 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_PEN_COLOR_RESULT, job ) );
 						break;
 					case CMD20.REQ_PenStatusChange_TYPE_SensitivitySet:
-						if(job != null)
-							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_RESULT, job ) );
+						if(resultCode == 3)
+						{
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE) );
+						}
+						else
+						{
+							if(job != null)
+								btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_RESULT, job ) );
+						}
 						break;
+
+					case CMD20.REQ_PenStatusChange_TYPE_SensitivitySet_FSC:
+						if(resultCode == 3)
+						{
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE) );
+						}
+						else
+						{
+							if(job != null)
+								btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_RESULT_FSC, job ) );
+						}
+						break;
+
 
 				}
 				break;
@@ -1062,11 +1152,13 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				{
 					packetId = pack.getDataRangeInt( 0, 2 );
 					mHandler.removeCallbacks( mChkOfflineFailRunnable );
-					// 0 : 시작 1: 중간 2: 끝
+					// 0 : start 1: middle 2: end
 					int position = pack.getDataRangeInt( 7, 1 );
 					NLog.d( "[CommProcessor20] received RES_OfflineChunk(0x24) command. packetId=" + packetId + ";position=" + position);
 					int sizeBeforeCompress = pack.getDataRangeInt( 3, 2 );
-					OfflineByteParser parser = new OfflineByteParser( pack.getData() );
+					OfflineByteParser parser = new OfflineByteParser( pack.getData() , maxPress);
+					if(factor != null)
+						parser.setCalibrate( factor );
 					try
 					{
 						offlineStrokes.addAll( parser.parse() );
@@ -1081,7 +1173,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					}
 
 					oRcvDataSize += sizeBeforeCompress;
-					// 만약 Chunk를 다 받았다면 offline data를 처리한다.
+					// If you have received the chunk, process the offline data.
 					if ( position == 2 )
 					{
 						if ( offlineStrokes.size() != 0 )
@@ -1243,6 +1335,240 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				}
 				break;
 
+			case CMD20.RES_PenProfile:
+			{
+				JSONArray jsonArray = null;
+				resultCode = pack.getResultCode();
+				NLog.d( "[CommProcessor20] RES_PenProfile resultCode: " + resultCode);
+				String profile_name = pack.getDataRangeString( 0, 8 ).trim();
+				int res_type = pack.getDataRangeInt( 8, 1 );
+
+				if ( resultCode == 0x00 )
+				{
+					JSONObject jsonObject = new JSONObject();
+					if ( res_type == PROFILE_CREATE )
+					{
+						int res_status = pack.getDataRangeInt( 9, 1 );
+						try
+						{
+							jsonObject.put( JsonTag.STRING_PROFILE_NAME, profile_name );
+							jsonObject.put( JsonTag.INT_PROFILE_RES_STATUS, res_status );
+//							jsonObject.put( JsonTag.STRING_PROFILE_RES_MSG, res_status );
+						}
+						catch ( JSONException e )
+						{
+							e.printStackTrace();
+						}
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.PROFILE_CREATE, jsonObject ) );
+					}
+					else if ( res_type == PROFILE_DELETE )
+					{
+						int res_status = pack.getDataRangeInt( 9, 1 );
+
+						try
+						{
+							jsonObject.put( JsonTag.STRING_PROFILE_NAME, profile_name );
+							jsonObject.put( JsonTag.INT_PROFILE_RES_STATUS, res_status );
+						}
+						catch ( JSONException e )
+						{
+							e.printStackTrace();
+						}
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.PROFILE_DELETE, jsonObject ) );
+
+					}
+					else if ( res_type == PROFILE_INFO )
+					{
+						int res_status = pack.getDataRangeInt( 9, 1 );
+						try
+						{
+							jsonObject.put( JsonTag.STRING_PROFILE_NAME, profile_name );
+							jsonObject.put( JsonTag.INT_PROFILE_RES_STATUS, res_status );
+							if(res_status == 0x00)
+							{
+								int total = pack.getDataRangeInt( 10, 2 );
+								int sector_size = pack.getDataRangeInt( 12, 2 );
+								int use = pack.getDataRangeInt( 14, 2 );
+								int key = pack.getDataRangeInt( 16, 2 );
+								jsonObject.put( JsonTag.INT_PROFILE_INFO_TOTAL_SECTOR_COUNT, total );
+								jsonObject.put( JsonTag.INT_PROFILE_INFO_SECTOR_SIZE, sector_size );
+								jsonObject.put( JsonTag.INT_PROFILE_INFO_USE_SECTOR_COUNT, use );
+								jsonObject.put( JsonTag.INT_PROFILE_INFO_USE_KEY_COUNT, key );
+							}
+						}
+						catch ( JSONException e )
+						{
+							e.printStackTrace();
+						}
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.PROFILE_INFO, jsonObject ) );
+					}
+					else if ( res_type == PROFILE_READ_VALUE )
+					{
+						if(requestOnDefaultCalibration)
+						{
+							requestOnDefaultCalibration = false;
+
+							try
+							{
+								int count = pack.getDataRangeInt( 9, 1 );
+								int data_offset = 0;
+								data_offset = 10;
+								for(int i = 0; i < count; i++)
+								{
+									String key = pack.getDataRangeString( data_offset, 16 ).trim();
+									data_offset += 16;
+									int key_status = pack.getDataRangeInt( data_offset, 1 );
+									data_offset++;
+									int key_size = pack.getDataRangeInt( data_offset, 2 );
+									data_offset += 2;
+									byte[] data = pack.getDataRange(data_offset, key_size );
+									data_offset += key_size;
+									if(key.equals( KEY_DEFAULT_CALIBRATION ))
+									{
+										if(key_status == PROFILE_STATUS_SUCCESS)
+										{
+											ByteBuffer buffer = ByteBuffer.allocate( data.length ).put( data );
+											buffer.order( ByteOrder.LITTLE_ENDIAN );
+											buffer.rewind();
+											int pointCount = (int)buffer.get();
+											int[] ret = new int[pointCount*2];
+											for(int j =0; j < pointCount *2;j++)
+											{
+												ret[j] = buffer.getShort();
+												NLog.d( "KEY_DEFAULT_CALIBRATION ret["+j+"]");
+											}
+											reqCalibrate2(PenProfile.getCalibrateFactor(ret[0],ret[1],ret[2],ret[3],ret[4],ret[5]));
+										}
+										else
+										{
+											NLog.d( "KEY_DEFAULT_CALIBRATION key_status" +key_status);
+										}
+										break;
+									}
+								}
+								JSONObject job2 = new JSONObject()
+										.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
+										.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
+								btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job2 ) );
+
+
+							}
+							catch ( JSONException e )
+							{
+								e.printStackTrace();
+							}
+						}
+						else
+						{
+							try
+							{
+								jsonObject.put( JsonTag.STRING_PROFILE_NAME, profile_name );
+								int count = pack.getDataRangeInt( 9, 1 );
+								jsonArray = new JSONArray( );
+								int data_offset = 0;
+								data_offset = 10;
+								for(int i = 0; i < count; i++)
+								{
+									String key = pack.getDataRangeString( data_offset, 16 ).trim();
+									data_offset += 16;
+									int key_status = pack.getDataRangeInt( data_offset, 1 );
+									data_offset++;
+									int key_size = pack.getDataRangeInt( data_offset, 2 );
+									data_offset += 2;
+									byte[] data = pack.getDataRange(data_offset, key_size );
+									data_offset += key_size;
+									jsonArray.put( new  JSONObject().put(JsonTag.STRING_PROFILE_KEY, key  ).put( JsonTag.INT_PROFILE_RES_STATUS, key_status ).put( JsonTag.BYTE_PROFILE_VALUE, Base64.encodeToString(data ,Base64.DEFAULT)) );
+								}
+
+								jsonObject.put( JsonTag.ARRAY_PROFILE_RES, jsonArray);
+							}
+							catch ( JSONException e )
+							{
+								e.printStackTrace();
+							}
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.PROFILE_READ_VALUE, jsonObject ) );
+						}
+					}
+					else if ( res_type == PROFILE_WRITE_VALUE )
+					{
+						try
+						{
+							jsonObject.put( JsonTag.STRING_PROFILE_NAME, profile_name );
+							int count = pack.getDataRangeInt( 9, 1 );
+							jsonArray = new JSONArray( );
+							int data_offset = 0;
+							data_offset = 10;
+							for(int i = 0; i < count; i++)
+							{
+								String key = pack.getDataRangeString( data_offset, 16 ).trim();
+								data_offset += 16;
+								int key_status = pack.getDataRangeInt( data_offset, 1 );
+								data_offset++;
+								jsonArray.put( new  JSONObject().put(JsonTag.STRING_PROFILE_KEY, key  ).put( JsonTag.INT_PROFILE_RES_STATUS, key_status ) );
+							}
+							jsonObject.put( JsonTag.ARRAY_PROFILE_RES, jsonArray);
+						}
+						catch ( JSONException e )
+						{
+							e.printStackTrace();
+						}
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.PROFILE_WRITE_VALUE, jsonObject ) );
+
+					}
+					else if ( res_type == PROFILE_DELETE_VALUE )
+					{
+						try
+						{
+							jsonObject.put( JsonTag.STRING_PROFILE_NAME, profile_name );
+							int count = pack.getDataRangeInt( 9, 1 );
+							jsonArray = new JSONArray( );
+							int data_offset = 0;
+							data_offset = 10;
+							for(int i = 0; i < count; i++)
+							{
+								String key = pack.getDataRangeString( data_offset, 16 ).trim();
+								data_offset += 16;
+								int key_status = pack.getDataRangeInt( data_offset, 1 );
+								data_offset++;
+								jsonArray.put( new  JSONObject().put(JsonTag.STRING_PROFILE_KEY, key  ).put( JsonTag.INT_PROFILE_RES_STATUS, key_status ) );
+							}
+							jsonObject.put( JsonTag.ARRAY_PROFILE_RES, jsonArray);
+						}
+						catch ( JSONException e )
+						{
+							e.printStackTrace();
+						}
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.PROFILE_DELETE_VALUE, jsonObject ) );
+					}
+				}
+				else
+				{
+					if(requestOnDefaultCalibration)
+					{
+						requestOnDefaultCalibration = false;
+
+						NLog.d( "KEY_DEFAULT_CALIBRATION PROFILE_FAILURE");
+						try
+						{
+
+							JSONObject job2 = new JSONObject()
+									.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
+									.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job2 ) );
+						}
+						catch ( JSONException e )
+						{
+							e.printStackTrace();
+						}
+					}
+					else
+					{
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.PROFILE_FAILURE ) );
+					}
+				}
+			}
+			break;
+
 		}
 	}
 
@@ -1251,8 +1577,8 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 	private void processDot( int sectionId, int ownerId, int noteId, int pageId, long timeLong, int x, int y, int fx, int fy, int force, int type, int color ,int tiltX, int tiltY , int  twist, int penTipType)
 	{
-		// max 1024 에서 256 으로 다운 스케일
-		force = force /4;
+		// Down scale from maxPressValue to 256
+		force = (force * 255)/maxPress ;
 		Fdot tempFdot = new Fdot((x + (float) (fx * 0.01)), (y + (float) (fy * 0.01)), force, type, timeLong, sectionId, ownerId, noteId, pageId, color,penTipType, tiltX, tiltY, twist);
 
 		if ( noteId == 45 && pageId == 1 )
@@ -1268,6 +1594,8 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	@Override
 	public void onFilteredDot( Fdot dot )
 	{
+		if(factor != null)
+			dot.pressure = (int)factor[dot.pressure];
 		btConnection.onCreateDot( dot );
 	}
 
@@ -1279,7 +1607,8 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 
 	/**
-	 * 펜 상태 요청
+	 * Pen Info request
+	 *
 	 */
 	public void reqPenInfo()
 	{
@@ -1291,25 +1620,30 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 //			//
 //			return;
 //		}
+
+        if(penInfoReceiveCount++ < PENINFO_SEND_FAIL_TRY_COUNT) {
+            mHandler.postDelayed(mChkPenInfoFailRunnable, PENINFO_SEND_FAIL_TIME);
+        }
+        else {
+            penInfoReceiveCount = 0;
+            mHandler.removeCallbacks(mChkPenInfoFailRunnable);
+        }
+
 		write( ProtocolParser20.buildReqPenInfo( appVer ) );
-//		mHandler.postDelayed( mChkPenInfoFailRunnable ,PENINFO_SEND_FAIL_TIME);
+
 	}
 
-
-
-
-
 	/**
-	 * 펜 RTC 설정
+	 * Pen RTC Setting
 	 */
-	private void reqSetCurrentTime ()
+	public void reqSetCurrentTime ()
 	{
 		int k = (CMD20.REQ_PenStatusChange << 8) & 0xff00 + CMD20.REQ_PenStatusChange_TYPE_CurrentTimeSet ;
 		execute( new SetTimeCommand( k, this ) );
 	}
 
 	/**
-	 * 펜 상태 요청
+	 * Pen status request
 	 */
 	public void reqPenStatus()
 	{
@@ -1317,8 +1651,8 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	}
 
 	/**
-	 * 2.0 에서 삭제됨
-	 * force calibrate 요청
+	 * deprecated from 2.0
+	 * force calibrate request
 	 */
 	public void reqForceCalibrate()
 	{
@@ -1344,7 +1678,27 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 	public void reqSetPenSensitivity( short sensitivity )
 	{
-		write( ProtocolParser20.buildPenSensitivitySetup( sensitivity ) );
+		if(sensorType != 0)
+		{
+			btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE) );
+		}
+		else
+			write( ProtocolParser20.buildPenSensitivitySetup( sensitivity ) );
+	}
+
+	/**
+	 * Req set pen sensitivity fsc.
+	 *
+	 * @param sensitivity the sensitivity
+	 */
+	public void reqSetPenSensitivityFSC( short sensitivity )
+	{
+		if(sensorType != 1)
+		{
+			btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE) );
+		}
+		else
+			write( ProtocolParser20.buildPenSensitivitySetupFSC( sensitivity ) );
 	}
 
 	/**
@@ -1424,7 +1778,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 *
 	 * @param sectionId the section id
 	 * @param ownerId   the owner id
-	 * @param noteId	the note id
+	 * @param noteId    the note id
 	 * @param pageIds   the page ids
 	 */
 	public void reqOfflineData( int sectionId, int ownerId, int noteId, int[] pageIds )
@@ -1455,7 +1809,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 *
 	 * @param sectionId the section id
 	 * @param ownerId   the owner id
-	 * @param noteId	the note id
+	 * @param noteId    the note id
 	 */
 	public void reqOfflineDataPageList( int sectionId, int ownerId, int noteId )
 	{
@@ -1538,6 +1892,13 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		write( ProtocolParser20.buildPasswordSetup( false, oldPassword, "" ) );
 	}
 
+	/**
+	 * Req pen sw upgrade.
+	 *
+	 * @param source     the source
+	 * @param fwVersion  the fw version
+	 * @param isCompress the is compress
+	 */
 	public void reqPenSwUpgrade( File source, String fwVersion , boolean isCompress)
 	{
 		NLog.d( "[CommProcessor20] request pen firmware upgrade." );
@@ -1575,7 +1936,112 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	}
 
 	/**
-	 * 펜에서 온 펜 SW 전송 요청에 대한 응답
+	 * Gets connect device name.
+	 *
+	 * @return the connect device name
+	 */
+	public String getConnectDeviceName()
+	{
+		return connectedDeviceName;
+	}
+
+	/**
+	 * Gets connect sub name.
+	 *
+	 * @return the connect sub name
+	 */
+	public String getConnectSubName()
+	{
+		return connectedSubName;
+	}
+
+
+
+
+	@Override
+	public boolean isSupportPenProfile ()
+	{
+		String[] temp = receiveProtocolVer.split( "\\." );
+		float ver = 0f;
+		try
+		{
+			ver = Float.parseFloat( temp[0]+"."+temp[1] );
+		}catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
+		if(ver >= PEN_PROFILE_SUPPORT_PROTOCOL_VERSION)
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * Request default calibration.
+	 */
+	public void requestDefaultCalibration()
+	{
+		String proFileName = "neolab";
+		String[] keys = {KEY_DEFAULT_CALIBRATION };
+		readProfileValue ( proFileName, keys );
+	}
+
+
+	@Override
+	public void createProfile ( String proFileName, byte[] password )
+	{
+		write( ProtocolParser20.buildProfileCreate(proFileName, password ) );
+
+	}
+
+	@Override
+	public void deleteProfile ( String proFileName, byte[] password )
+	{
+		write( ProtocolParser20.buildProfileDelete(proFileName, password ) );
+
+	}
+
+	@Override
+	public void writeProfileValue ( String proFileName, byte[] password ,String[] keys, byte[][] data )
+	{
+		write( ProtocolParser20.buildProfileWriteValue(proFileName, password ,keys ,data) );
+
+	}
+
+	@Override
+	public void readProfileValue ( String proFileName, String[] keys )
+	{
+		write( ProtocolParser20.buildProfileReadValue(proFileName, keys ) );
+
+	}
+
+	@Override
+	public void deleteProfileValue ( String proFileName, byte[] password, String[] keys )
+	{
+		write( ProtocolParser20.buildProfileDeleteValue(proFileName, password, keys) );
+
+	}
+
+	@Override
+	public void getProfileInfo ( String proFileName )
+	{
+		write( ProtocolParser20.buildProfileInfo(proFileName) );
+
+	}
+
+	/**
+	 * Gets press sensor type.
+	 *
+	 * @return the press sensor type
+	 */
+	public int getPressSensorType()
+	{
+
+		return sensorType;
+	}
+
+	/**
+	 * Responding to a request to send a pen SW from a pen
 	 *
 	 * @param offset the offset
 	 * @param status the status
@@ -1602,7 +2068,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	}
 
 	/**
-	 * 펜 SW 업그레이드 상태에 따른 처리
+	 * Processing according to pen SW upgrade status
 	 *
 	 * @param offset the offset
 	 * @param status the status

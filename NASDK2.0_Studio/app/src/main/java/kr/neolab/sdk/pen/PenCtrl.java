@@ -11,6 +11,7 @@ import kr.neolab.sdk.broadcastreceiver.BTDuplicateRemoveBroadcasterReceiver;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
 import kr.neolab.sdk.pen.bluetooth.BTAdt;
 import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
+import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IOfflineDataListener;
 import kr.neolab.sdk.pen.penmsg.IPenDotListener;
@@ -54,13 +55,64 @@ public class PenCtrl implements IPenCtrl {
         return true;
     }
 
+	@Override
+	public void createProfile ( String proFileName, byte[] password ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		currentAdt.createProfile ( proFileName, password );
+	}
 
-    /**
-     * Gets an instance of the Pen Controller
-     *
-     * @return instance instance
-     */
-    public synchronized static PenCtrl getInstance() {
+	@Override
+	public void deleteProfile ( String proFileName, byte[] password ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		currentAdt.deleteProfile ( proFileName, password );
+
+	}
+
+	@Override
+	public void writeProfileValue ( String proFileName, byte[] password, String[] keys, byte[][] data ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		currentAdt.writeProfileValue ( proFileName, password ,keys, data);
+
+	}
+
+	@Override
+	public void readProfileValue ( String proFileName, String[] keys ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		currentAdt.readProfileValue ( proFileName, keys );
+
+	}
+
+	@Override
+	public void deleteProfileValue ( String proFileName, byte[] password, String[] keys ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		currentAdt.deleteProfileValue ( proFileName, password , keys);
+
+	}
+
+	@Override
+	public void getProfileInfo ( String proFileName ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
+	{
+		currentAdt.getProfileInfo ( proFileName);
+	}
+
+	@Override
+	public boolean isSupportPenProfile ()
+	{
+		return currentAdt.isSupportPenProfile();
+	}
+
+	@Override
+	public boolean unpairDevice ( String address )
+	{
+		return currentAdt.unpairDevice(address);
+	}
+
+	/**
+	 * Gets an instance of the Pen Controller
+	 *
+	 * @return instance instance
+	 */
+	public synchronized static PenCtrl getInstance() {
         if (myInstance == null) {
             myInstance = new PenCtrl();
         }
@@ -110,12 +162,6 @@ public class PenCtrl implements IPenCtrl {
     @Override
     public IOfflineDataListener getOffLineDataListener() {
         return currentAdt.getOffLineDataListener();
-    }
-
-    @Override
-    public void startup() {
-        NLog.i("[BTCtrl] startup");
-        currentAdt.startListen();
     }
 
     @Override
@@ -328,13 +374,19 @@ public class PenCtrl implements IPenCtrl {
 	}
 
 	@Override
+	public void reqSetupPenSensitivityFSC( short level ) throws ProtocolNotSupportedException
+	{
+		currentAdt.reqSetupPenSensitivityFSC( level );
+	}
+
+	@Override
 	public void reqSetupPenCapOff ( boolean on ) throws ProtocolNotSupportedException
 	{
 		currentAdt.reqSetupPenCapOff( on );
 	}
 
 	@Override
-	public void reqSetupPenHover ( boolean on )
+	public void reqSetupPenHover ( boolean on )  throws ProtocolNotSupportedException
 	{
 		currentAdt.reqSetupPenHover( on );
 	}
@@ -380,6 +432,15 @@ public class PenCtrl implements IPenCtrl {
 	 */
 	public int getPenStatus() {
 		return currentAdt.getPenStatus();
+	}
+
+	/**
+	 * Get press sensor type int.
+	 *
+	 * @return the int
+	 */
+	public int getPressSensorType(){
+		return currentAdt.getPressSensorType();
 	}
 
 }

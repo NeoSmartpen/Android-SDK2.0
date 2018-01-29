@@ -56,7 +56,7 @@ public class OfflineFileParser implements IFilterListener
 
 	private OfflineFileParser()
 	{
-		// 필터 등록
+		// Filter registration
 		this.filterPaper = new FilterForPaper( this );
 		this.filterFilm = new FilterForFilm( this );
 	}
@@ -134,25 +134,27 @@ public class OfflineFileParser implements IFilterListener
 	/**
 	 * find list of offline data file
 	 *
+	 * @param penAddress the pen address
 	 * @return string [ ]
 	 */
-	public static String[] getOfflineFiles()
+	public static String[] getOfflineFiles(String penAddress)
 	{
-		return getOfflineFiles( getDefaultFilePath() );
+		return getOfflineFiles( penAddress,OfflineFile.getOfflineFilePath() );
 	}
 
 	/**
 	 * find list of offline data file
 	 *
-	 * @param filepath The location of the data files are stored offline
+	 * @param penAddress the pen address
+	 * @param filepath   The location of the data files are stored offline
 	 * @return string [ ]
 	 */
-	public static String[] getOfflineFiles( String filepath )
+	public static String[] getOfflineFiles(String penAddress, String filepath )
 	{
 		ArrayList<String> filelist = new ArrayList<String>();
 
-		File path = new File( filepath );
-
+		penAddress = penAddress.replace( ":", "" );
+		File path = new File( filepath);
 		if ( path != null && path.listFiles() != null && path.listFiles().length > 0 )
 		{
 			for ( File file : path.listFiles() )
@@ -209,15 +211,15 @@ public class OfflineFileParser implements IFilterListener
 			this.isCompressed = true;
 		}
 
-		// 파일병합
+		// Merge files
 		NLog.i( "[OfflineFileParser] process loadDataFromFile" );
 		this.loadDataFromFile( target );
 
-		// 헤더파싱
+		// Header parsing
 		NLog.i( "[OfflineFileParser] process parseHeader" );
 		this.parseHeader();
 
-		// 본문파싱
+		// Body parsing
 		NLog.i( "[OfflineFileParser] process parseBody" );
 		this.parseBody();
 
@@ -331,7 +333,7 @@ public class OfflineFileParser implements IFilterListener
 		
 		int lhLineColor = Color.BLACK;
 
-		// 현재 라인의 도트
+		// The dot of the current line
 		ArrayList<Fdot> tempDots = new ArrayList<Fdot>();
 
 		int idx = 0;
@@ -368,7 +370,7 @@ public class OfflineFileParser implements IFilterListener
 			{
 				dotCount++;
 
-				// 라인 헤더에 정의된 도트갯수보다 넘어가면 LN이 나올때까지 한바이트씩 포인터를 이동한다.
+				// If it exceeds the number of dots defined in the line header, it moves the pointer by one byte until the LN is reached.
 				if ( dotCount > lhDotTotal )
 				{
 					idx++;

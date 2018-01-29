@@ -29,7 +29,7 @@
     />
     <ListView android:id="@+id/paired_devices"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:stackFromBottom="true"
         android:layout_weight="1"
     />
@@ -44,13 +44,14 @@
     />
     <ListView android:id="@+id/new_devices"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:stackFromBottom="true"
-        android:layout_weight="2"
+        android:layout_weight="1"
     />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="20dp"
         android:orientation="horizontal">
         <Button android:id="@+id/button_scan"
                 android:layout_width="match_parent"

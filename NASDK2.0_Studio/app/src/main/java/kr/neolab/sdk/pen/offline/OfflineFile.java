@@ -43,11 +43,12 @@ public class OfflineFile
 	/**
 	 * Instantiates a new Offline file.
 	 *
+	 * @param penAddress   the pen address
 	 * @param fileinfo     the fileinfo
 	 * @param packetCount  the packet count
 	 * @param isCompressed the is compressed
 	 */
-	public OfflineFile( String fileinfo, int packetCount, boolean isCompressed )
+	public OfflineFile( String penAddress, String fileinfo, int packetCount, boolean isCompressed )
 	{
 		String[] arr = fileinfo.split( "\\\\" );
 
@@ -65,19 +66,20 @@ public class OfflineFile
 		this.appendCount = 0;
 		this.isCompressed = isCompressed;
 		
-		openTempFile();
+		openTempFile(penAddress);
 	}
 
 	/**
 	 * Instantiates a new Offline file.
 	 * supported from Protocol 2.0
 	 *
+	 * @param penAddress   the pen address
 	 * @param sectionId    the section id
 	 * @param ownerId      the owner id
 	 * @param noteId       the note id
 	 * @param isCompressed the is compressed
 	 */
-	public OfflineFile( int sectionId, int ownerId, int noteId, boolean isCompressed )
+	public OfflineFile( String penAddress, int sectionId, int ownerId, int noteId, boolean isCompressed )
 	{
 		this.sectionId = sectionId;
 		this.ownerId = ownerId;
@@ -86,12 +88,13 @@ public class OfflineFile
 		this.appendCount = 0;
 		this.isCompressed = isCompressed;
 
-		openTempFile();
+		openTempFile(penAddress);
 	}
 
 
-	private void openTempFile()
+	private void openTempFile(String penAddress)
 	{
+		penAddress = penAddress.replace( ":", "" );
 		File path = new File( OFFLINE_FILE_PATH );
 
 		if ( !path.isDirectory() )
@@ -113,10 +116,13 @@ public class OfflineFile
 
 	/**
 	 * Clear temp file.
+	 *
+	 * @param penAddress the pen address
 	 */
-	public void clearTempFile()
+	public void clearTempFile(String penAddress)
 	{
-		File path = new File( OFFLINE_FILE_PATH );
+		penAddress = penAddress.replace( ":","" );
+		File path = new File( OFFLINE_FILE_PATH);
 
 		File[] files = path.listFiles();
 
@@ -286,7 +292,6 @@ public class OfflineFile
 		}
 		
 		String filename = String.format( DEFAULT_FILE_FORMAT, sectionId, ownerId, noteId, pageId, System.currentTimeMillis(), isCompressed ? "zip" : "pen" );
-		
 		boolean result = tempFile.renameTo( new File(OFFLINE_FILE_PATH, filename) );
 		
 		NLog.d("[OfflineFile] result : " + result + ", filename : " + filename );

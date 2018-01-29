@@ -5,8 +5,8 @@ package kr.neolab.sdk.util;
  */
 public class SDKVersion {
 
-	/**
-	 * The constant version.
-	 */
-	public static String version = "2.00.0008";
+    /**
+     * The constant version.
+     */
+    public static String version = "2.01.01";
 }

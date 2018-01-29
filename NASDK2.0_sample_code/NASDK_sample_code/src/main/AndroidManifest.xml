@@ -34,6 +34,7 @@
         </activity>
         <activity android:name="kr.neolab.samplecode.DeviceListActivity"></activity>
         <activity android:name="kr.neolab.samplecode.SettingActivity"></activity>
+        <activity android:name="kr.neolab.samplecode.ProfileTestActivity"></activity>
         <service android:name="kr.neolab.samplecode.NeoSampleService"></service>
     </application>
 

@@ -11,8 +11,9 @@ public interface IPenDotListener
      * Fired when a receive dot successfully, override to handle in your own code
      * supported from Protocol 2.0
      *
-     * @param dot the dot
+     * @param macAddress the mac address
+     * @param dot        the dot
      */
-    public void onReceiveDot(Dot dot);
+    public void onReceiveDot(String macAddress, Dot dot);
 
 }

@@ -5,10 +5,10 @@ package kr.neolab.sdk.pen.filter;
  */
 public interface IFilterListener
 {
-	/**
-	 * On filtered dot.
-	 *
-	 * @param dot the dot
-	 */
-	public void onFilteredDot(Fdot dot);
+    /**
+     * On filtered dot.
+     *
+     * @param dot the dot
+     */
+    public void onFilteredDot(Fdot dot);
 }

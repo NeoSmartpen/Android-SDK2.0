@@ -3,11 +3,10 @@ package kr.neolab.samplecode;
 import android.app.Dialog;
 import android.content.Context;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 public class InputPasswordDialog extends Dialog
 {
@@ -16,11 +15,12 @@ public class InputPasswordDialog extends Dialog
 	public Button btnLogin;
 	
 	public EditText edPass;
+
+	private String penAddress = "";
 	
 	public InputPasswordDialog( Context context, MainActivity p )
 	{
 		super( context );
-		
 		requestWindowFeature( Window.FEATURE_NO_TITLE );
 		getWindow().clearFlags( WindowManager.LayoutParams.FLAG_DIM_BEHIND );
 		
@@ -41,10 +41,15 @@ public class InputPasswordDialog extends Dialog
 			}
 		} );
 	}
+	public void show(String penAddress)
+	{
+		this.penAddress = penAddress;
+		super.show();
+	}
 	
 	public void submit()
 	{
-		parent.inputPassword( edPass.getText().toString() );
+		parent.inputPassword( penAddress, edPass.getText().toString() );
 	}
 	
 	@Override

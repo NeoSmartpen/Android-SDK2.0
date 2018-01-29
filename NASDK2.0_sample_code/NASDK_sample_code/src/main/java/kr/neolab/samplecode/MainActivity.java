@@ -53,6 +53,7 @@ public class MainActivity extends Activity
 	private static final int REQUEST_CONNECT_DEVICE_SECURE = 4;
 
 	private PenClientCtrl penClientCtrl;
+	private MultiPenClientCtrl multiPenClientCtrl;
 
 	private kr.neolab.samplecode.SampleView mSampleView;
 
@@ -69,6 +70,9 @@ public class MainActivity extends Activity
 	private int currentOwnerId = -1;
 	private int currentBookcodeId = -1;
 	private int currentPagenumber = -1;
+	private int connectionMode = 0;
+
+	private ArrayList<String> connectedList= null;
 
 	@Override
 	protected void onCreate( Bundle savedInstanceState )
@@ -105,14 +109,37 @@ public class MainActivity extends Activity
 		mBuilder.setSmallIcon( R.drawable.ic_launcher_n );
 		mBuilder.setContentIntent( pendingIntent );   
 
-		penClientCtrl = PenClientCtrl.getInstance( getApplicationContext() );
+
 		chkPermissions ();
-		Log.d( TAG, "SDK Version " + penClientCtrl.getSDKVerions() );
 		Intent oIntent = new Intent();
 		oIntent.setClass( this, NeoSampleService.class );
 		startService( oIntent );
 
-		fwUpdateDialog = new FwUpdateDialog( this,penClientCtrl, mNotifyManager, mBuilder);
+
+		AlertDialog.Builder builder;
+		builder = new AlertDialog.Builder( this );
+		builder.setSingleChoiceItems( new CharSequence[]{ "Single Connection Mode", "Multi Connection Mode" }, connectionMode, new DialogInterface.OnClickListener()
+		{
+			@Override
+			public void onClick ( DialogInterface dialog, int which )
+			{
+				connectionMode = which;
+				if(connectionMode == 0)
+				{
+					penClientCtrl = PenClientCtrl.getInstance( getApplicationContext() );
+					fwUpdateDialog = new FwUpdateDialog( MainActivity.this,penClientCtrl, mNotifyManager, mBuilder);
+					Log.d( TAG, "SDK Version " + penClientCtrl.getSDKVerions() );
+				}else
+				{
+					multiPenClientCtrl = MultiPenClientCtrl.getInstance( getApplicationContext() );
+					fwUpdateDialog = new FwUpdateDialog( MainActivity.this,multiPenClientCtrl, mNotifyManager, mBuilder);
+					Log.d( TAG, "SDK Version " + multiPenClientCtrl.getSDKVerions() );
+				}
+				dialog.dismiss();
+			}
+		});
+		builder.setCancelable( false );
+		builder.create().show();
 	}
 
 
@@ -223,8 +250,15 @@ public class MainActivity extends Activity
 					if ( (address = data.getStringExtra( DeviceListActivity.EXTRA_DEVICE_ADDRESS )) != null )
 					{
 						boolean isLe = data.getBooleanExtra( DeviceListActivity.EXTRA_IS_BLUETOOTH_LE, false);
-						penClientCtrl.setLeMode(isLe);
-						penClientCtrl.connect( address );
+						if(connectionMode == 0)
+						{
+							penClientCtrl.setLeMode( isLe );
+							penClientCtrl.connect( address );
+						}
+						else
+						{
+							multiPenClientCtrl.connect(address, isLe );
+						}
 					}
 				}
 				break;
@@ -250,7 +284,15 @@ public class MainActivity extends Activity
 		oIntent.setClass( this, NeoSampleService.class );
 		stopService( oIntent );
 
-		PenClientCtrl.getInstance( getApplicationContext() ).disconnect();
+		if(penClientCtrl != null)
+			penClientCtrl.disconnect();
+		if(multiPenClientCtrl != null)
+		{
+			ArrayList<String> penAddressList = multiPenClientCtrl.getConnectDevice();
+			for(String address : penAddressList)
+				multiPenClientCtrl.disconnect( address );
+		}
+
 	}
 	@Override
 	public boolean onOptionsItemSelected( MenuItem item )
@@ -260,46 +302,138 @@ public class MainActivity extends Activity
 		{
 			case R.id.action_setting:
 
-				if ( penClientCtrl.isAuthorized() )
+				if(connectionMode == 0)
 				{
-					startActivity( new Intent( MainActivity.this, SettingActivity.class ) );
+					if(penClientCtrl.isAuthorized())
+					{
+						Intent intent = new Intent( MainActivity.this, SettingActivity.class );
+						startActivity( intent);
+					}
 				}
+				else
+				{
+					connectedList = multiPenClientCtrl.getConnectDevice();
+					if(connectedList.size() > 0)
+					{
+						AlertDialog.Builder builder;
+						String[] addresses = connectedList.toArray( new String[connectedList.size()]);
+						builder = new AlertDialog.Builder( this );
+						builder.setSingleChoiceItems( addresses, 0, new DialogInterface.OnClickListener()
+						{
+							@Override
+							public void onClick ( DialogInterface dialog, int which )
+							{
+								Intent intent = new Intent( MainActivity.this, SettingActivity.class );
+								intent.putExtra("pen_address",  connectedList.get( which ) );
+								startActivity( intent);
+								dialog.dismiss();
+							}
+						});
+						builder.create().show();
+					}
 
+				}
 				return true;
 
 			case R.id.action_connect:
-
-				if ( !penClientCtrl.isConnected() )
+				if(connectionMode == 1 || (connectionMode == 0 &&!penClientCtrl.isConnected()))
 				{
 					startActivityForResult( new Intent( MainActivity.this, DeviceListActivity.class ), 4 );
 				}
-
 				return true;
 
 			case R.id.action_disconnect:
-
-				if ( penClientCtrl.isConnected() )
+				if(connectionMode == 0)
 				{
-					penClientCtrl.disconnect();
+					if ( penClientCtrl.isConnected() )
+					{
+						penClientCtrl.disconnect();
+					}
+				}
+				else
+				{
+					connectedList = multiPenClientCtrl.getConnectDevice();
+					if(connectedList.size() > 0)
+					{
+						AlertDialog.Builder builder;
+						String[] addresses = connectedList.toArray( new String[connectedList.size()]);
+						builder = new AlertDialog.Builder( this );
+						builder.setSingleChoiceItems( addresses, 0, new DialogInterface.OnClickListener()
+						{
+							@Override
+							public void onClick ( DialogInterface dialog, int which )
+							{
+								multiPenClientCtrl.disconnect( connectedList.get( which ) );
+								dialog.dismiss();
+							}
+						});
+						builder.create().show();
+					}
+
 				}
 
 				return true;
 
 			case R.id.action_offline_list:
-
-				if ( penClientCtrl.isAuthorized() )
+				if(connectionMode == 0)
 				{
-					// to process saved offline data
-					penClientCtrl.reqOfflineDataList();
+					if ( penClientCtrl.isAuthorized() )
+					{
+						// to process saved offline data
+						penClientCtrl.reqOfflineDataList();
+					}
 				}
-
+				else
+				{
+					connectedList = multiPenClientCtrl.getConnectDevice();
+					if(connectedList.size() > 0)
+					{
+						AlertDialog.Builder builder;
+						String[] addresses = connectedList.toArray( new String[connectedList.size()]);
+						builder = new AlertDialog.Builder( this );
+						builder.setSingleChoiceItems( addresses, 0, new DialogInterface.OnClickListener()
+						{
+							@Override
+							public void onClick ( DialogInterface dialog, int which )
+							{
+								multiPenClientCtrl.reqOfflineDataList( connectedList.get( which ) );
+								dialog.dismiss();
+							}
+						});
+						builder.create().show();
+					}
+				}
 				return true;
 
 			case R.id.action_upgrade:
-
-				if ( penClientCtrl.isAuthorized() )
+				if(connectionMode == 0)
 				{
-					fwUpdateDialog.show();;
+					if ( penClientCtrl.isAuthorized() )
+					{
+						fwUpdateDialog.show( penClientCtrl.getConnectDevice() );
+					}
+				}
+				else
+				{
+					connectedList = multiPenClientCtrl.getConnectDevice();
+					if(connectedList.size() > 0)
+					{
+						AlertDialog.Builder builder;
+						String[] addresses = connectedList.toArray( new String[connectedList.size()]);
+						builder = new AlertDialog.Builder( this );
+						builder.setSingleChoiceItems( addresses, 0, new DialogInterface.OnClickListener()
+						{
+							@Override
+							public void onClick ( DialogInterface dialog, int which )
+							{
+								fwUpdateDialog.show( connectedList.get( which ) );
+								dialog.dismiss();
+							}
+						});
+						builder.create().show();
+					}
+
+
 //					if(penClientCtrl.getProtocolVersion() == 1)
 //					{
 //						// location of firmware (you should locate file in this directory.)
@@ -318,14 +452,72 @@ public class MainActivity extends Activity
 				return true;
 
 			case R.id.action_pen_status:
-
-				if ( penClientCtrl.isAuthorized() )
+				if(connectionMode == 0)
 				{
-					// request connected to the current state of the pen provided.
-					penClientCtrl.reqPenStatus();
+					if ( penClientCtrl.isAuthorized() )
+					{
+						penClientCtrl.reqPenStatus();
+					}
+				}
+				else
+				{
+					connectedList = multiPenClientCtrl.getConnectDevice();
+					if(connectedList.size() > 0)
+					{
+						AlertDialog.Builder builder;
+						String[] addresses = connectedList.toArray( new String[connectedList.size()]);
+						builder = new AlertDialog.Builder( this );
+						builder.setSingleChoiceItems( addresses, 0, new DialogInterface.OnClickListener()
+						{
+							@Override
+							public void onClick ( DialogInterface dialog, int which )
+							{
+								multiPenClientCtrl.reqPenStatus( connectedList.get( which ) );
+								dialog.dismiss();
+							}
+						});
+						builder.create().show();
+					}
+				}
+				return true;
+
+			case R.id.action_profile_test:
+				if(penClientCtrl.isAuthorized())
+				{
+					if(penClientCtrl.isSupportPenProfile())
+					{
+						startActivity( new Intent( MainActivity.this, ProfileTestActivity.class ) );
+
+					}
+					else
+					{
+						Util.showToast( this, "Firmware of this pen is not support pen profile feature." );
+					}
 				}
 
 				return true;
+
+			case R.id.action_pen_unpairing:
+				if(connectionMode == 0)
+				{
+					if(penClientCtrl.isAuthorized())
+						penClientCtrl.unpairDevice( penClientCtrl.getConnectDevice() ) ;
+				}
+				else
+				{
+					connectedList = multiPenClientCtrl.getConnectDevice();
+					if(connectedList.size() > 0)
+					{
+						AlertDialog.Builder builder;
+						String[] addresses = connectedList.toArray( new String[connectedList.size()]);
+						for(String addr  : addresses)
+						{
+							penClientCtrl.unpairDevice( addr ) ;
+						}
+					}
+				}
+					return true;
+
 
 			default:
 				return super.onOptionsItemSelected( item );
@@ -344,16 +536,16 @@ public class MainActivity extends Activity
 		}
 	}
 
-	private void handleDot(Dot dot )
+	private void handleDot(String penAddress, Dot dot )
 	{
 
-		NLog.d( "handleDot type =" + dot.dotType );
-		mSampleView.addDot( dot );
+		NLog.d( "penAddress="+penAddress+",handleDot type =" + dot.dotType );
+		mSampleView.addDot(penAddress, dot );
 	}
 
-	private void handleMsg( int penMsgType, String content )
+	private void handleMsg(String penAddress, int penMsgType, String content )
 	{
-		Log.d( TAG, "handleMsg : " + penMsgType );
+		Log.d( TAG, "penAddress="+penAddress+",handleMsg : " + penMsgType );
 
 		switch ( penMsgType )
 		{
@@ -373,8 +565,11 @@ public class MainActivity extends Activity
 
 			case PenMsgType.PEN_AUTHORIZED:
 				// OffLine Data set use
-				penClientCtrl.setAllowOfflineData( true );
-
+				if(connectionMode == 0)
+					penClientCtrl.setAllowOfflineData( true );
+				else
+					multiPenClientCtrl.setAllowOfflineData(penAddress, true );
+				Util.showToast( this, "connection is AUTHORIZED." );
 			break;
 			// Message when a connection attempt is unsuccessful pen
 			case PenMsgType.PEN_CONNECTION_FAILURE:
@@ -411,7 +606,7 @@ public class MainActivity extends Activity
 			case PenMsgType.PEN_FW_UPGRADE_SUSPEND:
 			{
 				if(fwUpdateDialog != null)
-					fwUpdateDialog.setMsg(penMsgType, content);
+					fwUpdateDialog.setMsg(penAddress, penMsgType, content);
 			}
 				break;
 
@@ -441,8 +636,6 @@ public class MainActivity extends Activity
 				// if you want to get offline data of pen, use this function.
 				// you can call this function, after complete download.
 				//
-
-
 				break;
 
 			// Messages for offline data transfer begins
@@ -452,9 +645,16 @@ public class MainActivity extends Activity
 
 			// Offline data transfer completion
 			case PenMsgType.OFFLINE_DATA_SEND_SUCCESS:
-
-				if(penClientCtrl.getProtocolVersion() ==1)
-				parseOfflineData();
+				if(connectionMode == 0)
+				{
+					if(penClientCtrl.getProtocolVersion() ==1)
+						parseOfflineData(penAddress);
+				}
+				else
+				{
+					if(multiPenClientCtrl.getProtocolVersion( penAddress) == 1)
+						parseOfflineData(penAddress);
+				}
 
 				break;
 
@@ -523,24 +723,31 @@ public class MainActivity extends Activity
 				}
 
 				if(inputPassDialog == null)
-					inputPassDialog = new InputPasswordDialog( this, this );
-				inputPassDialog.show();
+					inputPassDialog = new InputPasswordDialog( this, this);
+				inputPassDialog.show(penAddress);
 			}
 				break;
 			case PenMsgType.PEN_ILLEGAL_PASSWORD_0000:
 			{
 				if(inputPassDialog == null)
 					inputPassDialog = new InputPasswordDialog( this, this );
-				inputPassDialog.show();
+				inputPassDialog.show(penAddress);
 			}
 			break;
 
 		}
 	}
 
-	public void inputPassword( String password )
+	public void inputPassword(String penAddress,  String password )
 	{
-		penClientCtrl.inputPassword( password );
+		if(connectionMode == 0)
+		{
+			penClientCtrl.inputPassword(password);
+		}
+		else
+		{
+			multiPenClientCtrl.inputPassword(penAddress, password);
+		}
 	}
 
 //	private void onUpgrading( int total, int progress )
@@ -568,10 +775,10 @@ public class MainActivity extends Activity
 //		mNotifyManager.notify( 0, mBuilder.build() );
 //	}
 
-	private void parseOfflineData()
+	private void parseOfflineData(String penAddress)
 	{
 		// obtain saved offline data file list
-		String[] files = OfflineFileParser.getOfflineFiles();
+		String[] files = OfflineFileParser.getOfflineFiles(penAddress);
 
 		if ( files == null || files.length == 0 )
 		{
@@ -591,7 +798,7 @@ public class MainActivity extends Activity
 				if ( strokes != null )
 				{
 //					ArrayList<Stroke> strokeList = new ArrayList( Arrays.asList( strokes ));
-					mSampleView.addStrokes( strokes );
+					mSampleView.addStrokes( penAddress, strokes );
 				}
 
 				// delete data file
@@ -614,19 +821,22 @@ public class MainActivity extends Activity
 
 			if ( Broadcast.ACTION_PEN_MESSAGE.equals( action ) )
 			{
+				String penAddress = intent.getStringExtra( Broadcast.PEN_ADDRESS );
 				int penMsgType = intent.getIntExtra( Broadcast.MESSAGE_TYPE, 0 );
 				String content = intent.getStringExtra( Broadcast.CONTENT );
 
-				handleMsg( penMsgType, content );
+				handleMsg( penAddress, penMsgType, content );
 			}
 			else if ( Broadcast.ACTION_PEN_DOT.equals( action ) )
 			{
+				String penAddress = intent.getStringExtra( Broadcast.PEN_ADDRESS );
 				Dot dot = intent.getParcelableExtra(Broadcast.EXTRA_DOT );
 				dot.color = Color.BLACK;
-				handleDot(dot );
+				handleDot(penAddress, dot );
 			}
 			else if(Broadcast.ACTION_OFFLINE_STROKES.equals( action ))
 			{
+				String penAddress = intent.getStringExtra( Broadcast.PEN_ADDRESS );
 				Parcelable[] array = intent.getParcelableArrayExtra( Broadcast.EXTRA_OFFLINE_STROKES );
 				if(array != null)
 				{
@@ -635,7 +845,7 @@ public class MainActivity extends Activity
 					for (int i = 0; i < array.length; i++) {
 						strokes[i] = ((Stroke) array[i]);
 					}
-					mSampleView.addStrokes( strokes);
+					mSampleView.addStrokes(penAddress, strokes);
 				}
 			}
 			else if(Broadcast.ACTION_WRITE_PAGE_CHANGED.equals( action ))

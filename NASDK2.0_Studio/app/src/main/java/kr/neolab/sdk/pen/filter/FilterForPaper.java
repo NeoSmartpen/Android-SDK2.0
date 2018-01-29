@@ -44,24 +44,24 @@ public class FilterForPaper
 			return;
 		}
 
-		// Start Dot는 일단 1번에 넣줌
+		// Start Dot is put in the first dot.
 		if ( DotType.isPenActionDown( mdot.dotType ) )
 		{
 			dot1 = mdot;
 		}
 
-		// Middle dot는 두번째는 그냥 넣고 세번째부터 검증
-		// 첫번쨰 dot 검증 실패시 두번째-> 첫번째, 현재-> 두번째
-		// 첫번째 dot 건증 성공시
+		// Middle dot inserts the second and verifies from the third
+		// First dot validation failure second -> first, current -> second
+		// Successful first dot verification
 		else if ( DotType.isPenActionMove( mdot.dotType ) )
 		{
-			// Middle의 첫번째에서는 그냥 넣어줌
+			// Just put it in the middle of the first
 			if ( secondCheck )
 			{
 				dot2 = mdot;
 				secondCheck = false;
 			}
-			// 미들의 다음Dot는 첫번째것 검증 성공시 Middle validation 첵, 실패시 다음Dot를 넣어줌
+			// Middle next Dot checks Middle validation check when first verification succeeds, and next Dot when failure
 			else if ( thirdCheck )
 			{
 				if ( validateStartDot( dot1, dot2, mdot ) )
@@ -106,9 +106,8 @@ public class FilterForPaper
 		{
 			boolean validateStartDot = true;
 			boolean validateMiddleDot = true;
-			//실도트가 한개만 들어와서 Down 1, Move 1, End 1 개씩만 들어온경우
-			// (CommProcessor 에서 A_DotData 을 통해 도트가 1개만 들어오더라도 A_DotUpDownData 를 통해 실제 processDot 로는 Move 1, End 1 씩 데이터가 넘어온다.
-			// 그때에 대한 처리
+			//If only one dot is entered and only one Down 1, Move 1, End is entered
+			// (Even though only one dot is entered through A_DotData in CommProcessor, Move 1, End 1 data is passed to actual processDot through A_DotUpDownData.)
 			if(secondCheck)
 			{
 				dot2 = dot1;
@@ -125,7 +124,7 @@ public class FilterForPaper
 				}
 			}
 
-			// 미들 Dot 검증
+			// Middle Dot Verification
 			if ( validateMiddleDot( dot1, dot2, mdot ) )
 			{
 
@@ -142,7 +141,7 @@ public class FilterForPaper
 				validateMiddleDot = false;
 			}
 
-			// 마지막 Dot 검증
+			// Last Dot Verification
 			if ( validateEndDot( dot1, dot2, mdot ) )
 			{
 				if(!validateStartDot && !validateMiddleDot)
@@ -163,7 +162,7 @@ public class FilterForPaper
 				listener.onFilteredDot( dot2 );
 			}
 
-			// Dot 및 변수 초기화
+			// Dot and variable initialization
 			dot1 = new Fdot( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 			dot2 = new Fdot( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 			secondCheck = true;
@@ -184,8 +183,8 @@ public class FilterForPaper
 	}
 
 	// ==============================================
-	// 3점을 이용
-	// 방향성과 Delta X, Delta Y 세가지를 이용
+	// Use 3 points
+	// Directionality and Delta X, Delta Y
 	// ==============================================
 
 	private boolean validateStartDot( Fdot dot1, Fdot dot2, Fdot dot3 )

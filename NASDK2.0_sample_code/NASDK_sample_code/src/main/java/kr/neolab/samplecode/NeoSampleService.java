@@ -4,10 +4,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Handler;
 import android.os.IBinder;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -19,6 +17,7 @@ import kr.neolab.sdk.metadata.IMetadataCtrl;
 import kr.neolab.sdk.metadata.MetadataCtrl;
 import kr.neolab.sdk.metadata.structure.Symbol;
 import kr.neolab.sdk.pen.IPenCtrl;
+import kr.neolab.sdk.pen.MultiPenCtrl;
 import kr.neolab.sdk.pen.PenCtrl;
 import kr.neolab.sdk.pen.penmsg.IOfflineDataListener;
 import kr.neolab.sdk.pen.penmsg.IPenDotListener;
@@ -44,14 +43,13 @@ public class NeoSampleService extends Service{
 
 //	public static final String EXTRA_CURRENT_PAGE = "current_page";
 
-
 	private IPenCtrl mPenCtrl;
 	private Queue<Dot> mDotQueueForDB = null;
-	private Queue<Dot> mDotQueueForBroadcast = null;
+	private Queue<DotWithAddress> mDotQueueForBroadcast = null;
 	private DotConsumerForDBThread mDBThread = null;
 	private DotConsumerForBroadcastThread mBroadcastThread = null;
 
-	private int curSectionId, curOwnerId,  curBookcodeId, curPageNumber;	// 현재 작성중인 notebook 과 page number
+	private int curSectionId, curOwnerId,  curBookcodeId, curPageNumber;	
 
 //	private PageInfo currentPageInfo = null;
 //	private String currentSaveTag = "";
@@ -62,7 +60,6 @@ public class NeoSampleService extends Service{
 	ArrayList<Symbol> checkSymbols = new ArrayList<Symbol>();
 
 	IMetadataCtrl metadataCtrl;
-	private Handler mHandler;
 
 //	private BroadcastReceiver readyBroadcastReceiver = new BroadcastReceiver()
 //	{
@@ -120,72 +117,22 @@ public class NeoSampleService extends Service{
 //		registerBroadcastReceiver();
 		mPenCtrl = PenCtrl.getInstance();
 		mPenCtrl.setDotListener( mPenReceiveDotListener );
+		if(mPenCtrl.getOffLineDataListener() != null)
+			mPenCtrl.setOffLineDataListener( null );
 		mPenCtrl.setOffLineDataListener( mOfflineDataListener );
+
+		MultiPenCtrl.getInstance().setDotListener( mPenReceiveDotListener );
+		MultiPenCtrl.getInstance().setOffLineDataListener( mOfflineDataListener );
+
 
 		metadataCtrl = MetadataCtrl.getInstance();
 
-
-		////////////////////////////////////////테스트
-		mHandler = new Handler( );
-
-
-		try
-		{
-			File f = new File( Const.SAMPLE_FOLDER_PATH );
-			File[] fileNames = f.listFiles();
-
-			for ( int i = 0; i < fileNames.length; i++ )
-			{
-				final File file = fileNames[i];
-
-				if ( file.isFile() )
-				{
-
-//					final String fileName = file.getName().toLowerCase( Locale.US );
-//					if ( !fileName.endsWith( ".nproj" ) )
-//					{
-//						continue;
-//					}
-//
-//					final InputStream is = new FileInputStream( file );
-
-					new Thread( new Runnable()
-					{
-						@Override
-						public void run ()
-						{
-							try
-							{
-//								NLog.d( "parseBySAX fileName="+fileName );
-
-								metadataCtrl.loadFile( file );
-							}
-							catch ( Exception e )
-							{
-								e.printStackTrace();
-							}
-
-						}
-					} ).start();
-
-				}
-			}
-		}
-		catch ( Exception e )
-		{
-			e.printStackTrace();
-		}
-
-
-		////////////////////////////////////////테스트
-
-
-//		metadataCtrl.loadFiles( Const.SAMPLE_FOLDER_PATH);
+		metadataCtrl.loadFiles( Const.SAMPLE_FOLDER_PATH);
 
 //		NLog.d( "Page Width=" +metadataCtrl.getPageWidth( 8, 2));
 
 		mDotQueueForDB = new ConcurrentLinkedQueue<Dot>();
-		mDotQueueForBroadcast = new ConcurrentLinkedQueue<Dot>();
+		mDotQueueForBroadcast = new ConcurrentLinkedQueue<DotWithAddress>();
 
 		mDBThread = new DotConsumerForDBThread( NeoSampleService.this );
 		mDBThread.setDaemon( true );
@@ -260,20 +207,22 @@ public class NeoSampleService extends Service{
 		}
 	}
 	
-	private void enqueueDotForBroadcast(Dot dot){
-		mDotQueueForBroadcast.offer(dot);
+	private void enqueueDotForBroadcast(String macAddress, Dot dot){
+
+		mDotQueueForBroadcast.offer(new DotWithAddress(macAddress ,dot));
 
 		synchronized (mDotQueueForBroadcast) {
 			mDotQueueForBroadcast.notifyAll();	
 		}
 	}
 	
-	private void broadcastDot ( Dot dot )
+	private void broadcastDot ( String macAddress, Dot dot )
 	{
 
 		NLog.d( "broadcastDot send: sectionId:" + dot.sectionId + " ownerId:" + dot.ownerId + " noteId:" + dot.noteId + " pageId:" + dot.pageId + " dotType:" + dot.dotType+",X="+dot.getX()+",Y="+dot.getY() );
 
 		Intent intent = new Intent( Const.Broadcast.ACTION_PEN_DOT);
+		intent.putExtra( Const.Broadcast.PEN_ADDRESS, macAddress );
 		intent.putExtra( Const.Broadcast.EXTRA_DOT, dot);
 		sendBroadcast( intent );
 //		LocalBroadcastManager.getInstance( this ).sendBroadcast(intent);
@@ -282,13 +231,6 @@ public class NeoSampleService extends Service{
 
 
 
-	 // dot broadcast thread 가 멈춰 있는 상태에서 페이지가 추가 되거나 노트북이 변경되었을 때,
-	  //PageDetailActivity 에서 dot 가 전달되지 않아 입력 페이지(PageRenderFragment) 로 ViewPager 를 이동 시킬 수 없는 문제가 있음
-	  //(Dot 입력이 없어 ViewPager 가 이동 할 페이지를 알 수 없음)
-	  //기존의 방식으로 dot 입력을 확인 해 page 를 이동하는 방식에 추가로 페이지나 노트북이 변경되었음을 알리는 broadcast 사용
-
-	  //PageDetailActivity 는 이 broadcast 를 받고, 현재 입력되는 notebook 과 pagenumber 를 이용해 onLoadFinish 에서 해당 페이지로 이동시킴
-	  //해당 페이지로 이동이 되면 PageRenderFragment 가 dot receiver 를 등록하고 dot 를 받을 수 있게 됨
 	private void sendBroadcastIfPageChanged(int sectionId, int ownerId, int bookcodeId, int pageNumber){
 		if(curSectionId != sectionId || curOwnerId != ownerId || curBookcodeId != bookcodeId ){
 			curSectionId = sectionId;
@@ -303,7 +245,6 @@ public class NeoSampleService extends Service{
 			curPageNumber = pageNumber;
 //			currentPageInfo = ActionController.getInstance( this ).getPageInfo( sectionId, ownerId, bookcodeId, pageNumber);
 			sendPageChangedBroadcast();
-			// 페이지가 바뀌면 ready 를 false 로..(도트데이터를 일단 넘기지 않음)
 			ready = false;
 			NLog.d( "sendBroadcastIfPageChanged ready="+ready );
 		}
@@ -326,14 +267,14 @@ public class NeoSampleService extends Service{
 				checkSymbols.clear();
 
 
-				Symbol[] testSymbols = metadataCtrl.findApplicableSymbols(dot.noteId,dot.pageId );
-				if(testSymbols != null)
-				{
-					for(Symbol symbol: testSymbols)
-					{
-						NLog.d( "testSymbols symbol=  x="+symbol.getX()+",y="+symbol.getY()+",w="+symbol.getWidth()+",h="+symbol.getHeight() );
-					}
-				}
+//				Symbol[] testSymbols = metadataCtrl.findApplicableSymbols(dot.noteId,dot.pageId );
+//				if(testSymbols != null)
+//				{
+//					for(Symbol symbol: testSymbols)
+//					{
+//						NLog.d( "testSymbols symbol=  x="+symbol.getX()+",y="+symbol.getY()+",w="+symbol.getWidth()+",h="+symbol.getHeight() );
+//					}
+//				}
 
 				if(upSymbols == null && downSymbols == null)
 					return;
@@ -365,13 +306,13 @@ public class NeoSampleService extends Service{
 	private IPenDotListener mPenReceiveDotListener = new IPenDotListener() {
 
 		@Override
-		public void onReceiveDot ( Dot dot )
+		public void onReceiveDot ( String macAddress, Dot dot )
 		{
-			NLog.d( "NeoSampleService onReceiveDot dotType=" + dot.dotType+" ,pressure="+dot.pressure+",x="+dot.getX()+",y="+dot.getY() );
-			checkSymbol( dot);
+			NLog.d( "NeoSampleService onReceiveDot mac_address="+macAddress+"dotType=" + dot.dotType+" ,pressure="+dot.pressure+",x="+dot.getX()+",y="+dot.getY() );
+			checkSymbol( dot );
 			sendBroadcastIfPageChanged(dot.sectionId, dot.ownerId, dot.noteId, dot.pageId);
 			enqueueDot( dot );
-			enqueueDotForBroadcast(dot);
+			enqueueDotForBroadcast(macAddress, dot);
 
 		}
 	};
@@ -379,7 +320,7 @@ public class NeoSampleService extends Service{
 	private IOfflineDataListener mOfflineDataListener = new IOfflineDataListener()
 	{
 		@Override
-		public void onReceiveOfflineStrokes ( Stroke[] strokes, int sectionId, int ownerId, int noteId )
+		public void onReceiveOfflineStrokes ( String macAddress, Stroke[] strokes, int sectionId, int ownerId, int noteId )
 		{
 			// 도트가 0인 데이터 필터링
 			ArrayList<Stroke> newArrayList = new ArrayList<Stroke>();
@@ -397,6 +338,7 @@ public class NeoSampleService extends Service{
 				}
 			}
 			Intent i = new Intent( Const.Broadcast.ACTION_OFFLINE_STROKES );
+			i.putExtra( Const.Broadcast.PEN_ADDRESS, macAddress );
 			i.putExtra( Const.Broadcast.EXTRA_OFFLINE_STROKES, newArrayList.toArray(new Stroke[newArrayList.size()]) );
 			getApplicationContext().sendBroadcast( i );
 
@@ -572,21 +514,11 @@ public class NeoSampleService extends Service{
 				
 				while(!mDotQueueForBroadcast.isEmpty()){
 					Dot dot = null;
-					// broadcast 할 dot 를 받을 page 가 준비(dot receiver 등록)가 되어 있을 때만 broadcast
-//					if(ready)
-//					{
-						dot = mDotQueueForBroadcast.poll();
-//					}
-//					else
-//					{
-//						dot = mDotQueueForBroadcast.peek();
-//						NLog.d( "DotConsumerForBroadcastThread dot="+dot.dotType );
-//						dot = null;
-//						break;
-//					}
+						DotWithAddress dotWithAddress = mDotQueueForBroadcast.poll();
+						dot = dotWithAddress.dot;
 
 					if(dot != null){
-						broadcastDot(dot);
+						broadcastDot(dotWithAddress.address, dot);
 					}
 				}
 				
@@ -599,6 +531,17 @@ public class NeoSampleService extends Service{
 					NLog.d( "DotConsumerThread Interrupted!!" + e);
 				}
 			}
+		}
+	}
+
+	private class DotWithAddress
+	{
+		public Dot dot = null;
+		public String address = null;
+		public DotWithAddress(String address, Dot dot)
+		{
+			this.dot = dot;
+			this.address = address;
 		}
 	}
 }

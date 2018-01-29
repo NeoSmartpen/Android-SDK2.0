@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
+import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IOfflineDataListener;
 import kr.neolab.sdk.pen.penmsg.IPenDotListener;
@@ -55,11 +56,6 @@ public interface IPenCtrl
      * @return IOfflineDataListener off line data listener
      */
     public IOfflineDataListener getOffLineDataListener();
-
-    /**
-     * Ready to use function
-     */
-    public void startup();
 
     /**
      * Attempts to connect to the pen.
@@ -143,11 +139,14 @@ public interface IPenCtrl
      * Specify where to store the offline data. (Unless otherwise specified, is stored in the default external storage)
      *
      * @param path Be stored in the directory
+     * @deprecated
      */
     public void setOfflineDataLocation(String path);
 
     /**
      * Adjust the pressure-sensor to the pen.
+     *
+     * @deprecated
      */
     public void calibratePen();
 
@@ -350,6 +349,20 @@ public interface IPenCtrl
     public void reqSetupPenSensitivity( short level );
 
     /**
+     * Notice!!
+     * This is API for hardware developer!
+     * Software developers should never use this API.
+     * <p>
+     * Setup Sensitivity level of pen using FSC press sensor
+     * <p>
+     * supported from Protocol 2.0
+     *
+     * @param level sensitivity level (0~4)
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void reqSetupPenSensitivityFSC (  short level ) throws ProtocolNotSupportedException;
+
+    /**
      * Req set pen cap on off.
      * supported from Protocol 2.0
      *
@@ -407,4 +420,80 @@ public interface IPenCtrl
      */
     public boolean setLeMode(boolean isLeMode);
 
+    /**
+     * Create profile.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void createProfile ( String proFileName , byte[] password) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Delete profile.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void deleteProfile ( String proFileName, byte[] password ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Write profile value.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     * @param keys        the keys
+     * @param data        the data
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void writeProfileValue ( String proFileName, byte[] password ,String[] keys, byte[][] data ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Read profile value.
+     *
+     * @param proFileName the pro file name
+     * @param keys        the keys
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void readProfileValue ( String proFileName, String[] keys ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Delete profile value.
+     *
+     * @param proFileName the pro file name
+     * @param password    the password
+     * @param keys        the keys
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void deleteProfileValue ( String proFileName, byte[] password, String[] keys) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Gets profile info.
+     *
+     * @param proFileName the pro file name
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @throws ProfileKeyValueLimitException the profile key value limit exception
+     */
+    public void getProfileInfo ( String proFileName) throws ProtocolNotSupportedException,ProfileKeyValueLimitException;
+
+    /**
+     * Is support pen profile boolean.
+     *
+     * @return the boolean
+     */
+    public boolean isSupportPenProfile();
+
+    /**
+     * Unpair device boolean.
+     *
+     * @param address the address
+     * @return if success, return true
+     */
+    public boolean unpairDevice(String address);
 }

@@ -12,6 +12,7 @@ import android.view.View;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import kr.neolab.samplecode.renderer.Renderer;
 import kr.neolab.sdk.ink.structure.Dot;
@@ -33,7 +34,8 @@ public class SampleView extends View
 	// draw the strokes
 	public ArrayList<Stroke> strokes = new ArrayList<Stroke>();
 
-	private Stroke stroke = null;
+//	private Stroke stroke = null;
+	private HashMap<String, Stroke> mapStroke = new HashMap<String, Stroke>();
 
 	private int sectionId = 0, ownerId = 0, noteId = 0, pageId = 0;
 
@@ -125,7 +127,7 @@ public class SampleView extends View
 		}
 	}
 
-	public void addDot( Dot dot )
+	public void addDot( String penAddress, Dot dot )
 	{
 		if ( this.sectionId != dot.sectionId || this.ownerId != dot.ownerId || this.noteId != dot.noteId || this.pageId != dot.pageId )
 		{
@@ -137,18 +139,18 @@ public class SampleView extends View
 			this.pageId = dot.pageId;
 		}
 
-		if ( DotType.isPenActionDown( dot.dotType ) || stroke == null || stroke.isReadOnly() )
+		if ( DotType.isPenActionDown( dot.dotType ) || mapStroke.get( penAddress ) == null || mapStroke.get( penAddress ).isReadOnly() )
 		{
-			stroke = new Stroke( sectionId, ownerId, noteId, pageId, dot.color );
-			strokes.add( stroke );
+			mapStroke.put(penAddress, new Stroke( sectionId, ownerId, noteId, pageId, dot.color ) ) ;
+			strokes.add( mapStroke.get( penAddress ) );
 		}
 
-		stroke.add( dot );
+		mapStroke.get( penAddress ).add( dot );
 
 		invalidate();
 	}
 
-	public void addStrokes( Stroke[] strs )
+	public void addStrokes( String penAddress, Stroke[] strs )
 	{
 		for ( Stroke stroke : strs )
 		{

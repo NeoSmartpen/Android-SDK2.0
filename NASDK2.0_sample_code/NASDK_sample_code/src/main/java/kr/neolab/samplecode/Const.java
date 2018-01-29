@@ -21,6 +21,7 @@ public class Const
 		public final static String KEY_HOVER_MODE = "hover_onoff";
 		public final static String KEY_PEN_CAP_ON = "pencap_onoff";
 
+		public final static String KEY_MAC_ADDRESS = "mac_address";
 
 
 
@@ -63,6 +64,8 @@ public class Const
 	
 	public class Broadcast
 	{
+		public static final String PEN_ADDRESS = "pen_address";
+
 		public static final String ACTION_PEN_MESSAGE = "action_pen_message";
 		public static final String MESSAGE_TYPE = "message_type";
 		public static final String CONTENT = "content";
@@ -95,4 +98,6 @@ public class Const
 		
 		public static final String ACTION_PEN_UPDATE = "action_firmware_update";
 	}
+
+    public static final byte[] NEOLAB_PROFILE_PASS = { (byte)0x6B, (byte)0xCA, (byte)0x6B, (byte)0x50, (byte)0x5D, (byte)0xEC, (byte)0xA7, (byte)0x8C };
 }

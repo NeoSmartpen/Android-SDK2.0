@@ -74,14 +74,29 @@ public class FwUpdateDialog extends Dialog implements OnCheckListener,OnDownLoad
 
     private String fwFilePath = "";
     private PenClientCtrl penClientCtrl;
+    private MultiPenClientCtrl multiPenClientCtrl;
     private boolean success =false;
     private boolean isDisconnect = false;
+    private boolean isSingleConnectionMode = false;
+    private String penAddress = "";
+    String fwVersion = "";
+    int protocolVer = 0;
+    String deviceName = "";
 
-    public FwUpdateDialog ( Activity activity , PenClientCtrl penClientCtrl, NotificationManager notifyManager, Notification.Builder builder)
+    public FwUpdateDialog ( Activity activity ,Object obj,  NotificationManager notifyManager, Notification.Builder builder)
     {
         super( activity );
         this.activity = activity;
-        this.penClientCtrl = penClientCtrl;
+        if(obj instanceof PenClientCtrl)
+        {
+            this.penClientCtrl = (PenClientCtrl)obj;
+            isSingleConnectionMode = true;
+        }
+        else
+        {
+            this.multiPenClientCtrl = (MultiPenClientCtrl)obj;
+            isSingleConnectionMode = false;
+        }
         requestWindowFeature( Window.FEATURE_NO_TITLE );
         getWindow().clearFlags( WindowManager.LayoutParams.FLAG_DIM_BEHIND );
 
@@ -112,7 +127,25 @@ public class FwUpdateDialog extends Dialog implements OnCheckListener,OnDownLoad
         fw_version_chk_layout.setVisibility( View.VISIBLE );
     }
 
-    public void setMsg(int type, String content)
+    public void show (String penAddress)
+    {
+        this.penAddress = penAddress;
+        if(isSingleConnectionMode)
+        {
+            fwVersion = penClientCtrl.getPenFWVersion();
+            protocolVer = penClientCtrl.getProtocolVersion();
+        }
+        else
+        {
+            fwVersion = multiPenClientCtrl.getPenFWVersion( penAddress );
+            protocolVer = multiPenClientCtrl.getProtocolVersion(penAddress);
+        }
+
+
+        super.show();
+    }
+
+    public void setMsg( String penAddress, int type, String content)
     {
         switch ( type )
         {
@@ -297,8 +330,8 @@ public class FwUpdateDialog extends Dialog implements OnCheckListener,OnDownLoad
                 fw_version_chk_layout.setVisibility( View.INVISIBLE );
                 fw_version_layout.setVisibility( View.VISIBLE );
                 ((TextView)fw_version_layout.findViewById( R.id.fw_version_server_text )).setText( "Server FW Last version : "+lastServerVersion );
-                ((TextView)fw_version_layout.findViewById( R.id.fw_version_local_text )).setText( "Pen FW version : "+ penClientCtrl.getPenFWVersion() );
-                if(isUpgrade(penClientCtrl.getPenFWVersion(),lastServerVersion))
+                ((TextView)fw_version_layout.findViewById( R.id.fw_version_local_text )).setText( "Pen FW version : "+ fwVersion );
+                if(isUpgrade(fwVersion,lastServerVersion))
                 {
                     ((Button)fw_version_layout.findViewById( R.id.btn_ok )).setVisibility( View.INVISIBLE );
                     ((Button)fw_version_layout.findViewById( R.id.btn_download )).setVisibility( View.VISIBLE );
@@ -314,7 +347,7 @@ public class FwUpdateDialog extends Dialog implements OnCheckListener,OnDownLoad
 
                             ((ProgressBar)fw_loading_layout.findViewById( R.id.fw_loading_progressbar )).setIndeterminate( true );
                             String urlStr = "";
-                            if(penClientCtrl.getProtocolVersion() == 2)
+                            if(protocolVer == 2)
                             {
                                 urlStr = FW_BASE_URL_20+fwLocation;
 
@@ -396,7 +429,7 @@ public class FwUpdateDialog extends Dialog implements OnCheckListener,OnDownLoad
     protected void onStart ()
     {
         super.onStart();
-        FirmUpgradeCheckAsyncTask task = new FirmUpgradeCheckAsyncTask(penClientCtrl.getProtocolVersion(), penClientCtrl.getDeviceName() , this);
+        FirmUpgradeCheckAsyncTask task = new FirmUpgradeCheckAsyncTask(protocolVer, this);
         if ( Build.VERSION.SDK_INT >= 11 )
         {
             task.executeOnExecutor( AsyncTask.THREAD_POOL_EXECUTOR );
@@ -410,11 +443,10 @@ public class FwUpdateDialog extends Dialog implements OnCheckListener,OnDownLoad
 
 
     /**
-     * 펌웨어 버전을 비교하여 업데이트 필요여부를 리턴
-     *
-     * @param v1 연결된   팬의 펌웨어 버전
-     * @param v2 서버의 최신 버전
-     * @return 최신버전이 있으면 true
+     * Check new version
+     * @param v1 Pen version
+     * @param v2 Server new version
+     * @return if new version exist, true
      */
     private boolean isUpgrade(String v1, String v2) {
         String s1 = normalisedVersion(v1);
@@ -454,14 +486,33 @@ public class FwUpdateDialog extends Dialog implements OnCheckListener,OnDownLoad
                 ((ProgressBar)fw_loading_layout.findViewById( R.id.fw_loading_progressbar )).setProgress( 0 );
                 ((ProgressBar)fw_loading_layout.findViewById( R.id.fw_loading_progressbar )).setIndeterminate( true );
                 File fwFile = new File(fwFilePath);
-                if(penClientCtrl.getProtocolVersion() == 2)
+                if(isSingleConnectionMode)
                 {
-                    penClientCtrl.upgradePen2(fwFile, lastServerVersion );
+                    if(protocolVer == 2)
+                    {
+                        if(penClientCtrl.getDeviceName().equals( "NSP-C200" ))
+                            penClientCtrl.upgradePen2(fwFile, lastServerVersion , false);
+                        else
+                            penClientCtrl.upgradePen2(fwFile, lastServerVersion );
+                    }
+                    else
+                    {
+                        penClientCtrl.upgradePen( fwFile );
+                    }
                 }
                 else
                 {
-
-                    penClientCtrl.upgradePen( fwFile );
+                    if(protocolVer == 2)
+                    {
+                        if(multiPenClientCtrl.getDeviceName(penAddress).equals( "NSP-C200" ))
+                            multiPenClientCtrl.upgradePen2(penAddress ,fwFile, lastServerVersion , false);
+                        else
+                            multiPenClientCtrl.upgradePen2(penAddress, fwFile, lastServerVersion );
+                    }
+                    else
+                    {
+                        multiPenClientCtrl.upgradePen(penAddress, fwFile );
+                    }
                 }
 
             }
@@ -518,14 +569,12 @@ public class FwUpdateDialog extends Dialog implements OnCheckListener,OnDownLoad
     {
 
         private int protocolVer;
-        private String deviceName;
         private OnCheckListener listener;
 
-        public FirmUpgradeCheckAsyncTask ( int protocolVer, String deviceName , OnCheckListener listener)
+        public FirmUpgradeCheckAsyncTask ( int protocolVer, OnCheckListener listener)
         {
             this.protocolVer = protocolVer;
             this.listener = listener;
-            this.deviceName = deviceName;
         }
 
         @Override
@@ -543,7 +592,12 @@ public class FwUpdateDialog extends Dialog implements OnCheckListener,OnDownLoad
                 String strUrl = "";
                 if ( protocolVer == 2 )
                 {
-                    if ( deviceName != null && deviceName.equals( "NWP-F50" ) )
+                    String modelName ="";
+                    if(isSingleConnectionMode)
+                        modelName = penClientCtrl.getDeviceName();
+                    else
+                        modelName = multiPenClientCtrl.getDeviceName(penAddress);
+                    if ( modelName!= null && deviceName.equals( "NWP-F50" ) )
                     {
                         strUrl = FW_BASE_URL_20 + File.separator + FW_VERSION_CHK_FILE_F50;
                     }

@@ -224,8 +224,15 @@ public class CMD
      * The constant A_PenDebug.
      */
     public static final int A_PenDebug                   = 0xE5;
+
     /**
-     * The constant P_ShowText.
+     * The constant P_ProfileRequest.
      */
-    public static final int P_ShowText                   = 0x61;
+    public static final int P_ProfileRequest                   = 0x61;
+
+    /**
+     * The constant A_ProfileResponse.
+     */
+    public static final int A_ProfileResponse                   = 0x62;
+
 }

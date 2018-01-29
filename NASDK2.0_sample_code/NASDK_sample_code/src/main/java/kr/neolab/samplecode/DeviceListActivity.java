@@ -6,10 +6,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
@@ -22,8 +18,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.RequiresApi;
-import android.util.Log;
+import android.os.Handler;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -32,12 +27,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.os.Handler;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import kr.neolab.sdk.util.NLog;
 
@@ -48,7 +41,7 @@ import kr.neolab.sdk.util.NLog;
  * by the user, the MAC address of the device is sent back to the parent
  * Activity in the result Intent.
  */
-@TargetApi(21)
+@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class DeviceListActivity extends Activity
 {
     // Return Intent extra
@@ -57,13 +50,11 @@ public class DeviceListActivity extends Activity
 
     // Member fields
     private BluetoothAdapter mBtAdapter;
-
     private Handler mHandler;
     private static final long SCAN_PERIOD = 10000;
     private BluetoothLeScanner mLeScanner;
     private ScanSettings mScanSetting;
     private List<ScanFilter> mScanFilters;
-
     private ArrayAdapter<String> mPairedDevicesArrayAdapter;
     private ArrayAdapter<String> mNewDevicesArrayAdapter;
     ArrayList<String> temp = new  ArrayList<String>();
@@ -79,17 +70,24 @@ public class DeviceListActivity extends Activity
             BluetoothDevice device = result.getDevice();
             if ( device != null )
             {
+//                String sppAddress = changeAddressFromLeToSpp()
                 String msg = device.getName() + "\n" +"[RSSI : " + result.getRssi() + "dBm]" + device.getAddress();
                 NLog.d( "onLeScan " + msg );
-
                 /**
-                 * setting pen client control for ble
+                 * have to change adapter to BLE
                  */
-                    if(!temp.contains( device.getAddress() ))
-                    {
-                        NLog.d( "ACTION_FOUND onLeScan : " +device.getName() + " address : "+ device.getAddress()+", COD:" + device.getBluetoothClass());
-                        temp.add( device.getAddress());
-                        mNewDevicesArrayAdapter.add(msg);
+//                PenClientCtrl.getInstance( getApplicationContext() ).setLeMode(true);
+//                if(PenClientCtrl.getInstance( getApplicationContext() ).isAvailableDevice(result.getScanRecord().getBytes())) {
+                    if (!temp.contains(device.getAddress())) {
+                        NLog.d("ACTION_FOUND onLeScan : " + device.getName() + " address : " + device.getAddress() + ", COD:" + device.getBluetoothClass());
+
+                        PenClientCtrl.getInstance( DeviceListActivity.this ).setLeMode( true );
+                        if(PenClientCtrl.getInstance( DeviceListActivity.this ).isAvailableDevice(result.getScanRecord().getBytes()  ))
+                        {
+                            temp.add(device.getAddress());
+                            mNewDevicesArrayAdapter.add(msg);
+                        }
+                    } else {
                     }
             }
         }
@@ -108,8 +106,38 @@ public class DeviceListActivity extends Activity
             NLog.d("Scan Failed", "Error Code : " + errorCode);
         }
     };
-
-
+    private String changeAddressFromLeToSpp(byte[] data)
+    {
+        int index = 0;
+        int size = 0;
+        byte flag = 0;
+        while(data.length > index)
+        {
+            size = data[index++];
+            if ( data.length <= index )
+                return null;
+            flag = data[index];
+            if ( (flag & 0xFF) == 0xFF )
+            {
+                ++index;
+                byte[] mac = new byte[6];
+                System.arraycopy(data, index, mac, 0, 6);
+                StringBuilder sb = new StringBuilder(18);
+                for (byte b : mac) {
+                    if (sb.length() > 0)
+                        sb.append(':');
+                    sb.append(String.format("%02x", b));
+                }
+                String strMac = sb.toString().toUpperCase();
+                return strMac;
+            }
+            else
+            {
+                index += size;
+            }
+        }
+        return null;
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -136,8 +164,8 @@ public class DeviceListActivity extends Activity
             {
                 is_le_scan = false;
                 doDiscovery(false);
-                scanButton.setVisibility( View.GONE );
-                scanLEButton.setVisibility( View.GONE );
+                scanButton.setEnabled( false );
+                scanLEButton.setEnabled( false );
             }
         } );
 
@@ -153,12 +181,13 @@ public class DeviceListActivity extends Activity
                     temp.clear();
                     doDiscovery( true );
                     scanLEButton.setText( "STOP" );
-                    scanButton.setVisibility( View.GONE );
+                    scanButton.setEnabled( false );
                 }
                 else
                 {
                     scanLEButton.setText( R.string.button_le_scan );
-                    scanButton.setVisibility( View.VISIBLE );
+                    scanButton.setEnabled( true );
+//                    scanButton.setVisibility( View.VISIBLE );
                     if (Build.VERSION.SDK_INT < 21) {
                         mLeScanner.stopScan(mScanCallback);
                     }
@@ -255,7 +284,6 @@ public class DeviceListActivity extends Activity
         // Turn on sub-title for new devices
         findViewById(R.id.title_new_devices).setVisibility(View.VISIBLE);
 
-        // Request discover from BluetoothAdapter
         mNewDevicesArrayAdapter.clear();
 
         if (le) // scan btle

@@ -4,7 +4,15 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.TimeZone;
+
 import kr.neolab.sdk.util.NLog;
+
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_CREATE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_DELETE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_DELETE_VALUE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_INFO;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_READ_VALUE;
+import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_WRITE_VALUE;
 
 /**
  * The type Protocol parser.
@@ -126,11 +134,11 @@ public class ProtocolParser
 
 	/**
 	 * Build pen on off data byte [ ].
+	 * 0x02 CMD.P_PenOnResponse
 	 *
 	 * @param status the status
 	 * @return the byte [ ]
 	 */
-// 0x02 CMD.P_PenOnResponse
 	public static byte[] buildPenOnOffData( boolean status )
 	{
 		PacketBuilder builder = new PacketBuilder( 9 );
@@ -166,10 +174,10 @@ public class ProtocolParser
 
 	/**
 	 * Build set current time data byte [ ].
+	 * 0x03 CMD.P_RTCset
 	 *
 	 * @return the byte [ ]
 	 */
-// 0x03 CMD.P_RTCset
 	public static byte[] buildSetCurrentTimeData()
 	{
 		PacketBuilder builder = new PacketBuilder( 12 );
@@ -189,10 +197,11 @@ public class ProtocolParser
 
 	/**
 	 * Build force calibrate data byte [ ].
+	 * <p>
+	 * 0x07 CMD.P_ForceCalibrate
 	 *
 	 * @return the byte [ ]
 	 */
-// 0x07 CMD.P_ForceCalibrate
 	public static byte[] buildForceCalibrateData()
 	{
 		PacketBuilder builder = new PacketBuilder( 0 );
@@ -205,11 +214,11 @@ public class ProtocolParser
 
 	/**
 	 * Build pen echo response byte [ ].
+	 * 0x0A CMD.P_EchoResponse
 	 *
 	 * @param echar the echar
 	 * @return the byte [ ]
 	 */
-// 0x0A CMD.P_EchoResponse
 	public static byte[] buildPenEchoResponse( byte echar )
 	{
 		PacketBuilder builder = new PacketBuilder( 1 );
@@ -236,10 +245,10 @@ public class ProtocolParser
 
 	/**
 	 * Build pen status data byte [ ].
+	 * 0x21 CMD.P_PenStatusRequest
 	 *
 	 * @return the byte [ ]
 	 */
-// 0x21 CMD.P_PenStatusRequest
 	public static byte[] buildPenStatusData()
 	{
 		PacketBuilder builder = new PacketBuilder( 0 );
@@ -252,11 +261,11 @@ public class ProtocolParser
 
 	/**
 	 * Build offline info response byte [ ].
+	 * 0x42 CMD.P_OfflineInfoResponse
 	 *
 	 * @param result the result
 	 * @return the byte [ ]
 	 */
-// 0x42 CMD.P_OfflineInfoResponse
 	public static byte[] buildOfflineInfoResponse( boolean result )
 	{
 		PacketBuilder builder = new PacketBuilder( 2 );
@@ -270,11 +279,11 @@ public class ProtocolParser
 
 	/**
 	 * Build offline chunk response byte [ ].
+	 * 0x44 CMD.P_OfflineChunkResponse
 	 *
 	 * @param index the index
 	 * @return the byte [ ]
 	 */
-// 0x44 CMD.P_OfflineChunkResponse
 	public static byte[] buildOfflineChunkResponse( int index )
 	{
 		PacketBuilder builder = new PacketBuilder( 2 );
@@ -288,6 +297,7 @@ public class ProtocolParser
 
 	/**
 	 * Build pen sw upgrade byte [ ].
+	 * 0x51 CMD.P_PenSWUpgradeCommand
 	 *
 	 * @param filename    the filename
 	 * @param filesize    the filesize
@@ -295,7 +305,6 @@ public class ProtocolParser
 	 * @param chunk_size  the chunk size
 	 * @return the byte [ ]
 	 */
-// 0x51 CMD.P_PenSWUpgradeCommand
 	public static byte[] buildPenSwUpgrade( String filename, int filesize, short chunk_count, short chunk_size )
 	{
 		PacketBuilder builder = new PacketBuilder( 136 );
@@ -329,13 +338,13 @@ public class ProtocolParser
 
 	/**
 	 * Build pen sw upgrade response byte [ ].
+	 * 0x53 P_PenSWUpgradeResponse
 	 *
 	 * @param index    the index
 	 * @param checksum the checksum
 	 * @param data     the data
 	 * @return the byte [ ]
 	 */
-// 0x53 P_PenSWUpgradeResponse
 	public static byte[] buildPenSwUpgradeResponse( int index, byte checksum, byte[] data )
 	{
 		int dataLength = data.length + 3;
@@ -349,29 +358,6 @@ public class ProtocolParser
 		NLog.d( "[ProtocolParser] REQ  buildPenSwUpgradeResponse.");
 		sendbyte.showPacket();
 		return sendbyte.getPacket();
-	}
-
-	/**
-	 * Build show text data byte [ ].
-	 *
-	 * @param showText the show text
-	 * @return the byte [ ]
-	 */
-// CMD 0x61 P_ShowText
-	public static byte[] buildShowTextData( String showText )
-	{
-		// TODO Auto-generated method stub
-		PacketBuilder builder = new PacketBuilder( 24 );
-		builder.setCommand( CMD.P_ShowText );
-
-		// showText
-		ByteBuffer temp = ByteBuffer.wrap( showText.getBytes() );
-		temp.order( ByteOrder.LITTLE_ENDIAN );
-		byte[] bFilename = temp.array();
-
-		NLog.d( "[ProtocolParser] showText : " + showText );
-		builder.write( bFilename, 24 );
-		return builder.getPacket();
 	}
 
 	/**
@@ -661,6 +647,175 @@ public class ProtocolParser
 		sendbyte.write( ByteConverter.stringTobyte( newPassword ), 16 );
 
 		NLog.d( "[ProtocolParser] REQ  buildPasswordSetup.");
+		sendbyte.showPacket();
+		return sendbyte.getPacket();
+	}
+
+/////////////////////////   Profile   ///////////////////////////////////
+
+	/**
+	 * Build profile create byte [ ].
+	 *
+	 * @param filename the filename
+	 * @param pass     the pass
+	 * @return the byte [ ]
+	 */
+	public static byte[] buildProfileCreate( String filename, byte[] pass )
+	{
+		PacketBuilder sendbyte = new PacketBuilder( 8+1+8+2+2 );
+		sendbyte.setCommand( CMD.P_ProfileRequest );
+		// Profile filename
+		sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+		// request type
+		sendbyte.write(PROFILE_CREATE );
+		// Profile password
+		sendbyte.write(pass,8 );
+
+		// sector size
+		sendbyte.write( ByteConverter.shortTobyte( (short)32 ),2 );
+		// sector count(2^N Currently fixed 2^8)
+		sendbyte.write( ByteConverter.shortTobyte( (short)8 ),2 );
+		NLog.d( "[ProtocolParser] REQ  buildProfileCreate.");
+		sendbyte.showPacket();
+		return sendbyte.getPacket();
+	}
+
+	/**
+	 * Build profile delete byte [ ].
+	 *
+	 * @param filename the filename
+	 * @param pass     the pass
+	 * @return the byte [ ]
+	 */
+	public static byte[] buildProfileDelete( String filename, byte[] pass )
+	{
+		PacketBuilder sendbyte = new PacketBuilder( 8+1+8 );
+		sendbyte.setCommand( CMD.P_ProfileRequest );
+		// Profile filename
+		sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+		// request type
+		sendbyte.write(PROFILE_DELETE );
+		// Profile password
+		sendbyte.write(pass,8 );
+		NLog.d( "[ProtocolParser] REQ  buildProfileDelete.");
+		sendbyte.showPacket();
+		return sendbyte.getPacket();
+	}
+
+	/**
+	 * Build profile info byte [ ].
+	 *
+	 * @param filename the filename
+	 * @return the byte [ ]
+	 */
+	public static byte[] buildProfileInfo( String filename )
+	{
+		PacketBuilder sendbyte = new PacketBuilder( 8+1);
+		sendbyte.setCommand( CMD.P_ProfileRequest );
+		// Profile filename
+		sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+		// request type
+		sendbyte.write(PROFILE_INFO );
+		NLog.d( "[ProtocolParser] REQ  buildProfileInfo.");
+		sendbyte.showPacket();
+		return sendbyte.getPacket();
+	}
+
+	/**
+	 * Build profile read value byte [ ].
+	 *
+	 * @param filename the filename
+	 * @param keys     the keys
+	 * @return the byte [ ]
+	 */
+	public static byte[] buildProfileReadValue(String filename, String[] keys)
+	{
+		PacketBuilder sendbyte = new PacketBuilder( 8+1+1+16*keys.length );
+		sendbyte.setCommand( CMD.P_ProfileRequest );
+		// Profile filename
+		sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+		// request type
+		sendbyte.write(PROFILE_READ_VALUE );
+		// key count
+		sendbyte.write((byte)keys.length );
+		for(int i = 0; i < keys.length; i++)
+		{
+			// key
+			sendbyte.write(ByteConverter.stringTobyte( keys[i] ),16 );
+		}
+		NLog.d( "[ProtocolParser] REQ  buildProfileReadValue.");
+		sendbyte.showPacket();
+		return sendbyte.getPacket();
+	}
+
+	/**
+	 * Build profile write value byte [ ].
+	 *
+	 * @param filename the filename
+	 * @param pass     the pass
+	 * @param keys     the keys
+	 * @param data     the data
+	 * @return the byte [ ]
+	 */
+	public static byte[] buildProfileWriteValue(String filename, byte[] pass, String[] keys, byte[][] data)
+	{
+		int data_len = 0;
+		for(int i = 0; i < data.length; i++)
+		{
+			data_len += 16;
+			data_len += 2;
+			data_len += data[i].length;
+		}
+
+		PacketBuilder sendbyte = new PacketBuilder( 8+1+8+1+ data_len);
+		sendbyte.setCommand( CMD.P_ProfileRequest );
+		// Profile filename
+		sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+		// request type
+		sendbyte.write(PROFILE_WRITE_VALUE );
+		// Profile password
+		sendbyte.write(pass,8 );
+		// key count
+		sendbyte.write((byte)data.length );
+
+		for(int i = 0; i < data.length; i++)
+		{
+			// key
+			sendbyte.write(ByteConverter.stringTobyte( keys[i] ),16 );
+			sendbyte.write(ByteConverter.shortTobyte( (short) data[i].length ),2 );
+			sendbyte.write(data[i] );
+		}
+		NLog.d( "[ProtocolParser] REQ  buildProfileWriteValue.");
+		sendbyte.showPacket();
+		return sendbyte.getPacket();
+	}
+
+	/**
+	 * Build profile delete value byte [ ].
+	 *
+	 * @param filename the filename
+	 * @param pass     the pass
+	 * @param keys     the keys
+	 * @return the byte [ ]
+	 */
+	public static byte[] buildProfileDeleteValue( String filename, byte[] pass, String[] keys)
+	{
+		PacketBuilder sendbyte = new PacketBuilder( 8+1+8+1+16*keys.length );
+		sendbyte.setCommand( CMD.P_ProfileRequest );
+		// Profile filename
+		sendbyte.write(ByteConverter.stringTobyte( filename ),8 );
+		// request type
+		sendbyte.write(PROFILE_DELETE_VALUE );
+		// Profile password
+		sendbyte.write(pass,8 );
+		// key count
+		sendbyte.write((byte)keys.length );
+		for(int i = 0; i < keys.length; i++)
+		{
+			// key
+			sendbyte.write(ByteConverter.stringTobyte( keys[i] ),16 );
+		}
+		NLog.d( "[ProtocolParser20] REQ  buildProfileDeleteValue.");
 		sendbyte.showPacket();
 		return sendbyte.getPacket();
 	}

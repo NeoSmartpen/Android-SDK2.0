@@ -12,30 +12,11 @@ import kr.neolab.sdk.ink.structure.Dot;
  */
 public class Fdot extends Dot implements Parcelable
 {
-//    public int dotType;
-//
-//    /**
-//     * The Pen tip type. 0: normal , 1:eraser
-//     */
-//    public int penTipType = 0;
-//    /**
-//     * The Tilt x. X 기울기 (0~180)
-//     */
-//    public int tiltX = 0;
-//    /**
-//     * The Tilt y. Y 기울기 (0~180)
-//     */
-//    public int tiltY = 0;
-//
-//    /**
-//     * The Twist. 펜의 방향
-//     */
-////    public int twist = 0;
-
     /**
      * The Mac address.
      */
     public String mac_address = "";
+
     /**
      * The Dot data byte align.
      */
@@ -128,9 +109,8 @@ public class Fdot extends Dot implements Parcelable
     }
 
     /**
-     * 모든 dot data 를 byte array 로.
-     * (주로 실시간 전송 시에.)
-     * NeoSDK AppCommProcessor.processDot과 일치 해야한다.
+     * All dot data into a byte array.
+     * (Mainly in real time transmission.)
      *
      * @return byte [ ]
      */
@@ -156,8 +136,8 @@ public class Fdot extends Dot implements Parcelable
     }
 
     /**
-     * 필요 dot data만 byte array로.
-     * (저장 시에.)
+     * Required dot data only in byte array.
+     * (save)
      *
      * @return byte [ ]
      */

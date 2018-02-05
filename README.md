@@ -44,6 +44,6 @@ That does not require the source code open to be released, and technical support
 
 Please contact following to get more information:
 
-- Global: _globaliz@neolab.net
+- Global: _globalbiz@neolab.net
 - Korea: _koreabiz@neolab.net
 

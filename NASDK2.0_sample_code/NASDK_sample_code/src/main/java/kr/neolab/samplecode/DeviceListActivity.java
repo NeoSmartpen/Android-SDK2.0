@@ -188,7 +188,7 @@ public class DeviceListActivity extends Activity
                     scanLEButton.setText( R.string.button_le_scan );
                     scanButton.setEnabled( true );
 //                    scanButton.setVisibility( View.VISIBLE );
-                    if (Build.VERSION.SDK_INT < 21) {
+                    if (Build.VERSION.SDK_INT >= 21) {
                         mLeScanner.stopScan(mScanCallback);
                     }
                 }

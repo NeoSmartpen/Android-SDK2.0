@@ -1,6 +1,6 @@
-# AndroidSDK2.0
+# Android SDK2.0
 
-NeoSmartpen SDK 2.0 for Android Platform
+Neo smartpen SDK 2.0 for Android Platform
 
 javadoc link :https://neosmartpen.github.io/AndroidSDK2.0/docs
  
@@ -20,7 +20,7 @@ Smaple Code is [Link](https://github.com/NeoSmartpen/AndroidSDK2.0/blob/master/N
  
 ## LICENSE
 
-NeoSmartpen SDK is Copyright (c) 2017 NeoLAB Convergence, Inc.
+Neo smartpen SDK is Copyright (c) 2017 NeoLAB Convergence, Inc.
 
 We provide two types of license for Pen SDK.
 

@@ -1,18 +1,18 @@
-# AndroidSDK2.0
+# Android SDK2.0
 
-NeoSmartpen SDK 2.0 for Android Platform
+Neo smartpen SDK 2.0 for Android Platform
 
-javadoc link :https://neosmartpen.github.io/AndroidSDK2.0/docs
+javadoc link :https://neosmartpen.github.io/Android-SDK2.0/docs
  
-SDK Document link :https://neosmartpen.github.io/AndroidSDK2.0/NeoSmartpen_SDK_Android_V215.pdf
+SDK Document link :https://neosmartpen.github.io/Android-SDK2.0/NeoSmartpen_SDK_Android_V215.pdf
 
 ### Finding Bluetooth Devices
 
-Bluetoohth : references to [Link](https://developer.android.com/guide/topics/connectivity/bluetooth.html#FindingDevices)
+Bluetoohth : references to [here](https://developer.android.com/guide/topics/connectivity/bluetooth.html#FindingDevices)
 
-Bluetooth LE : references to [Link](https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#find)
+Bluetooth LE : references to [here](https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#find)
 
-Smaple Code is [Link](https://github.com/NeoSmartpen/AndroidSDK2.0/blob/master/NASDK2.0_sample_code/NASDK_sample_code/src/main/java/kr/neolab/samplecode/DeviceListActivity.java)
+Smaple Code is [here](https://github.com/NeoSmartpen/AndroidSDK2.0/blob/master/NASDK2.0_sample_code/NASDK_sample_code/src/main/java/kr/neolab/samplecode/DeviceListActivity.java)
 
 ## Ncode™ SERVICE DEVELOPMENT GETTING STARTED GUIDE
 
@@ -20,7 +20,7 @@ Smaple Code is [Link](https://github.com/NeoSmartpen/AndroidSDK2.0/blob/master/N
  
 ## LICENSE
 
-NeoSmartpen SDK is Copyright (c) 2017 NeoLAB Convergence, Inc.
+Neo smartpen SDK is Copyright (c) 2017 NeoLAB Convergence, Inc.
 
 We provide two types of license for Pen SDK.
 
@@ -44,6 +44,6 @@ That does not require the source code open to be released, and technical support
 
 Please contact following to get more information:
 
-- Global: _globalbiz@neolab.net
-- Korea: _koreabiz@neolab.net
+- Global: _global1@neolab.net
+- Korea: _biz1@neolab.net
 

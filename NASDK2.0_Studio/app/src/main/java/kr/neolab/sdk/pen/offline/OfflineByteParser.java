@@ -235,15 +235,21 @@ public class OfflineByteParser implements IFilterListener
 
                 }
                 dotIndex += BYTE_DOT_SIZE;
-                // Down scale from maxPressValue to 256
-                if(maxPress == 0)
-                    pressure = pressure /4;
-                else
-                    pressure = (pressure * 255)/maxPress ;
-                if(factor != null)
-                    pressure = (int)factor[pressure];
-                Fdot dot = new Fdot((x + (float) (fx * 0.01)), (y + (float) (fy * 0.01)), pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color,lhPenTipType ,tiltX, tiltY, twist);
-                tempDots.add( dot );
+
+                if(pressure <= 852) {
+                    // Down scale from maxPressValue to 256
+                    if (maxPress == 0)
+                        pressure = pressure / 4;
+                    else
+                        pressure = (pressure * 255) / maxPress;
+                    if (factor != null)
+                        pressure = (int) factor[pressure];
+                    Fdot dot = new Fdot((x + (float) (fx * 0.01)), (y + (float) (fy * 0.01)), pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color, lhPenTipType, tiltX, tiltY, twist);
+                    tempDots.add(dot);
+                }
+                else {
+                    NLog.e( "[OfflineByteParser] Dot pressure is greater than 852.This dot will be discarded.  pressure: " + pressure + ", max pressure : " + maxPress );
+                }
 
                 if ( isPenUp )
                 {

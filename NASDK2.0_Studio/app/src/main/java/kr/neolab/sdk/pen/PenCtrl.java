@@ -155,9 +155,13 @@ public class PenCtrl implements IPenCtrl {
 
     @Override
     public IPenMsgListener getListener() {
-        // TODO Auto-generated method stub
         return currentAdt.getListener();
     }
+
+	public IPenDotListener getDotListener() {
+		return currentAdt.getDotListener();
+	}
+
 
     @Override
     public IOfflineDataListener getOffLineDataListener() {
@@ -233,7 +237,18 @@ public class PenCtrl implements IPenCtrl {
 	{
 		currentAdt.reqForceCalibrate();
 	}
-	
+
+	/**
+	 * Sets calibrate 2.
+	 *
+	 * @param factor the factor
+	 */
+//	@Override
+	public void setCalibrate2 ( float[] factor )
+	{
+		currentAdt.reqCalibrate2( factor );
+	}
+
 	@Override
 	public void upgradePen(File fwFile) throws ProtocolNotSupportedException
 	{   
@@ -441,6 +456,16 @@ public class PenCtrl implements IPenCtrl {
 	 */
 	public int getPressSensorType(){
 		return currentAdt.getPressSensorType();
+	}
+
+	/**
+	 * Gets current adt.
+	 *
+	 * @return the current adt
+	 */
+	public IPenAdt getCurrentAdt()
+	{
+		return currentAdt;
 	}
 
 }

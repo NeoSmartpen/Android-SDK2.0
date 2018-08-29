@@ -12,7 +12,7 @@ import org.json.JSONObject;
 import java.io.File;
 
 import kr.neolab.sdk.ink.structure.DotType;
-import kr.neolab.sdk.pen.bluetooth.BTAdt.ConnectedThread;
+import kr.neolab.sdk.pen.bluetooth.IConnectedThread;
 import kr.neolab.sdk.pen.bluetooth.cmd.CommandManager;
 import kr.neolab.sdk.pen.bluetooth.cmd.EstablishCommand;
 import kr.neolab.sdk.pen.bluetooth.cmd.ForceCalibrateCommand;
@@ -54,7 +54,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	 */
 	private Packet prevPacket;
 
-	private ConnectedThread btConnection;
+	private IConnectedThread btConnection;  
 
 	private ProtocolParser parser;
 
@@ -66,6 +66,8 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	private int prevOwnerId = 0, prevSectionId = 0;
 
 	private long prevDotTime = 0;
+
+	private long down_MTIME = 0;
 
 	private int currColor = 0;
 
@@ -109,9 +111,12 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 
 	private float firmWareVer = 0f;
 
+	private float[] factor = null;
 
 	private int sensorType = 0;
 	private String connectedDeviceName = null;
+
+	private boolean isReceivedPageIdChange = true;  //[2018.03.05] Stroke Test
 
 	/**
 	 * The constant PEN_PROFILE_SUPPORT_VERSION_F110.
@@ -142,6 +147,55 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 		}
 	}
 
+    /**
+     * If pen up is missed, make up dot and send error message.
+     */
+    private class ChkMissingPenUpRunnable implements Runnable { //[2018.03.05] Stroke Test
+        @Override
+        public void run() {
+            if ( prevPacket != null )
+            {
+                // In case of pen down, but prev dot is move. MISSING UP DOT
+
+                int pX = prevPacket.getDataRangeInt( 1, 2 );
+                int pY = prevPacket.getDataRangeInt( 3, 2 );
+                int pFX = prevPacket.getDataRangeInt( 5, 1 );
+                int pFY = prevPacket.getDataRangeInt( 6, 1 );
+                int pFORCE = prevPacket.getDataRangeInt( 7, 1 );
+                long pTimeLong = prevDotTime;
+
+                NLog.e( "[CommProcessor / ChkMissingPenUpRunnable] prev stroke end with middle dot. " +
+                        "TimeStamp="+ pTimeLong + ",ErrorType="+ JsonTag.ERROR_TYPE_MISSING_PEN_UP + ",Section=" + prevSectionId + ",Owner="+prevOwnerId+",Note="+prevNoteId+",Page"+prevPageId+",X="+pX+",Y="+pY+",Force="+pFORCE );
+
+                processDot( sectionId, ownerId, noteId, pageId, pTimeLong, pX, pY, pFX, pFY, pFORCE, DotType.PEN_ACTION_UP.getValue(), currColor );
+
+                try
+                {
+                    JSONObject job = new JSONObject()
+                            .put( JsonTag.INT_SECTION_ID, prevSectionId )
+                            .put( JsonTag.INT_OWNER_ID, prevOwnerId )
+                            .put( JsonTag.INT_NOTE_ID, prevNoteId )
+                            .put( JsonTag.INT_PAGE_ID, prevPageId )
+                            .put( JsonTag.INT_LOG_X, pX )
+                            .put( JsonTag.INT_LOG_Y, pY )
+							.put( JsonTag.INT_LOG_FX, pFX)
+							.put( JsonTag.INT_LOG_FY, pFY)
+                            .put( JsonTag.INT_LOG_FORCE, pFORCE )
+                            .put( JsonTag.INT_LOG_ERROR_TYPE, JsonTag.ERROR_TYPE_MISSING_PEN_UP)
+                            .put( JsonTag.LONG_LOG_PEN_DOWN_TIMESTAMP, down_MTIME )
+                            .put( JsonTag.LONG_LOG_TIMESTAMP, pTimeLong );
+                    btConnection.onCreateMsg( new PenMsg( PenMsgType.ERROR_MISSING_PEN_UP, job ) );
+                }catch ( Exception e )
+                {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+    }
+
+    private ChkMissingPenUpRunnable mChkMissingPenUpRunnable;
+
 	private ChkOfflineFailRunnable mChkOfflineFailRunnable;
 
 	/**
@@ -149,7 +203,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	 *
 	 * @param conn the conn
 	 */
-	public CommProcessor( ConnectedThread conn )
+	public CommProcessor( IConnectedThread conn )
 	{
 		this.btConnection = conn;
 		this.parser = new ProtocolParser( this );
@@ -158,10 +212,66 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 		this.dotFilterFilm = new FilterForFilm( this );
 		this.mChkOfflineFailRunnable = new ChkOfflineFailRunnable();
 
+        this.mChkMissingPenUpRunnable = new ChkMissingPenUpRunnable();
+
 		this.checkEstablish();
 	}
 
-	public ConnectedThread getConn()
+    /**
+     * Finish.
+     */
+    public void finish() {
+        if ( prevPacket != null )
+        {
+            // In case of pen down, but prev dot is move. MISSING UP DOT
+            int pX = prevPacket.getDataRangeInt( 1, 2 );
+            int pY = prevPacket.getDataRangeInt( 3, 2 );
+            int pFX = prevPacket.getDataRangeInt( 5, 1 );
+            int pFY = prevPacket.getDataRangeInt( 6, 1 );
+            int pFORCE = prevPacket.getDataRangeInt( 7, 1 );
+            long pTimeLong = prevDotTime;
+
+            NLog.e( "[CommProcessor] The Processor has finished. But prev stroke end with middle dot. " +
+                    "TimeStamp="+ pTimeLong + ",ErrorType="+ JsonTag.ERROR_TYPE_MISSING_PEN_UP + ",Section=" + prevSectionId + ",Owner="+prevOwnerId+",Note="+prevNoteId+",Page"+prevPageId+",X="+pX+",Y="+pY+",Force="+pFORCE );
+
+            this.processDot( sectionId, ownerId, noteId, pageId, pTimeLong, pX, pY, pFX, pFY, pFORCE, DotType.PEN_ACTION_UP.getValue(), currColor );
+
+            try
+            {
+                JSONObject job = new JSONObject()
+                        .put( JsonTag.INT_SECTION_ID, prevSectionId )
+                        .put( JsonTag.INT_OWNER_ID, prevOwnerId )
+                        .put( JsonTag.INT_NOTE_ID, prevNoteId )
+                        .put( JsonTag.INT_PAGE_ID, prevPageId )
+                        .put( JsonTag.INT_LOG_X, pX )
+                        .put( JsonTag.INT_LOG_Y, pY )
+                        .put( JsonTag.INT_LOG_FX, pFX)
+                        .put( JsonTag.INT_LOG_FY, pFY)
+                        .put( JsonTag.INT_LOG_FORCE, pFORCE )
+                        .put( JsonTag.INT_LOG_ERROR_TYPE, JsonTag.ERROR_TYPE_MISSING_PEN_UP)
+                        .put( JsonTag.LONG_LOG_PEN_DOWN_TIMESTAMP, down_MTIME )
+                        .put( JsonTag.LONG_LOG_TIMESTAMP, pTimeLong );
+                btConnection.onCreateMsg( new PenMsg( PenMsgType.ERROR_MISSING_PEN_UP, job ) );
+            }catch ( Exception e )
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+	/**
+	 * Req calibrate 2.
+	 *
+	 * @param factor the factor
+	 */
+	public void reqCalibrate2 ( float[] factor )
+	{
+		this.factor = factor;
+	}
+
+
+
+	public IConnectedThread getConn()
 	{
 		return this.btConnection;
 	}
@@ -222,11 +332,92 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 				// " / timeAdd : " + TIME + " / x : " + X + " / y : " + Y +
 				// " / fx : " + FLOAT_X + " / fy : " + FLOAT_Y);
 
-                if ( !isStartWithDown || timeLong < 10000 )
+                //[2018.03.05] Stroke Test
+				if ( timeLong < 10000 )
 				{
-					NLog.e( "[CommProcessor] this stroke start with middle dot." );
-					return;
+					NLog.e( "[CommProcessor] Invalid Time." +
+									"TimeStamp="+ timeLong + ",ErrorType="+ JsonTag.ERROR_TYPE_INVALID_TIME + ",Section=" + sectionId + ",Owner="+ownerId+",Note="+noteId+",Page"+pageId+",X="+X+",Y="+Y+",Force="+FORCE );
+
+					try
+					{
+						JSONObject job = new JSONObject()
+								.put( JsonTag.INT_SECTION_ID, sectionId )
+								.put( JsonTag.INT_OWNER_ID, ownerId )
+								.put( JsonTag.INT_NOTE_ID, noteId )
+								.put( JsonTag.INT_PAGE_ID, pageId )
+								.put( JsonTag.INT_LOG_X, X )
+								.put( JsonTag.INT_LOG_Y, Y )
+								.put( JsonTag.INT_LOG_FX, FLOAT_X)
+								.put( JsonTag.INT_LOG_FY, FLOAT_Y)
+								.put( JsonTag.INT_LOG_FORCE, FORCE )
+								.put( JsonTag.INT_LOG_ERROR_TYPE, JsonTag.ERROR_TYPE_INVALID_TIME )
+                                .put( JsonTag.LONG_LOG_PEN_DOWN_TIMESTAMP, down_MTIME )
+								.put( JsonTag.LONG_LOG_TIMESTAMP, timeLong );
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.ERROR_INVALID_TIME, job ) );
+					}catch ( Exception e )
+					{
+						e.printStackTrace();
+					}
 				}
+
+                //[2018.03.05] Stroke Test
+                if ( !isStartWithDown )
+				{
+					NLog.e( "[CommProcessor] this stroke start with middle dot. " +
+									"TimeStamp="+ timeLong + ",ErrorType="+ JsonTag.ERROR_TYPE_MISSING_PEN_DOWN + ",Section=" + sectionId + ",Owner="+ownerId+",Note="+noteId+",Page"+pageId+",X="+X+",Y="+Y+",Force="+FORCE );
+
+					try
+					{
+						JSONObject job = new JSONObject()
+								.put( JsonTag.INT_SECTION_ID, sectionId )
+								.put( JsonTag.INT_OWNER_ID, ownerId )
+								.put( JsonTag.INT_NOTE_ID, noteId )
+								.put( JsonTag.INT_PAGE_ID, pageId )
+								.put( JsonTag.INT_LOG_X, X )
+								.put( JsonTag.INT_LOG_Y, Y )
+								.put( JsonTag.INT_LOG_FX, FLOAT_X)
+								.put( JsonTag.INT_LOG_FY, FLOAT_Y)
+								.put( JsonTag.INT_LOG_FORCE, FORCE )
+								.put( JsonTag.INT_LOG_ERROR_TYPE, JsonTag.ERROR_TYPE_MISSING_PEN_DOWN)
+                                .put( JsonTag.LONG_LOG_PEN_DOWN_TIMESTAMP, -1 )
+								.put( JsonTag.LONG_LOG_TIMESTAMP, timeLong );
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.ERROR_MISSING_PEN_DOWN, job ) );
+					}catch ( Exception e )
+					{
+						e.printStackTrace();
+					}
+					timeLong = System.currentTimeMillis();
+                    this.isPrevDotDown = true;
+                    this.isStartWithDown = true;
+
+//					return;
+				}
+
+                //[2018.03.05] Stroke Test
+                if(isReceivedPageIdChange == false) {
+                    NLog.e( "[CommProcessor] Page ID change NOT sent." +
+                            "TimeStamp="+ timeLong + ",ErrorType="+ JsonTag.ERROR_TYPE_MISSING_PAGE_CHANGE + ",Section=" + sectionId + ",Owner="+ownerId+",Note="+noteId+",Page"+pageId+",X="+X+",Y="+Y+",Force="+FORCE );
+                    try
+                    {
+                        JSONObject job = new JSONObject()
+                                .put( JsonTag.INT_SECTION_ID, sectionId )
+                                .put( JsonTag.INT_OWNER_ID, ownerId )
+                                .put( JsonTag.INT_NOTE_ID, noteId )
+                                .put( JsonTag.INT_PAGE_ID, ownerId )
+                                .put( JsonTag.INT_LOG_X, X )
+                                .put( JsonTag.INT_LOG_Y, Y )
+								.put( JsonTag.INT_LOG_FX, FLOAT_X)
+								.put( JsonTag.INT_LOG_FY, FLOAT_Y)
+                                .put( JsonTag.INT_LOG_FORCE, FORCE )
+                                .put( JsonTag.INT_LOG_ERROR_TYPE, JsonTag.ERROR_TYPE_MISSING_PAGE_CHANGE)
+                                .put( JsonTag.LONG_LOG_PEN_DOWN_TIMESTAMP, down_MTIME )
+                                .put( JsonTag.LONG_LOG_TIMESTAMP, timeLong );
+                        btConnection.onCreateMsg( new PenMsg( PenMsgType.ERROR_TYPE_MISSING_PAGE_CHANGE, job ) );
+                    }catch ( Exception e )
+                    {
+                        e.printStackTrace();
+                    }
+                }
 
 				if ( isPrevDotDown )
 				{
@@ -242,6 +433,8 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 
 				prevDotTime = timeLong;
 				prevPacket = pack;
+
+//                setMakeUpDotTimer();    //[2018.03.05] Stroke Test
 
 				break;
 
@@ -291,10 +484,53 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 
 				if ( PEN_UP_DOWN == 0 )
 				{
+				    down_MTIME = MTIME;
+                    //[2018.03.05] Stroke Test
+					if ( prevPacket != null )
+					{
+						// In case of pen down, but prev dot is move. MISSING UP DOT
+
+						int pX = prevPacket.getDataRangeInt( 1, 2 );
+						int pY = prevPacket.getDataRangeInt( 3, 2 );
+						int pFX = prevPacket.getDataRangeInt( 5, 1 );
+						int pFY = prevPacket.getDataRangeInt( 6, 1 );
+						int pFORCE = prevPacket.getDataRangeInt( 7, 1 );
+						long pTimeLong = prevDotTime;
+
+						NLog.e( "[CommProcessor] prev stroke end with middle dot. " +
+										"TimeStamp="+ pTimeLong + ",ErrorType="+ JsonTag.ERROR_TYPE_MISSING_PEN_UP + ",Section=" + prevSectionId + ",Owner="+prevOwnerId+",Note="+prevNoteId+",Page"+prevPageId+",X="+pX+",Y="+pY+",Force="+pFORCE );
+
+                        this.processDot( sectionId, ownerId, noteId, pageId, pTimeLong, pX, pY, pFX, pFY, pFORCE, DotType.PEN_ACTION_UP.getValue(), currColor );
+
+						try
+						{
+							JSONObject job = new JSONObject()
+									.put( JsonTag.INT_SECTION_ID, prevSectionId )
+									.put( JsonTag.INT_OWNER_ID, prevOwnerId )
+									.put( JsonTag.INT_NOTE_ID, prevNoteId )
+									.put( JsonTag.INT_PAGE_ID, prevPageId )
+									.put( JsonTag.INT_LOG_X, pX )
+									.put( JsonTag.INT_LOG_Y, pY )
+									.put( JsonTag.INT_LOG_FX, pFX)
+									.put( JsonTag.INT_LOG_FY, pFY)
+									.put( JsonTag.INT_LOG_FORCE, pFORCE )
+									.put( JsonTag.INT_LOG_ERROR_TYPE, JsonTag.ERROR_TYPE_MISSING_PEN_UP)
+                                    .put( JsonTag.LONG_LOG_PEN_DOWN_TIMESTAMP, down_MTIME )
+									.put( JsonTag.LONG_LOG_TIMESTAMP, pTimeLong );
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.ERROR_MISSING_PEN_UP, job ) );
+						}catch ( Exception e )
+						{
+							e.printStackTrace();
+						}
+
+					}
+
 					// In case of pen down, set the timestamp of the Start Dot
 					this.prevDotTime = MTIME;
 					this.isPrevDotDown = true;
 					this.isStartWithDown = true;
+
+                    isReceivedPageIdChange = false;     //[2018.03.05] Stroke Test
 				}
 				else if ( PEN_UP_DOWN == 1 )
 				{
@@ -310,11 +546,37 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 
 						this.processDot( sectionId, ownerId, noteId, pageId, pTimeLong, pX, pY, pFX, pFY, pFORCE, DotType.PEN_ACTION_UP.getValue(), currColor );
 					}
+					else
+					{
+                        //[2018.03.05] Stroke Test
+                        //Check if it is miss pen move or pen down & move, and then send error message.
+                        int errorType = isStartWithDown ? JsonTag.ERROR_TYPE_MISSING_PEN_MOVE : JsonTag.ERROR_TYPE_MISSING_PEN_DOWN_PEN_MOVE;
+                        int penMsgType = isStartWithDown ? PenMsgType.ERROR_MISSING_PEN_MOVE : PenMsgType.ERROR_MISSING_PEN_DOWN_PEN_MOVE;
+						// Previous dot was Down or Up dot. Missing Move Dots or get Only Up Dot.
+						NLog.e( "[CommProcessor] Missing Pen Down Pen Move " +
+										"TimeStamp="+ -1 + ",ErrorType="+ errorType );
+
+						try
+						{
+							JSONObject job = new JSONObject()
+                                    .put( JsonTag.LONG_LOG_PEN_DOWN_TIMESTAMP, down_MTIME )
+									.put( JsonTag.LONG_LOG_TIMESTAMP, prevDotTime )
+									.put( JsonTag.INT_LOG_ERROR_TYPE, errorType);
+							btConnection.onCreateMsg( new PenMsg( penMsgType, job ) );
+						}catch ( Exception e )
+						{
+							e.printStackTrace();
+						}
+					}
 
 					isStartWithDown = false;
+
+                    isReceivedPageIdChange = false;     //[2018.03.05] Stroke Test
 				}
 
 				this.prevPacket = null;
+
+//                clearMakeUpDotTimer();    //[2018.03.05] Stroke Test
 
 				break;
 
@@ -326,6 +588,8 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 			 * ------------------------------------------------------------------
 			 */
 			case CMD.A_DotIDChange:
+
+                isReceivedPageIdChange = true;      //[2018.03.05] Stroke Test
 
 				// Change note page information
 				noteId = pack.getDataRangeInt( 0, 2 );
@@ -342,6 +606,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 			 * ------------------------------------------------------------------
 			 */
 			case CMD.A_DotIDChange32:
+                isReceivedPageIdChange = true;      //[2018.03.05] Stroke Test
 
 				// Change note page information
 				byte[] osbyte = pack.getDataRange( 0, 4 );
@@ -369,11 +634,14 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 					long pTimeLong = prevDotTime;
 
 					this.processDot( prevSectionId, prevOwnerId, prevNoteId, prevPageId, pTimeLong, pX, pY, pFX, pFY, pFORCE, DotType.PEN_ACTION_UP.getValue(), currColor );
+
+					NLog.d( "[CommProcessor] it write pen continually between another page!!" + ",Section=" + prevSectionId + ",Owner="+prevOwnerId+",Note="+prevNoteId+",Page"+prevPageId+",X="+pX+",Y="+pY+",Force="+pFORCE );
+
 					isPrevDotDown = true;
 					isStartWithDown = true;
+
+//					clearMakeUpDotTimer();      //[2018.03.05] Stroke Test
 				}
-
-
 				break;
 
 			/*
@@ -1198,6 +1466,8 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	@Override
 	public void onFilteredDot( Fdot dot )
 	{
+		if(factor != null)
+			dot.pressure = (int)factor[dot.pressure];
 		btConnection.onCreateDot( dot );
 	}
 
@@ -1587,4 +1857,23 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	{
 		this.chunk = chunk;
 	}
+
+    /**
+     * Clear timer for make up dot when pen up is missed.
+     */
+    private void clearMakeUpDotTimer() {    //[2018.03.05] Stroke Test
+        if(mChkMissingPenUpRunnable != null){
+            mHandler.removeCallbacks(mChkMissingPenUpRunnable);
+        }
+    }
+
+    /**
+     * Set timer for make up dot when pen up is missed.
+     */
+    private void setMakeUpDotTimer() {  //[2018.03.05] Stroke Test
+        if(mChkMissingPenUpRunnable != null){
+            mHandler.removeCallbacks(mChkMissingPenUpRunnable);
+        }
+        mHandler.postDelayed(mChkMissingPenUpRunnable, 1000);
+    }
 }

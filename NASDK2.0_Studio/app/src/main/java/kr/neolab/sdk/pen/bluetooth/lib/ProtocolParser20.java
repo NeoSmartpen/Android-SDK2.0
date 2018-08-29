@@ -12,6 +12,7 @@ import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20;
 import kr.neolab.sdk.util.NLog;
 import kr.neolab.sdk.util.UseNoteData;
 
+import static kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20.PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_CREATE;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_DELETE;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_DELETE_VALUE;
@@ -185,7 +186,7 @@ public class ProtocolParser20
         {
             escapeBuffer.put( counter, data );
             counter++;
-            NLog.d( "[ProtocolParser20] parseOneByte PKT_END count=" + count + ", dataLength=" + dataLength + ", headerLength=" + headerLength +", isEvent="+isEvent+ "Packet:" + PacketBuilder.showPacket( escapeBuffer.array(), counter ) );
+            NLog.d( "[ProtocolParser20] parseOneByte PKT_END count=" + count + ", dataLength=" + dataLength + ", headerLength=" + headerLength +", isEvent="+isEvent+ ", Packet: " + PacketBuilder.showPacket( escapeBuffer.array(), counter ) );
             if(count == dataLength + headerLength - 1)
             {
                 this.listener.onCreatePacket( new Packet( escapeBuffer.array(),2 ,isEvent) );
@@ -294,13 +295,12 @@ public class ProtocolParser20
      * 0x01 CMD20.REQ_PenInfo
      *
      * @param appVer    the app ver
-     * @param masterKey the master key
      * @return the byte [ ]
      */
     public static byte[] buildReqPenInfo ( String appVer )
     {
 
-        PacketBuilder builder = new PacketBuilder( 16 + 2 + 16);
+        PacketBuilder builder = new PacketBuilder( 16 + 2 + 16 + 8);    //[2018.03.05] Stroke Test
 
         builder.setCommand( CMD20.REQ_PenInfo );
 
@@ -309,6 +309,7 @@ public class ProtocolParser20
         builder.write( ByteConverter.shortTobyte( (short) 0x1101 ), 2 );
         // It may be empty depending on the situation (depending on whether Context is set).
         builder.write( ByteConverter.stringTobyte( appVer ), 16 );
+        builder.write( ByteConverter.stringTobyte(PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION), 8);   //[2018.03.05] Stroke Test
         NLog.d( "[ProtocolParser20] REQ  buildReqPenInfo. appVer=" + appVer + "Packet:" + builder.showPacket());
         return builder.getPacket();
     }

@@ -50,6 +50,7 @@ public interface IMultiPenCtrl
      */
     public IPenMsgListener getListener ( String address );
 
+
     /**
      * get up listener of offlineData from pen
      * supported from Protocol 2.0

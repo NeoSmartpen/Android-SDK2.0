@@ -81,6 +81,11 @@ public class FilterForFilm
 				}
 				else
 				{
+					if( DotType.isPenActionDown( fdot1.dotType ))
+					{
+						fdot2.dotType = DotType.PEN_ACTION_DOWN.getValue();
+					}
+
 					fdot1 = fdot2;
 					fdot2 = mdot;
 				}

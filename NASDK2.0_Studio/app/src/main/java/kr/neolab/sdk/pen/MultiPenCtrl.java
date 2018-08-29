@@ -117,7 +117,16 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			return null;
     }
 
-    @Override
+	public IPenDotListener getDotListener(String address) {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			return mPenAdt.getDotListener();
+		else
+			return null;
+	}
+
+
+	@Override
     public IOfflineDataListener getOffLineDataListener(String address) {
 		IPenAdt mPenAdt = (mConnectedCollection.get(address));
 		if(mPenAdt != null)
@@ -266,6 +275,19 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 		if(mPenAdt != null)
 			mPenAdt.setOfflineDataLocation( path );
 
+	}
+
+	/**
+	 * Sets calibrate 2.
+	 *
+	 * @param address the address
+	 * @param factor  the factor
+	 */
+	public void setCalibrate2 ( String address, float[] factor )
+	{
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			mPenAdt.reqCalibrate2( factor);
 	}
 
 

@@ -47,6 +47,11 @@ public class JsonTag
      */
     public final static String BOOL_REGULAR_DISCONNECT = "regular";
 
+	/**
+	 * The constant BOOL_WRITE_FAILED_DISCONNECT.
+	 */
+	public final static String BOOL_SEND_DATA_FAILED_DISCONNECT = "send_data_failed";
+
     /**
      * The constant INT_POWER_OFF_REASON.
      * 0: auto power_off 1: low battery 2:update 3: power key
@@ -217,4 +222,171 @@ public class JsonTag
      */
     public final static String INT_PROFILE_INFO_USE_KEY_COUNT = "profile_use_key_count";
 
+    //[2018.03.05] Stroke Test - START
+    /**
+     * The constant LONG_LOG_NUMBER.
+     */
+    public final static String LONG_LOG_NUMBER = "log_number";
+
+    /**
+     * The constant LONG_LOG_TIMESTAMP.
+     */
+    public final static String LONG_LOG_TIMESTAMP = "log_timestamp";
+
+    /**
+     * The constant LONG_LOG_PEN_DOWN_TIMESTAMP
+     */
+    public final static String LONG_LOG_PEN_DOWN_TIMESTAMP = "log_pen_down_timestamp";
+
+    /**
+     * The constant LONG_LOG_ERROR_TYPE.
+     */
+    public final static String INT_LOG_ERROR_TYPE = "log_error_type";
+
+    /**
+     * The constant INT_LOG_ERROR_EVENT_COUNT.
+     */
+    public final static String INT_LOG_ERROR_EVENT_COUNT = "log_error_event_count";
+
+    /**
+     * The constant INT_LOG_ERROR_PREV_EVENT_COUNT.
+     */
+    public final static String INT_LOG_ERROR_PREV_EVENT_COUNT = "log_error_prev_event_count";
+
+    /**
+     * The constant INT_LOG_SECTION.
+     */
+    public final static String INT_LOG_SECTION = "log_section";
+
+    /**
+     * The constant INT_LOG_OWNER.
+     */
+    public final static String INT_LOG_OWNER = "log_owner";
+
+    /**
+     * The constant INT_LOG_book.
+     */
+    public final static String INT_LOG_BOOK = "log_book";
+
+    /**
+     * The constant INT_LOG_PAGE.
+     */
+    public final static String INT_LOG_PAGE = "log_page";
+
+    /**
+     * The constant INT_LOG_X.
+     */
+    public final static String INT_LOG_X = "log_x";
+
+    /**
+     * The constant INT_LOG_FX.
+     */
+    public final static String INT_LOG_FX = "log_fx";
+
+    /**
+     * The constant INT_LOG_Y.
+     */
+    public final static String INT_LOG_Y = "log_y";
+
+    /**
+     * The constant INT_LOG_FY.
+     */
+    public final static String INT_LOG_FY = "log_fy";
+
+    /**
+     * The constant FLOAT_LOG_FX.
+     */
+    public final static String FLOAT_LOG_FX = "log_fx";
+
+    /**
+     * The constant FLOAT_LOG_FY.
+     */
+    public final static String FLOAT_LOG_Y = "log_fy";
+
+    /**
+     * The constant INT_LOG_FORCE.
+     */
+    public final static String INT_LOG_FORCE = "log_force";
+
+    /**
+     * The constant INT_LOG_NDAC.
+     */
+    public final static String INT_LOG_NDAC = "log_ndac";
+
+    /**
+     * The constant INT_LOG_IMAGE_BRIGHTNESS.
+     */
+    public final static String INT_LOG_IMAGE_BRIGHTNESS = "log_image_brightness";
+
+    /**
+     * The constant INT_LOG_EXPOSURE_TIME.
+     */
+    public final static String INT_LOG_EXPOSURE_TIME = "log_exposure_time";
+
+    /**
+     * The constant INT_LOG_LABEL_COUNT.
+     */
+    public final static String INT_LOG_LABEL_COUNT = "log_label_count";
+
+    /**
+     * The constant INT_LOG_NDAC_ERROR_CODE.
+     */
+    public final static String INT_LOG_NDAC_ERROR_CODE = "log_ndac_error_code";
+
+    /**
+     * The constant INT_LOG_NDAC_ERROR_COUNT.
+     */
+    public final static String INT_LOG_NDAC_ERROR_COUNT = "log_ndac_error_count";
+
+    /**
+     * The constant INT_LOG_CLASS_TYPE.
+     */
+    public final static String INT_LOG_CLASS_TYPE = "log_class_type";
+
+    /**
+     * The constant INT_LOG_EXTRA_DATA.
+     */
+    public final static String INT_LOG_EXTRA_DATA = "log_extra_data";
+
+    /**
+     * The constant ERROR_TYPE_MISSING_PEN_UP.
+     */
+    public final static int ERROR_TYPE_MISSING_PEN_UP	= 1;
+
+    /**
+     * The constant ERROR_TYPE_MISSING_PEN_DOWN.
+     */
+    public final static int ERROR_TYPE_MISSING_PEN_DOWN	= 2;
+
+    /**
+     * The constant ERROR_TYPE_INVALID_TIME.
+     */
+    public final static int ERROR_TYPE_INVALID_TIME	= 3;
+
+    /**
+     * The constant ERROR_TYPE_MISSING_PEN_DOWN_PEN_MOVE.
+     */
+    public final static int ERROR_TYPE_MISSING_PEN_DOWN_PEN_MOVE	= 4;
+
+    /**
+     * The constant ERROR_TYPE_MISSING_PEN_DOWN_PEN_MOVE.
+     */
+    public final static int ERROR_TYPE_IMAGE_PROCESSING_ERROR	= 5;
+
+    /**
+     * The constant ERROR_TYPE_MISSING_PEN_DOWN_PEN_MOVE.
+     */
+    public final static int ERROR_TYPE_INVALID_EVENT_COUNT	= 6;
+
+    /**
+     * The constant ERROR_TYPE_MISSING_PEN_DOWN_PEN_MOVE.
+     */
+    public final static int ERROR_TYPE_MISSING_PAGE_CHANGE	= 7;
+
+    /**
+     * The constant ERROR_TYPE_MISSING_PEN_DOWN_PEN_MOVE.
+     */
+    public final static int ERROR_TYPE_MISSING_PEN_MOVE	= 8;
+
+    //[2018.03.05] Stroke Test - END
 }

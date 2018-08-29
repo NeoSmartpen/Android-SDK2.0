@@ -15,11 +15,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -95,6 +95,7 @@ public class BTLEAdt implements IPenAdt
     private static final boolean USE_QUEUE = true;
 
     private boolean mIsRegularDisconnect = false;
+	private boolean mIsWriteSuccessed = true;
 
     private Timer watchDog;
     private TimerTask watchDogTask;
@@ -141,17 +142,13 @@ public class BTLEAdt implements IPenAdt
     private BluetoothGattCharacteristic mWriteGattChacteristic = null;
 
     // The firmware team says 160 is the best, but when set to 256, if the MTU is successfully set, it will be faster than setting it to 160
-    private final static int[] mtuLIst = { 256, 160, 64, 23 };
+    private final static int[] mtuLIst = { 160, 64, 23 };
     private int mtuIndex = 0;
     private int mtu;
     private int mProtocolVer = 0;
 
-    private int writeIndex = 0;
-    private boolean writeContinues = false;
-    private byte[] writeDataBuffer;
-    private ArrayDeque<byte[]> writeQueue;
-
     private int penStatus = CONN_STATUS_IDLE;
+    private float[] factor = null;
 
     /**
      * Instantiates a new Btle adt.
@@ -173,8 +170,6 @@ public class BTLEAdt implements IPenAdt
 
     private boolean initialize ()
     {
-        writeQueue = new ArrayDeque<>();
-
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if ( mBluetoothAdapter == null )
         {
@@ -215,7 +210,13 @@ public class BTLEAdt implements IPenAdt
     @Override
     public IPenMsgListener getListener ()
     {
-        return null;
+        return this.listener;
+    }
+
+    @Override
+    public IPenDotListener getDotListener ()
+    {
+        return this.dotListener;
     }
 
     @Override
@@ -228,15 +229,20 @@ public class BTLEAdt implements IPenAdt
     public synchronized void connect(String address) {
 	    if (mBluetoothAdapter == null || address == null) {
 		    NLog.w("BluetoothAdapter not initialized or unspecified address.");
-		    this.responseMsg(new PenMsg(PenMsgType.PEN_CONNECTION_FAILURE));
-		    return;
-	    }
+            PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE);
+            msg.mac_address = address;
+            this.responseMsg( msg );
+
+            return;
+        }
 
         if ( penAddress != null )
         {
             if ( this.penStatus == CONN_STATUS_AUTHORIZED )
             {
-                responseMsg( new PenMsg( PenMsgType.PEN_ALREADY_CONNECTED ) );
+                PenMsg msg = new PenMsg( PenMsgType.PEN_ALREADY_CONNECTED);
+                msg.mac_address = address;
+                this.responseMsg( msg );
                 return;
             }
             else if ( this.penStatus != CONN_STATUS_IDLE )
@@ -249,20 +255,27 @@ public class BTLEAdt implements IPenAdt
         if ( device == null )
         {
             NLog.w( "Device not found.  Unable to connect." );
-            this.responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
+            PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE);
+            msg.mac_address = address;
+            this.responseMsg( msg );
             return;
         }
 
-        if ( device.getType() != BluetoothDevice.DEVICE_TYPE_LE )
+        if ( device.getType() != BluetoothDevice.DEVICE_TYPE_LE
+		        && device.getType() != BluetoothDevice.DEVICE_TYPE_UNKNOWN)
         {
             NLog.w( "MacAddress is not Bluetooth LE Type" );
-            this.responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
+            PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE);
+            msg.mac_address = address;
+            this.responseMsg( msg );
             return;
         }
 
         if ( this.penStatus != CONN_STATUS_IDLE )
         {
-            responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
+            PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE);
+            msg.mac_address = address;
+            this.responseMsg( msg );
             return;
         }
 
@@ -287,10 +300,13 @@ public class BTLEAdt implements IPenAdt
         };
 
         this.watchDogAlreadyCalled = false;
-        this.mBluetoothGatt = device.connectGatt( context, false, mBluetoothGattCallback );
+        if(Build.VERSION.SDK_INT >= 23)
+            this.mBluetoothGatt = device.connectGatt( context, false, mBluetoothGattCallback,BluetoothDevice.TRANSPORT_LE );
+        else
+            this.mBluetoothGatt = device.connectGatt( context, false, mBluetoothGattCallback );
         try
         {
-            this.watchDog.schedule( watchDogTask, 3000 );  // 3seconds
+            this.watchDog.schedule( watchDogTask, 10000 );  // 10seconds
         }
         catch ( Exception e )
         {
@@ -740,6 +756,21 @@ public class BTLEAdt implements IPenAdt
         mConnectionThread.getPacketProcessor().reqForceCalibrate();
     }
 
+    @Override
+    public void reqCalibrate2 ( float[] factor )
+    {
+        if ( !isConnected() )
+        {
+            return;
+        }
+
+        this.factor = factor;
+        if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )
+            ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqCalibrate2( factor );
+        else
+            ((CommProcessor)mConnectionThread.getPacketProcessor()).reqCalibrate2( factor);
+
+    }
 
     @Override
     public void setAllowOfflineData ( boolean allow )
@@ -900,13 +931,12 @@ public class BTLEAdt implements IPenAdt
     }
 
     @Override
-    public void reqSetupAutoPowerOnOff ( boolean setOn )
+    public void reqSetupAutoPowerOnOff ( final boolean setOn )
     {
         if ( !isConnected() )
         {
             return;
         }
-
         mConnectionThread.getPacketProcessor().reqAutoPowerSetupOnOff( setOn );
     }
 
@@ -1031,13 +1061,22 @@ public class BTLEAdt implements IPenAdt
     private void onLostConnection ()
     {
         NLog.d( "[BTAdt/ConnectThread] onLostConnection mIsRegularDisconnect=" + mIsRegularDisconnect );
-        if ( mIsRegularDisconnect ) responseMsg( new PenMsg( PenMsgType.PEN_DISCONNECTED ) );
+	    JSONObject job = new JSONObject();
+        if ( mIsRegularDisconnect )
+        {
+	        try
+	        {
+		        job.put( JsonTag.BOOL_SEND_DATA_FAILED_DISCONNECT, mIsWriteSuccessed );
+	        } catch (JSONException e)
+	        {
+		        e.printStackTrace();
+	        }
+        }
         else
         {
             try
             {
-                JSONObject job = new JSONObject().put( JsonTag.BOOL_REGULAR_DISCONNECT, mIsRegularDisconnect );
-                responseMsg( new PenMsg( PenMsgType.PEN_DISCONNECTED, job ) );
+                job.put( JsonTag.BOOL_REGULAR_DISCONNECT, mIsRegularDisconnect );
             }
             catch ( Exception e )
             {
@@ -1045,8 +1084,11 @@ public class BTLEAdt implements IPenAdt
             }
         }
 
+	    responseMsg( new PenMsg( PenMsgType.PEN_DISCONNECTED, job ) );
+
         onDisconnected();
         mIsRegularDisconnect = false;
+        mIsWriteSuccessed = true;
     }
 
     private void responseMsg ( PenMsg msg )
@@ -1066,6 +1108,8 @@ public class BTLEAdt implements IPenAdt
 
     private void responseDot ( Fdot dot )
     {
+        if ( factor != null ) dot.pressure = (int) factor[dot.pressure];
+
         if ( listener != null )
         {
             if ( USE_QUEUE )
@@ -1086,6 +1130,8 @@ public class BTLEAdt implements IPenAdt
     {
         private CommandManager processor;
 
+	    private WriteCharacteristicThread mWriteCharacteristicThread;
+
         private String macAddress;
         private String sppMacAddress;
         private boolean isRunning = false;
@@ -1098,6 +1144,9 @@ public class BTLEAdt implements IPenAdt
         public ConnectedThread ( int protocolVer )
         {
             if ( readQueue == null ) readQueue = new ArrayBlockingQueue<>( 128 );
+
+	        mWriteCharacteristicThread = new WriteCharacteristicThread();
+	        mWriteCharacteristicThread.start();
 
             readQueue.clear();
 
@@ -1141,6 +1190,7 @@ public class BTLEAdt implements IPenAdt
         {
             while ( this.isRunning )
             {
+                NLog.d( "[BTAdt/ConnectedThread]  read" );
                 synchronized ( readQueue )
                 {
                     try
@@ -1182,14 +1232,26 @@ public class BTLEAdt implements IPenAdt
         public void stopRunning ()
         {
             NLog.d( "[BTAdt/ConnectedThread] stopRunning()" );
+
+	        if (mWriteCharacteristicThread != null)
+	        {
+		        mWriteCharacteristicThread.stopRunning();
+		        mWriteCharacteristicThread = null;
+	        }
+
             if ( processor != null )
             {
                 if ( processor instanceof CommProcessor20 )
                 {
                     ( (CommProcessor20) processor ).finish();
                 }
+                else if( processor instanceof CommProcessor )
+                {
+                    ((CommProcessor)processor).finish();
+                }
             }
 
+            this.isRunning = false;
             try
             {
                 // thread take release data byte array length 0
@@ -1199,7 +1261,6 @@ public class BTLEAdt implements IPenAdt
             {
                 e.printStackTrace();
             }
-            this.isRunning = false;
         }
 
         /**
@@ -1208,45 +1269,8 @@ public class BTLEAdt implements IPenAdt
          */
         public void write ( byte[] buffer )
         {
-            if ( mBluetoothGatt != null && mWriteGattChacteristic != null )
-            {
-                writeIndex = 0;
-                byte[] bytes = new byte[buffer.length];
-                System.arraycopy( buffer, 0, bytes, 0, buffer.length );
-                writeQueue.add( bytes );
-
-                continuousWrite();
-            }
-        }
-
-        public void continuousWrite ()
-        {
-            if ( mBluetoothGatt != null && mWriteGattChacteristic != null )
-            {
-                if ( !writeContinues )
-                {
-//                if ( dataBuffer == null || writeIndex >= dataBuffer.length ) {
-                    writeDataBuffer = writeQueue.poll();
-                    if ( writeDataBuffer == null ) return;
-                    writeIndex = 0;
-                    writeContinues = true;
-                }
-                int size = 0;
-                int bufferSize = writeDataBuffer.length;
-                // mtu transmission data size is mtu - 3 (opcode 1byte + attribute handle 2byte)
-                if ( writeIndex + mtu - 3 < bufferSize ) size = mtu - 3;
-                else
-                {
-                    size = bufferSize - writeIndex;
-                    writeContinues = false;
-                }
-                byte[] b = new byte[size];
-                System.arraycopy( writeDataBuffer, writeIndex, b, 0, size );
-                mWriteGattChacteristic.setValue( b );
-                boolean ret = mBluetoothGatt.writeCharacteristic( mWriteGattChacteristic );
-                writeIndex += size;
-                NLog.d( "write result : " + ret + ", size check : " + size );
-            }
+            if(mWriteCharacteristicThread != null)
+	            mWriteCharacteristicThread.write(buffer);
         }
 
         /**
@@ -1304,7 +1328,7 @@ public class BTLEAdt implements IPenAdt
         @Override
         public boolean getIsEstablished ()
         {
-            return penStatus == CONN_STATUS_ESTABLISHED || penStatus == CONN_STATUS_AUTHORIZED;
+            return penStatus == CONN_STATUS_ESTABLISHED || penStatus == CONN_STATUS_AUTHORIZED ;
         }
 
         public void onEstablished ()
@@ -1354,7 +1378,131 @@ public class BTLEAdt implements IPenAdt
         {
             return allowOffline;
         }
+
+        public void releaseWriteThread()
+        {
+        	mWriteCharacteristicThread.release();
+        }
     }
+
+	public class WriteCharacteristicThread extends Thread {
+		private boolean isRunning;
+
+		private int writeIndex = 0;
+		private boolean writeContinues = false;
+		private byte[] writeDataBuffer;
+		private ArrayBlockingQueue<byte[]> writeQueue = null;
+		private int writeRetryCount;
+
+		public WriteCharacteristicThread() {
+			writeQueue = new ArrayBlockingQueue(128);
+			isRunning = true;
+			writeRetryCount = 0;
+		}
+
+		public void run() {
+			while (isRunning) {
+				continuousWrite();
+			}
+		}
+
+		public void stopRunning() {
+			try {
+				writeQueue.put(new byte[0]);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			isRunning = false;
+		}
+
+
+		public boolean write(byte[] buffer) {
+			if (mBluetoothGatt != null && mWriteGattChacteristic != null) {
+				writeIndex = 0;
+				byte[] bytes = new byte[buffer.length];
+				System.arraycopy(buffer, 0, bytes, 0, buffer.length);
+				writeQueue.add(bytes);
+				return true;
+			}
+
+			return false;
+		}
+
+		public void release() {
+			synchronized (this) {
+				this.notify();
+			}
+		}
+
+
+		private void continuousWrite() {
+			if (mBluetoothGatt != null && mWriteGattChacteristic != null) {
+				if (!writeContinues) {
+//                if ( dataBuffer == null || writeIndex >= dataBuffer.length ) {
+					try {
+						writeDataBuffer = writeQueue.take();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						writeDataBuffer = null;
+					}
+
+
+					if (writeDataBuffer == null || writeDataBuffer.length == 0) return;
+					writeIndex = 0;
+					writeContinues = true;
+				}
+				int size = 0;
+				int bufferSize = writeDataBuffer.length;
+				// mtu transmission data size is mtu - 3 (opcode 1byte + attribute handle 2byte)
+				if (writeIndex + mtu - 3 < bufferSize) size = mtu - 3;
+				else {
+					size = bufferSize - writeIndex;
+					writeContinues = false;
+				}
+				byte[] b = new byte[size];
+				System.arraycopy(writeDataBuffer, writeIndex, b, 0, size);
+				mWriteGattChacteristic.setValue(b);
+
+				synchronized (this) {
+
+					boolean ret = mBluetoothGatt.writeCharacteristic(mWriteGattChacteristic);
+					NLog.d("write result : " + ret + ", size check : " + size+",writeContinues="+writeContinues);
+
+					if (ret) {
+						writeIndex += size;
+						writeRetryCount = 0;
+						try {
+							this.wait();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					} else // failed
+					{
+						if (writeRetryCount >= 3)
+						{
+							// error & disconnect
+							mIsWriteSuccessed = false;
+							mConnectionThread.unbind(true);
+						}
+						delay(10);
+						++writeRetryCount;
+						writeContinues = true;
+					}
+				}
+			}
+		}
+
+		private void delay(long time)
+		{
+			try {
+				sleep( time );
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
 
     private Handler mHandler = new Handler( Looper.getMainLooper() )
     {
@@ -1374,13 +1522,21 @@ public class BTLEAdt implements IPenAdt
                 case QUEUE_MSG:
                 {
                     PenMsg pmsg = (PenMsg) msg.obj;
-                    pmsg.mac_address = penAddress;
+                    if(pmsg.mac_address == null || pmsg.mac_address.length() == 0)
+                        pmsg.mac_address = penAddress;
                     if ( pmsg.penMsgType == PenMsgType.PEN_DISCONNECTED || pmsg.penMsgType == PenMsgType.PEN_CONNECTION_FAILURE )
                     {
-                        NLog.d( "[BTAdt/mHandler] PenMsgType.PEN_DISCONNECTED" );
+                        NLog.d( "[BTAdt/mHandler] PenMsgType.PEN_DISCONNECTED or PenMsgType.PEN_CONNECTION_FAILURE" );
+                        if(listener != null)
+                            listener.onReceiveMessage( pmsg.mac_address, pmsg );
                         penAddress = null;
                     }
-                    listener.onReceiveMessage( penAddress, pmsg );
+                    else
+                    {
+                        if(listener != null)
+                            listener.onReceiveMessage( pmsg.mac_address, pmsg );
+                    }
+
                 }
                 break;
 
@@ -1443,15 +1599,23 @@ public class BTLEAdt implements IPenAdt
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED:
                     NLog.d( "Disconnected" );
+//                    if ( mConnectionThread != null )
+//                    {
+//                        if(mConnectionThread.getIsEstablished())
+//                        {
+//                            mConnectionThread.stopRunning();
+//                        }
+//                        else
+//                        {
+//                            NLog.d( "Connect failed" );
+//                            responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
+//                            onDisconnected();
+//                        }
+//                    }
                     if ( mConnectionThread == null )
                     {
-                        NLog.d( "Connect failed" );
                         responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
                         onDisconnected();
-                    }
-                    else
-                    {
-                        mConnectionThread.stopRunning();
                     }
                     close();
                     break;
@@ -1470,6 +1634,7 @@ public class BTLEAdt implements IPenAdt
                     mProtocolVer = 2;
                     mConnectionThread = new ConnectedThread( mProtocolVer );
                     mConnectionThread.start();
+
                     initCharacteristic( mProtocolVer );
                 }
                 else
@@ -1494,7 +1659,7 @@ public class BTLEAdt implements IPenAdt
             NLog.d( "call onCharacteristicWrite status : " + status );
             if ( status == BluetoothGatt.GATT_SUCCESS )
             {
-                mConnectionThread.continuousWrite();
+                mConnectionThread.releaseWriteThread();
             }
         }
 
@@ -1584,22 +1749,28 @@ public class BTLEAdt implements IPenAdt
 
     private void onDisconnected ()
     {
+
         penStatus = CONN_STATUS_IDLE;
     }
 
     private void close ()
     {
+        if ( mConnectionThread != null )
+        {
+            if(((CommProcessor20) mConnectionThread.getPacketProcessor()) != null && ((CommProcessor20) mConnectionThread.getPacketProcessor()).setTimeCommand != null && ((CommProcessor20) mConnectionThread.getPacketProcessor()).setTimeCommand.isAlive())
+            {
+                ((CommProcessor20) mConnectionThread.getPacketProcessor()).setTimeCommand.finish();
+            }
+            mConnectionThread.stopRunning();
+            mConnectionThread = null;
+        }
         if ( mBluetoothGatt == null )
         {
             return;
         }
         mBluetoothGatt.close();
         mBluetoothGatt = null;
-        if ( mConnectionThread != null )
-        {
-            mConnectionThread.stopRunning();
-            mConnectionThread = null;
-        }
+
     }
 
     private void setCharacteristicIndication ( BluetoothGattCharacteristic characteristic, boolean enabled )

@@ -2,8 +2,6 @@ package kr.neolab.sdk.pen.bluetooth.lib;
 
 import android.graphics.PointF;
 
-import kr.neolab.sdk.util.NLog;
-
 /**
  * Created by LMS on 2017-11-28.
  * To modify this restriction rule, be sure to record the revision history.
@@ -197,11 +195,11 @@ public class PenProfile
                 }
             }
         }
-        for(int i = 0 ;i < mModifyPressureFactor.length ; i++)
-        {
-            NLog.d( "test mPressureFactor"+i+":"+mModifyPressureFactor[i] );
-
-        }
+//        for(int i = 0 ;i < mModifyPressureFactor.length ; i++)
+//        {
+//            NLog.d( "test mPressureFactor"+i+":"+mModifyPressureFactor[i] );
+//
+//        }
 
         return mModifyPressureFactor;
 

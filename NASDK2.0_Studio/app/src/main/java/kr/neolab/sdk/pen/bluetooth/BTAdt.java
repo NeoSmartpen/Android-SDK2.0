@@ -192,6 +192,12 @@ public class BTAdt implements IPenAdt
 	}
 
 	@Override
+	public IPenDotListener getDotListener ()
+	{
+		return this.dotListener;
+	}
+
+	@Override
 	public IOfflineDataListener getOffLineDataListener()
 	{
 		return this.offlineDataListener;
@@ -219,6 +225,7 @@ public class BTAdt implements IPenAdt
                 return;
             }
         }
+		BluetoothDevice device = getBluetoothAdapter().getRemoteDevice( address );
 
         boolean ret;
         try {
@@ -246,7 +253,7 @@ public class BTAdt implements IPenAdt
 
         NLog.i( "[BTAdt] connect device : " + address );
 
-        BluetoothDevice device = getBluetoothAdapter().getRemoteDevice( address );
+
         this.penBtName = device.getName();
 
 
@@ -748,6 +755,21 @@ public class BTAdt implements IPenAdt
 		mConnectionThread.getPacketProcessor().reqForceCalibrate();
 	}
 
+	@Override
+	public void reqCalibrate2 ( float[] factor )
+	{
+		if ( !isConnected() )
+		{
+			return;
+		}
+		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+			((CommProcessor20)mConnectionThread.getPacketProcessor()).reqCalibrate2( factor);
+		else
+			((CommProcessor)mConnectionThread.getPacketProcessor()).reqCalibrate2( factor);
+
+
+	}
+
 	/**
 	 * Listen(Accept) Thread
 	 *
@@ -1184,6 +1206,10 @@ public class BTAdt implements IPenAdt
 				{
 					((CommProcessor20)processor).finish();
 				}
+				else if( processor instanceof CommProcessor )
+                {
+                    ((CommProcessor)processor).finish();
+                }
 			}
 			this.isRunning = false;
 		}

@@ -151,6 +151,13 @@ public interface IPenCtrl
     public void calibratePen();
 
     /**
+     * Sets calibrate.
+     *
+     * @param factor the factor
+     */
+//    public void setCalibrate2(float[] factor);
+
+    /**
      * To upgrade the firmware of the pen.
      *
      * @param fwFile     the fw file

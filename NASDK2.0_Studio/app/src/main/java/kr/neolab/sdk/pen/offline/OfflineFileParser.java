@@ -53,6 +53,7 @@ public class OfflineFileParser implements IFilterListener
 
 	private ArrayList<Stroke> strokes = new ArrayList<Stroke>();
 	private Stroke stroke = null;
+	private float[] factor = null;
 
 	private OfflineFileParser()
 	{
@@ -102,6 +103,16 @@ public class OfflineFileParser implements IFilterListener
 	{
 		this();
 		this.target = file;
+	}
+
+	/**
+	 * Sets calibrate.
+	 *
+	 * @param factor the factor
+	 */
+	public void setCalibrate ( float[] factor )
+	{
+		this.factor = factor;
 	}
 
 	/**
@@ -417,6 +428,8 @@ public class OfflineFileParser implements IFilterListener
 					isPenUp = true;
 				}
 
+				if(factor != null)
+					pressure = (int)factor[pressure];
 				Fdot dot = new Fdot((x + (float) (fx * 0.01)), (y + (float) (fy * 0.01)), pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color,0 , 0, 0, 0);
 
 				tempDots.add( dot );

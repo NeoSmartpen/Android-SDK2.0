@@ -76,11 +76,16 @@ public class FilterForPaper
 					}
 					else
 					{
+
 						dot2 = mdot;
 					}
 				}
 				else
 				{
+					if( DotType.isPenActionDown( dot1.dotType ))
+					{
+						dot2.dotType = DotType.PEN_ACTION_DOWN.getValue();
+					}
 					dot1 = dot2;
 					dot2 = mdot;
 				}

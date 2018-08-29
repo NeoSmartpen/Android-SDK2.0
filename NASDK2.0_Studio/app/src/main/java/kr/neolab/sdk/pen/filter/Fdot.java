@@ -52,6 +52,34 @@ public class Fdot extends Dot implements Parcelable
         super( x, y, pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color,penTipType, tiltX, tiltY, twist);
     }
 
+    /**
+     * Instantiates a new Fdot.
+     *
+     * @param x          the x
+     * @param y          the y
+     * @param pressure   the pressure
+     * @param dotType    the dot type
+     * @param timestamp  the timestamp
+     * @param sectionId  the section id
+     * @param ownerId    the owner id
+     * @param noteId     the note id
+     * @param pageId     the page id
+     * @param color      the color
+     * @param penTipType the pen tip type
+     * @param tiltX      the tilt x
+     * @param tiltY      the tilt y
+     * @param twist      the twist
+     * @param dotCount      the dot count
+     * @param totalImgCount      the total imaga count
+     * @param processImgCount      the process image count
+     * @param successImgCount      the success image count
+     * @param sendImgCount      the send image count
+     */
+    public Fdot(float x, float y, int pressure, int dotType, long timestamp, int sectionId, int ownerId, int noteId, int pageId, int color,int penTipType , int tiltX, int tiltY, int twist, int dotCount, int totalImgCount, int processImgCount, int successImgCount, int sendImgCount)
+    {   //[2018.03.05] Stroke Test
+        super( x, y, pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color,penTipType, tiltX, tiltY, twist, dotCount, totalImgCount, processImgCount, successImgCount, sendImgCount);
+    }
+
 //    public void setDot(int dotType, int sectionId, int ownerId, int noteId, int pageId, int x, int y, long time, int fx, int fy, int force, int color)
 //    {
 //    	this.dotType = dotType;
@@ -200,6 +228,13 @@ public class Fdot extends Dot implements Parcelable
         parcel.writeInt(twist);
         parcel.writeLong( timestamp );
         parcel.writeString( mac_address );
+
+        //[2018.03.05] Stroke Test
+        parcel.writeInt(dotCount);
+        parcel.writeInt(totalImgCount);
+        parcel.writeInt(processImgCount);
+        parcel.writeInt(successImgCount);
+        parcel.writeInt(sendImgCount);
     }
 
     /**
@@ -226,7 +261,14 @@ public class Fdot extends Dot implements Parcelable
             int twist = source.readInt();
             long timestamp = source.readLong();
             String address = source.readString();
-            Fdot oFdot = new Fdot(x, y,pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color,penTipType,tiltX, tiltY, twist);
+
+            //[2018.03.05] Stroke Test
+            int dotCount = source.readInt();
+            int totalImgCount = source.readInt();
+            int processImgCount = source.readInt();
+            int successImgCount = source.readInt();
+            int sendImgCount = source.readInt();
+            Fdot oFdot = new Fdot(x, y,pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color,penTipType,tiltX, tiltY, twist, dotCount, totalImgCount, processImgCount, successImgCount, sendImgCount);
             oFdot.mac_address = address;
             return oFdot;
         }

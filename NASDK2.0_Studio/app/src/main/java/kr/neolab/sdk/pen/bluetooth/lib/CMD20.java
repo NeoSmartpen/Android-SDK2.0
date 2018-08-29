@@ -39,6 +39,26 @@ public class CMD20
      */
     public static final int RES_EventDotData3 = 0x67;
     /**
+     * The constant RES_EventPenDown.
+     */
+    public static final int RES_EventPenDown = 0x69;
+    /**
+     * The constant RES_EventPenDown.
+     */
+    public static final int RES_EventPenUp = 0x6A;
+    /**
+     * The constant RES_EventIdChange2.
+     */
+    public static final int RES_EventIdChange2 = 0x6B;
+    /**
+     * The constant RES_EventDotData4.
+     */
+    public static final int RES_EventDotData4 = 0x6C;
+    /**
+     * The constant RES_EventErrorDot2.
+     */
+    public static final int RES_EventErrorDot2 = 0x6D;
+    /**
      * The constant RES_EventUploadPenFWChunk.
      */
     public static final int RES_EventUploadPenFWChunk = 0x32;

@@ -73,6 +73,8 @@ public interface IPenAdt
      */
     public IPenMsgListener getListener();
 
+    public IPenDotListener getDotListener();
+
     /**
      * get up listener of offlineData from pen
      * supported from Protocol 2.0
@@ -197,6 +199,13 @@ public interface IPenAdt
      * Adjust the pressure-sensor to the pen.
      */
     public void reqForceCalibrate();
+
+    /**
+     * Sets calibrate.
+     *
+     * @param factor the factor
+     */
+    public void reqCalibrate2(float[] factor);
 
     /**
      * Specify whether you want to get the data off-line.

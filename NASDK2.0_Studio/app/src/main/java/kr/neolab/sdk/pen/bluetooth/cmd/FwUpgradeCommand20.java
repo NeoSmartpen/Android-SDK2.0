@@ -140,6 +140,7 @@ public class FwUpgradeCommand20 extends Command
 		int offset = 0;
 		while ( repeat )
 		{
+//			NLog.e( "[FwUpgradeCommand20] queue="+queue.size());
 			if ( !queue.isEmpty() )
 			{
 				CommProcessor20.FwPacketInfo info = (CommProcessor20.FwPacketInfo)queue.poll();
@@ -151,7 +152,7 @@ public class FwUpgradeCommand20 extends Command
 					comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( index ), info.status , isCompress) );
 					if(info.status == CommProcessor20.FwPacketInfo.STATUS_ERROR)
 					{
-						NLog.e( "[FwUpgradeCommand] STATUS_ERROR");
+						NLog.e( "[FwUpgradeCommand20] STATUS_ERROR");
 						comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_FAILURE ) );
 						comp.finishUpgrade();
 						repeat = false;
@@ -161,7 +162,7 @@ public class FwUpgradeCommand20 extends Command
 
 
 					int maximum = chunk.getChunkLength();
-					NLog.d( "[FwUpgradeCommand] send progress => maximum : " + maximum + ", current : " + index );
+					NLog.d( "[FwUpgradeCommand20] send progress => maximum : " + maximum + ", current : " + index );
 					JSONObject job;
 					try
 					{
@@ -188,7 +189,7 @@ public class FwUpgradeCommand20 extends Command
 					{
 						if(info.status == CommProcessor20.FwPacketInfo.STATUS_ERROR)
 						{
-							NLog.e( "[FwUpgradeCommand] can't write chunk packet.", e );
+							NLog.e( "[FwUpgradeCommand20] can't write chunk packet.", e );
 							comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_FAILURE ) );
 							comp.finishUpgrade();
 							repeat = false;
@@ -198,7 +199,7 @@ public class FwUpgradeCommand20 extends Command
 						comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( index ), info.status , isCompress) );
 
 						int maximum = chunk.getChunkLength();
-						NLog.d( "[FwUpgradeCommand] send progress No Compress=> maximum : " + maximum + ", current : " + index );
+						NLog.d( "[FwUpgradeCommand20] send progress No Compress=> maximum : " + maximum + ", current : " + index );
 						JSONObject job;
 						try
 						{
@@ -215,7 +216,7 @@ public class FwUpgradeCommand20 extends Command
 
 					}catch ( Exception e2 )
 					{
-						NLog.e( "[FwUpgradeCommand] can't write chunk packet.", e2 );
+						NLog.e( "[FwUpgradeCommand20] can't write chunk packet.", e2 );
 						comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_FAILURE ) );
 						comp.finishUpgrade();
 						repeat = false;
@@ -227,7 +228,7 @@ public class FwUpgradeCommand20 extends Command
 			}
 			if ( count >= timeout )
 			{
-				NLog.e( "[FwUpgradeCommand] tracing : wait timeout." );
+				NLog.e( "[FwUpgradeCommand20] tracing : wait timeout.count="+count );
 				comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_FAILURE ) );
 				comp.finishUpgrade();
 				repeat = false;

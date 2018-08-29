@@ -92,12 +92,6 @@ public class PenMsgType
      */
     public final static int PEN_SETUP_SENSITIVITY_RESULT_FSC   = 0x19;
 
-    /**
-     * The constant PEN_USING_NOTE_SET_FAIL.
-     * This Msg was deprecated in 2.00.0009 . See PEN_USING_NOTE_SET_RESULT
-     */
-    @Deprecated
-//    public final static int PEN_USING_NOTE_SET_FAIL     = 0x19;
 
 
     /**
@@ -208,6 +202,9 @@ public class PenMsgType
      */
     public final static int OFFLINE_DATA_SEND_FAILURE	= 0x34;
 
+
+    public final static int OFFLINE_DATA_SEND_ZERO	= 0x37;
+
     /**
      * The constant OFFLINE_DATA_FILE_CREATED.
      */
@@ -238,10 +235,48 @@ public class PenMsgType
      */
     public final static int PEN_CONNECTION_FAILURE_BTDUPLICATE	= 0x54;
 
+    //[2018.03.05] Stroke Test - START
     /**
-     * The constant ERROR_DOT_NO_DOWN.
+     * The constant ERROR_MISSING_PEN_UP.
      */
-    public final static int ERROR_DOT_NO_DOWN	= 0x70;
+    public final static int ERROR_MISSING_PEN_UP	= 0x70;
+
+    /**
+     * The constant ERROR_MISSING_PEN_DOWN.
+     */
+    public final static int ERROR_MISSING_PEN_DOWN	= 0x71;
+
+    /**
+     * The constant ERROR_INVALID_TIME.
+     */
+    public final static int ERROR_INVALID_TIME	= 0x72;
+
+    /**
+     * The constant ERROR_MISSING_PEN_DOWN_PEN_MOVE.
+     */
+    public final static int ERROR_MISSING_PEN_DOWN_PEN_MOVE	= 0x73;
+
+    /**
+     * The constant ERROR_MISSING_PEN_DOWN_PEN_MOVE.
+     */
+    public final static int ERROR_TYPE_IMAGE_PROCESSING_ERROR	= 0x74;
+
+    /**
+     * The constant ERROR_MISSING_PEN_DOWN_PEN_MOVE.
+     */
+    public final static int ERROR_TYPE_INVALID_EVENT_COUNT	= 0x75;
+
+    /**
+     * The constant ERROR_MISSING_PEN_DOWN_PEN_MOVE.
+     */
+    public final static int ERROR_TYPE_MISSING_PAGE_CHANGE	= 0x76;
+
+    /**
+     * The constant ERROR_MISSING_PEN_DOWN_PEN_MOVE.
+     */
+    public final static int ERROR_MISSING_PEN_MOVE	= 0x77;
+
+    //[2018.03.05] Stroke Test - END
 
     /**
      * The constant PROFILE_FAILURE.

@@ -65,6 +65,13 @@ color = Color.BLACK;
      */
     public int penTipType = Stroke.PEN_TIP_TYPE_NORMAL;
 
+    //[2018.03.05] Stroke Test
+    public int dotCount = -1;
+    public int totalImgCount = -1;
+    public int processImgCount = -1;
+    public int successImgCount = -1;
+    public int sendImgCount = -1;
+
     private Dot ()
     {
 
@@ -92,6 +99,13 @@ color = Color.BLACK;
         this.tiltX = dot.tiltX;
         this.tiltY = dot.tiltY;
         this.twist = dot.twist;
+
+        //[2018.03.05] Stroke Test
+        this.dotCount = dot.dotCount;
+        this.totalImgCount = dot.totalImgCount;
+        this.processImgCount = dot.processImgCount;
+        this.successImgCount = dot.successImgCount;
+        this.sendImgCount = dot.sendImgCount;
     }
 
     /**
@@ -129,6 +143,50 @@ color = Color.BLACK;
         this.tiltX = tiltX;
         this.tiltY = tiltY;
         this.twist = twist;
+    }
+
+    /**
+     * A constructor that constructs a Dot object
+     *
+     * @param x          x-coordinate of dot
+     * @param y          y-coordinate of dot
+     * @param pressure   level of pressure
+     * @param dotType    type of dot
+     * @param timestamp  generated time
+     * @param sectionId  the section id
+     * @param ownerId    the owner id
+     * @param noteId     the note id
+     * @param pageId     the page id
+     * @param color      the color
+     * @param penTipType the pen tip type
+     * @param tiltX      the tilt x
+     * @param tiltY      the tilt y
+     * @param twist      the twist
+     */
+    public Dot ( float x, float y, int pressure, int dotType, long timestamp, int sectionId, int ownerId, int noteId, int pageId, int color, int penTipType, int tiltX, int tiltY, int twist, int dotCount, int totalImgCount, int processImgCount, int successImgCount, int sendImgCount )
+    {
+        this.x = x;
+        this.y = y;
+        this.pressure = pressure;
+        this.dotType = dotType;
+        this.timestamp = timestamp;
+
+        this.sectionId = sectionId;
+        this.ownerId = ownerId;
+        this.noteId = noteId;
+        this.pageId = pageId;
+        this.color = color;
+        this.penTipType = penTipType;
+        this.tiltX = tiltX;
+        this.tiltY = tiltY;
+        this.twist = twist;
+
+        //[2018.03.05] Stroke Test
+        this.dotCount = dotCount;
+        this.totalImgCount = totalImgCount;
+        this.processImgCount = processImgCount;
+        this.successImgCount = successImgCount;
+        this.sendImgCount = sendImgCount;
     }
 
     /**
@@ -230,6 +288,13 @@ color = Color.BLACK;
         parcel.writeInt( pageId );
         parcel.writeInt( color );
         parcel.writeInt( penTipType );
+
+        //[2018.03.05] Stroke Test
+        parcel.writeInt( dotCount );
+        parcel.writeInt( totalImgCount );
+        parcel.writeInt( processImgCount );
+        parcel.writeInt( successImgCount );
+        parcel.writeInt( sendImgCount );
     }
 
     /**
@@ -258,6 +323,12 @@ color = Color.BLACK;
             oDot.color = source.readInt();
             oDot.penTipType = source.readInt();
 
+            //[2018.03.05] Stroke Test
+            oDot.dotCount = source.readInt();
+            oDot.totalImgCount = source.readInt();
+            oDot.processImgCount = source.readInt();
+            oDot.successImgCount = source.readInt();
+            oDot.sendImgCount = source.readInt();
 
             return oDot;
         }

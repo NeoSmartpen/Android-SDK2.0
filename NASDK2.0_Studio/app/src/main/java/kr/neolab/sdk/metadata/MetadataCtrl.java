@@ -50,6 +50,7 @@ public class MetadataCtrl implements IMetadataCtrl
     private HashMap<String, Page> pageTable;
     private HashMap<String, PointF> offsetTable;
     private SparseArray<Book> bookTable;
+    private String content = "";
 
     /**
      * The constant PIXEL_TO_DOT_SCALE.
@@ -1005,9 +1006,13 @@ public class MetadataCtrl implements IMetadataCtrl
 		return null;
 	}
 
-
     @Override
-    public Symbol[] findApplicableSymbols( Stroke nstr )
+    public Symbol[] findApplicableSymbols( Stroke nstr)
+    {
+        return findApplicableSymbols(nstr , 0f,  0f);
+    }
+
+    public Symbol[] findApplicableSymbols( Stroke nstr , Float offsetX,  Float offsetY)
     {
         ArrayList<Symbol> candidates = this.symbolTable.get( getQueryString( nstr.noteId, nstr.pageId ) );
 
@@ -1026,12 +1031,29 @@ public class MetadataCtrl implements IMetadataCtrl
 
                 if(e.points != null && e.points.length() > 0)
                 {
-                    if(inSideCustomshape(e, pf.x, pf.y) && !result.contains( e ))
+                    if(inSideCustomshape(e, pf.x+offsetX, pf.y+offsetY) && !result.contains( e ))
+                    {
                         result.add( e );
+                        break;
+                    }
                 }
-                else if ( e.contains( pf.x, pf.y ) && !result.contains( e ))
+                else if ( e.contains( pf.x+offsetX, pf.y+offsetY ) && !result.contains( e ))
                 {
                     result.add( e );
+                    break;
+                }
+                else
+                {
+                    if(i != 0)
+                    {
+                        Dot prevF = nstr.get( i-1 );
+
+                        if(is2DotSymbolCross(prevF,pf,e,offsetX,offsetY ) && !result.contains( e ))
+                        {
+                            result.add( e );
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -1044,6 +1066,11 @@ public class MetadataCtrl implements IMetadataCtrl
         {
             return null;
         }
+    }
+
+    public Symbol[] findApplicableSymbols( Dot dot )
+    {
+        return findApplicableSymbols( dot.noteId, dot.pageId, dot.x, dot.y );
     }
 
     @Override
@@ -1189,6 +1216,75 @@ public class MetadataCtrl implements IMetadataCtrl
         return crosses % 2 > 0;
     }
 
+    private boolean is2DotSymbolCross ( Dot dot1, Dot dot2, Symbol symbol)
+    {
+        return is2DotSymbolCross(dot1, dot2, symbol ,0f,0f);
+    }
+
+    private boolean is2DotSymbolCross ( Dot dot1, Dot dot2, Symbol symbol , Float offsetX,  Float offsetY)
+    {
+
+        PointF ap1 = new PointF();
+        ap1.x = dot1.x+offsetX;
+        ap1.y = dot1.y+offsetY;
+
+        PointF ap2 = new PointF();
+        ap2.x = dot2.x+offsetX;
+        ap2.y = dot2.y+offsetY;
+
+        PointF bp1 = new PointF();
+        bp1.x = symbol.left;
+        bp1.y = symbol.top;
+
+        PointF bp2 = new PointF();
+        bp2.x = symbol.right;
+        bp2.y = symbol.top;
+
+        PointF bp3 = new PointF();
+        bp3.x = symbol.right;
+        bp3.y = symbol.bottom;
+
+        PointF bp4 = new PointF();
+        bp4.x = symbol.left;
+        bp4.y = symbol.bottom;
+
+
+        if(isLineCross( ap1,ap2,bp1,bp2 ))
+            return true;
+        else if(isLineCross( ap1,ap2,bp2,bp3 ))
+            return true;
+        else if(isLineCross( ap1,ap2,bp3,bp4 ))
+            return true;
+        else if(isLineCross( ap1,ap2,bp4,bp1 ))
+            return true;
+        else
+            return false;
+
+    }
+
+
+    private boolean isLineCross ( PointF ap1, PointF ap2, PointF bp1, PointF bp2 )
+    {
+        float t;
+        float s;
+        float under = ( bp2.y - bp1.y ) * ( ap2.x - ap1.x ) - ( bp2.x - bp1.x ) * ( ap2.y - ap1.y );
+        if ( under == 0 ) return false;
+
+        float _t = ( bp2.x - bp1.x ) * ( ap1.y - bp1.y ) - ( bp2.y - bp1.y ) * ( ap1.x - bp1.x );
+        float _s = ( ap2.x - ap1.x ) * ( ap1.y - bp1.y ) - ( ap2.y - ap1.y ) * ( ap1.x - bp1.x );
+
+        t = _t / under;
+        s = _s / under;
+
+        if ( t < 0.0 || t > 1.0 || s < 0.0 || s > 1.0 ) return false;
+        if ( _t == 0 && _s == 0 ) return false;
+
+        // Formula for finding intersection points
+        // P.x = (int) (ap1.x + t * (double) (ap2.x - ap1.x));
+        // P.y = (int) (ap1.y + t * (double) (ap2.y - ap1.y));
+
+        return true;
+    }
 
 
 
@@ -1365,7 +1461,25 @@ public class MetadataCtrl implements IMetadataCtrl
             @Override
             public void endElement( String uri, String localName, String qName ) throws SAXException
             {
-                if ( localName.equals( "symbol" ) )
+                if(isSymbol && localName.equals( "id"))
+                {
+                    symbol.id = content;
+                    content = "";
+                    tag = null;
+                }
+                else if(isSymbol && localName.equals( "points"))
+                {
+                    symbol.points = content;
+                    content = "";
+                    tag = null;
+                }
+                else if(isSymbol && localName.equals( "name"))
+                {
+                    symbol.name = content;
+                    content = "";
+                    tag = null;
+                }
+                else if ( localName.equals( "symbol" ) )
                 {
                     isSymbol = false;
 
@@ -1374,6 +1488,12 @@ public class MetadataCtrl implements IMetadataCtrl
                     put( noteId, symbol.pageId, symbol );
 
                     symbol = null;
+                }
+                else if ( localName.equals( "extra_info" ) )
+                {
+                    extra_info = content;
+                    content = "";
+                    tag = null;
                 }
             }
 
@@ -1412,31 +1532,38 @@ public class MetadataCtrl implements IMetadataCtrl
                 }
                 else if ( tag.equals( "extra_info" ) )
                 {
-                    extra_info = charsToString( ch, 0, length );
-                    tag = null;
+                    if(content.length() == 0)
+                        content = charsToString( ch, start, length );
+                    else
+                        content += charsToString( ch, start, length );
                 }
                 else if ( tag.equals( "start_page" ) )
                 {
                     startPage = Integer.parseInt( charsToString( ch, 0, length ) );
                     tag = null;
                 }
-
-                if ( isSymbol )
+                else if ( isSymbol )
                 {
                     if ( tag.equals( "id" ) )
                     {
-                        symbol.id = charsToString( ch, 0, length );
-                        tag = null;
+                        if(content.length() == 0)
+                            content = charsToString( ch, start, length );
+                        else
+                            content += charsToString( ch, start, length );
                     }
                     else if ( tag.equals( "name" ) )
                     {
-                        symbol.name = charsToString( ch, 0, length );
-                        tag = null;
+                        if(content.length() == 0)
+                            content = charsToString( ch, start, length );
+                        else
+                            content += charsToString( ch, start, length );
                     }
                     else if ( tag.equals( "points" ) )
                     {
-                        symbol.points = charsToString( ch, 0, length );
-                        tag = null;
+                        if(content.length() == 0)
+                            content = charsToString( ch, start, length );
+                        else
+                            content += charsToString( ch, start, length );
                     }
 
                 }
@@ -1498,7 +1625,7 @@ public class MetadataCtrl implements IMetadataCtrl
 
     private String charsToString( char[] ch, int start, int length )
     {
-        String value = null;
+        String value = "";
 
         if ( ch.length > 0 )
         {
@@ -1509,7 +1636,7 @@ public class MetadataCtrl implements IMetadataCtrl
 
             if ( value.equals( "" ) )
             {
-                value = null;
+                value = "";
             }
 
             item = null;

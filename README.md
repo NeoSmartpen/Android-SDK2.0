@@ -8,7 +8,7 @@ SDK Document link :https://neosmartpen.github.io/Android-SDK2.0/NeoSmartpen_SDK_
 
 ### Finding Bluetooth Devices
 
-Bluetoohth : references to [here](https://developer.android.com/guide/topics/connectivity/bluetooth.html#FindingDevices)
+Bluetooth : references to [here](https://developer.android.com/guide/topics/connectivity/bluetooth.html#FindingDevices)
 
 Bluetooth LE : references to [here](https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#find)
 

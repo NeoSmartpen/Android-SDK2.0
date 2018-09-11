@@ -12,7 +12,7 @@ Bluetoohth : references to [here](https://developer.android.com/guide/topics/con
 
 Bluetooth LE : references to [here](https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#find)
 
-Smaple Code is [here](https://github.com/NeoSmartpen/AndroidSDK2.0/blob/master/NASDK2.0_sample_code/NASDK_sample_code/src/main/java/kr/neolab/samplecode/DeviceListActivity.java)
+Sample Code is [here](https://github.com/NeoSmartpen/AndroidSDK2.0/blob/master/NASDK2.0_sample_code/NASDK_sample_code/src/main/java/kr/neolab/samplecode/DeviceListActivity.java)
 
 ## Ncode™ SERVICE DEVELOPMENT GETTING STARTED GUIDE
 

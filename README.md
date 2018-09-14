@@ -1,34 +1,34 @@
-# Android SDK2.0
+## Android SDK2.0
 
 Neo smartpen SDK(also referred to as ‘Pen SDK’) for Android. This open-source library allows you to integrate the Neo smartpen - Neo smartpen N2 and M1 - into your Android app.
 
-# About Neo smartpen
+## About Neo smartpen
 
 The Neo smartpen is designed to seamlessly integrate the real and digital worlds by transforming what you write on paper - everything from sketches and designs to business meeting notes - to your iOS, Android and Windows devices. It works in tandem with N notebooks, powered by NeoLAB Convergence’s patented Ncode™ technology and the accompanying application, Neo Notes. Find out more at www.neosmartpen.com
 Tutorial video - https://goo.gl/MQaVwY
 
-# About Ncode™: service development guide
+## About Ncode™: service development guide
 ‘Natural Handwriting’ technology based on Ncode™(Microscopic data patterns containing various types of data) is a handwriting stroke recovery technology that digitizes paper coordinates obtained by optical pen devices such as Neo smartpen. The coordinates then can be used to store handwriting stroke information, analyzed to extract meaning based on user preferences and serve as the basis for many other types of services.
 Click the link below to view a beginners guide to Ncode technology. 
 https://github.com/NeoSmartpen/Documentations/blob/master/Ncode™ Service Development Getting Started Guide v1.01.pdf
 
-# Requirements
+## Requirements
 
  - Android Studio or Eclipse IDE(ADT)
  - Android SDK(minimum SDK 4.4 Kitkat)
  
-# Supported models
+## Supported models
 
 - Neo smartpen N2(F110, F120)
 - Neo smartpen M1(F50)
 
-# Getting started
+## Getting started
 
 javadoc link :https://neosmartpen.github.io/Android-SDK2.0/docs/index.html
  
 SDK Document link :https://neosmartpen.github.io/Android-SDK2.0/NeoSmartpen_SDK_Android_V216.pdf
 
-# Guide to ‘Finding Bluetooth devices’
+## Guide to ‘Finding Bluetooth devices’
 
 Bluetooth : references to [here](https://developer.android.com/guide/topics/connectivity/bluetooth.html#FindingDevices)
 
@@ -36,11 +36,9 @@ Bluetooth LE : references to [here](https://developer.android.com/guide/topics/c
 
 Sample Code is [here](https://github.com/NeoSmartpen/AndroidSDK2.0/blob/master/NASDK2.0_sample_code/NASDK_sample_code/src/main/java/kr/neolab/samplecode/DeviceListActivity.java)
  
-# LICENSE
+## License:
 
-Neo smartpen SDK is Copyright (c) 2017 NeoLAB Convergence, Inc.
-
-We provide two types of license for Pen SDK.
+Copyright©2017 by NeoLAB Convergence, Inc. All page content is property of NeoLAB Convergence Inc. <https://neolab.net> 
 
 ### 1. GPL license v3 - for non-commercial purpose
     

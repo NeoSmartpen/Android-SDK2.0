@@ -24,7 +24,7 @@ https://github.com/NeoSmartpen/Documentations/blob/master/Ncode™ Service Devel
 
 ## Getting started
 
-javadoc link :https://github.com/NeoSmartpen/Android-SDK2.0/blob/master/doc/index.html
+javadoc link :https://neosmartpen.github.io/Android-SDK2.0/
  
 SDK Document link :https://github.com/NeoSmartpen/Android-SDK2.0/blob/master/NeoSmartpen_SDK_Android_V216.pdf
 

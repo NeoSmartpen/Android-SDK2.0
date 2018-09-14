@@ -24,9 +24,9 @@ https://github.com/NeoSmartpen/Documentations/blob/master/Ncode™ Service Devel
 
 ## Getting started
 
-javadoc link :https://neosmartpen.github.io/Android-SDK2.0/docs/index.html
+javadoc link :https://github.com/NeoSmartpen/Android-SDK2.0/blob/master/doc/index.html
  
-SDK Document link :https://neosmartpen.github.io/Android-SDK2.0/NeoSmartpen_SDK_Android_V216.pdf
+SDK Document link :https://github.com/NeoSmartpen/Android-SDK2.0/blob/master/NeoSmartpen_SDK_Android_V216.pdf
 
 ## Guide to ‘Finding Bluetooth devices’
 

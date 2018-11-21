@@ -2243,7 +2243,11 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 						jsonObject.put( JsonTag.INT_TOTAL_SIZE, this.oTotalDataSize );
 						jsonObject.put( JsonTag.INT_RECEIVED_SIZE, this.oRcvDataSize );
 
-						btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_STATUS, jsonObject ) );
+						// If all of the bytes have been received, then the download succeeded.
+						if ( this.oRcvDataSize < this.oTotalDataSize)
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_STATUS, jsonObject ) );
+						else
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_SUCCESS, jsonObject ) );
 					}
 					catch ( JSONException e )
 					{

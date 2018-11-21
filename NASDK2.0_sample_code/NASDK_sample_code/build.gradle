@@ -29,4 +29,5 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:2.2.2'
     //compile project(':NASDK')
     //    compile project(':NeoViewSDK')
+    implementation 'junit:junit:4.12'
 }

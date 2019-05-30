@@ -1,4 +1,4 @@
-package kr.neolab.samplecode.renderer;
+package kr.neolab.sdk.renderer;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

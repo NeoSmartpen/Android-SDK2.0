@@ -1,4 +1,4 @@
-package kr.neolab.samplecode.renderer;
+package kr.neolab.sdk.renderer;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -181,11 +181,11 @@ public class StrokeDrawer
 		{
 			Paint tempPaint = null;
 
-			if( type == kr.neolab.sdk.ink.structure.Stroke.STROKE_TYPE_NORMAL )
+			if( type == Stroke.STROKE_TYPE_NORMAL )
 				tempPaint = mFountainPaint;
-			else if( type == kr.neolab.sdk.ink.structure.Stroke.STROKE_TYPE_PEN )
+			else if( type == Stroke.STROKE_TYPE_PEN )
 				tempPaint = mPencilPaint;
-			else if( type == kr.neolab.sdk.ink.structure.Stroke.STROKE_TYPE_HIGHLIGHT )
+			else if( type == Stroke.STROKE_TYPE_HIGHLIGHT )
 				tempPaint = mHeighLightPaint;
 			if( type == Stroke.STROKE_TYPE_NORMAL )
 			{

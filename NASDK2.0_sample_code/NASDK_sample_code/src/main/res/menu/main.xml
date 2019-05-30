@@ -23,6 +23,7 @@
   <item android:id="@+id/action_pen_status"
         android:title="@string/pen_status"
         android:showAsAction="never" />
+
   <item android:id="@+id/action_pen_unpairing"
         android:title="@string/pen_unpairing"
         android:showAsAction="never" />
@@ -30,5 +31,10 @@
   <item android:id="@+id/action_profile_test"
         android:title="@string/pen_profile"
         android:showAsAction="never" />
+
+  <item
+      android:id="@+id/action_symbol_stroke"
+      android:showAsAction="never"
+      android:title="symbolStroke"/>
 
 </menu>

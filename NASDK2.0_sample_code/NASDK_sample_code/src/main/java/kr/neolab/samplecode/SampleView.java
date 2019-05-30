@@ -11,14 +11,17 @@ import android.view.SurfaceHolder;
 import android.view.View;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import kr.neolab.samplecode.renderer.Renderer;
 import kr.neolab.sdk.ink.structure.Dot;
 import kr.neolab.sdk.ink.structure.DotType;
 import kr.neolab.sdk.ink.structure.Stroke;
 import kr.neolab.sdk.metadata.MetadataCtrl;
+import kr.neolab.sdk.metadata.structure.Symbol;
+import kr.neolab.sdk.renderer.Renderer;
+import kr.neolab.sdk.util.StrokeUtil;
 
 public class SampleView extends View
 {
@@ -125,7 +128,7 @@ public class SampleView extends View
 			float screen_offset_x = -paper_offsetX * paper_scale;
 			float screen_offset_y = -paper_offsetY * paper_scale;
 
-			Renderer.draw( canvas, strokes.toArray( new Stroke[0] ), paper_scale, screen_offset_x+offsetX, screen_offset_y+offsetY,Stroke.STROKE_TYPE_PEN );
+			Renderer.draw( canvas, strokes.toArray( new Stroke[0] ), paper_scale, screen_offset_x+offsetX, screen_offset_y+offsetY, Stroke.STROKE_TYPE_PEN );
 		}
 	}
 
@@ -180,6 +183,36 @@ public class SampleView extends View
 
 		setPage( width, height,dx, dy , imagePath);
 		invalidate();
+	}
+
+	public void makeSymbolImage( final Symbol symbol )
+	{
+		((MainActivity)getContext()).runOnUiThread( new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				try
+				{
+					Stroke[] inStr = MetadataCtrl.getInstance().getInsideStrokes( symbol, strokes.toArray(new Stroke[strokes.size()]) );
+					Bitmap bitmap = StrokeUtil.StrokeToImage( inStr, paper_scale );
+
+					String filename = symbol.name + ".jpg";
+					File file = new File( Const.SAMPLE_FOLDER_PATH, filename );
+
+					FileOutputStream out = new FileOutputStream( file );
+					bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+					out.flush();
+					out.close();
+				}
+				catch ( Exception e )
+				{
+					e.printStackTrace();
+				}
+			}
+		} );
+
+
 	}
 
 	public class SampleThread extends Thread

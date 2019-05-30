@@ -1087,7 +1087,7 @@ public class MetadataCtrl implements IMetadataCtrl
 
         for ( Symbol e : candidates )
         {
-            if ( pageId == e.pageId && e.contains( x, y ) )
+            if ( pageId == e.pageId )
             {
 
                 if(e.points != null && e.points.length() > 0)//Custom

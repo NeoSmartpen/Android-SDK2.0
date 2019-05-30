@@ -36,6 +36,8 @@ import kr.neolab.samplecode.Const.Broadcast;
 import kr.neolab.samplecode.Const.JsonTag;
 import kr.neolab.sdk.ink.structure.Dot;
 import kr.neolab.sdk.ink.structure.Stroke;
+import kr.neolab.sdk.metadata.MetadataCtrl;
+import kr.neolab.sdk.metadata.structure.Symbol;
 import kr.neolab.sdk.pen.offline.OfflineFileParser;
 import kr.neolab.sdk.pen.penmsg.PenMsgType;
 import kr.neolab.sdk.util.NLog;
@@ -514,6 +516,11 @@ public class MainActivity extends Activity
 				}
 					return true;
 
+			case R.id.action_symbol_stroke:
+				// select specific symbol and make Image
+				mSampleView.makeSymbolImage( lastSymbol );
+				return true;
+
 
 			default:
 				return super.onOptionsItemSelected( item );
@@ -532,11 +539,17 @@ public class MainActivity extends Activity
 		}
 	}
 
+	private Symbol lastSymbol;
 	private void handleDot(String penAddress, Dot dot )
 	{
 
 		NLog.d( "penAddress="+penAddress+",handleDot type =" + dot.dotType );
 		mSampleView.addDot(penAddress, dot );
+
+		// this is for Symbol Stroke menu
+		Symbol[] symbols = MetadataCtrl.getInstance().findApplicableSymbols( dot );
+		if( symbols != null && symbols.length >0 )
+			lastSymbol = symbols[0];
 	}
 
 	private void handleMsg(String penAddress, int penMsgType, String content )

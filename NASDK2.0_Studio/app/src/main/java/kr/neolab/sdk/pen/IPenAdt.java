@@ -5,6 +5,7 @@ import android.content.Context;
 import java.io.File;
 import java.util.ArrayList;
 
+import kr.neolab.sdk.metadata.IMetadataListener;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
@@ -67,7 +68,15 @@ public interface IPenAdt
     public void setOffLineDataListener(IOfflineDataListener listener);
 
     /**
-     * get up listener of message from pen
+     * set up listener of metadata processing
+     * supported from Protocol 2.0
+     *
+     * @param listener callback interface
+     */
+    public void setMetadataListener( IMetadataListener listener );
+
+    /**
+     * get listener of message from pen
      *
      * @return IPenMsgListener listener
      */
@@ -76,12 +85,20 @@ public interface IPenAdt
     public IPenDotListener getDotListener();
 
     /**
-     * get up listener of offlineData from pen
+     * get listener of offlineData from pen
      * supported from Protocol 2.0
      *
      * @return IOfflineDataListener off line data listener
      */
     public IOfflineDataListener getOffLineDataListener();
+
+    /**
+     * get callbac
+     * supported from Protocol 2.0
+     *
+     * @return IMetadataListener metadata listener
+     */
+    public IMetadataListener getMetadataListener();
 
     /**
      * Attempts to connect to the pen.

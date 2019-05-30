@@ -13,7 +13,7 @@
         android:showAsAction="never" />
   
   <item android:id="@+id/action_offline_list"
-        android:title="@string/offline_list"
+        android:title="@string/offline"
         android:showAsAction="never" />
  
   <item android:id="@+id/action_upgrade"

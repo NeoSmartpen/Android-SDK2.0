@@ -1042,7 +1042,7 @@ public class MetadataCtrl implements IMetadataCtrl
                     result.add( e );
                     break;
                 }
-                else
+                else if ( e.type.compareToIgnoreCase( "Rectangle" ) == 0)
                 {
                     if(i != 0)
                     {
@@ -1090,7 +1090,7 @@ public class MetadataCtrl implements IMetadataCtrl
             if ( pageId == e.pageId && e.contains( x, y ) )
             {
 
-                if(e.points != null && e.points.length() > 0)
+                if(e.points != null && e.points.length() > 0)//Custom
                 {
                     if(inSideCustomshape(e, x, y))
                         result.add( e );
@@ -1110,6 +1110,58 @@ public class MetadataCtrl implements IMetadataCtrl
         {
             return null;
         }
+    }
+
+    @Override
+    public Stroke[] getInsideStrokes( Symbol symbol, Stroke[] strokes )
+    {
+        return getInsideStrokes( symbol, strokes, 0f, 0f);
+    }
+
+    public Stroke[] getInsideStrokes( Symbol symbol, Stroke[] strokes, Float offsetX,  Float offsetY )
+    {
+        ArrayList<Stroke> list = new ArrayList<>();
+
+        for( Stroke stroke : strokes )
+        {
+            for ( int i = 0; i < stroke.size(); i++ )
+            {
+                Dot pf = stroke.get( i );
+
+                if(symbol.points != null && symbol.points.length() > 0)
+                {
+                    if(inSideCustomshape(symbol, pf.x+offsetX, pf.y+offsetY) && !list.contains( stroke ))
+                    {
+                        list.add( stroke );
+                        break;
+                    }
+                }
+                else if ( symbol.contains( pf.x+offsetX, pf.y+offsetY ) && !list.contains( stroke ) )
+                {
+                    list.add( stroke );
+                    break;
+                }
+                else if ( symbol.type.compareToIgnoreCase( "Rectangle" ) == 0)
+
+                {
+                    if(i != 0)
+                    {
+                        Dot prevF = stroke.get( i-1 );
+
+                        if(is2DotSymbolCross(prevF,pf,symbol,offsetX,offsetY ) && !list.contains( stroke ))
+                        {
+                            list.add( stroke );
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if(list.size() == 0)
+            return null;
+        else
+            return list.toArray( new Stroke[list.size()] );
     }
 
     @Override
@@ -1347,7 +1399,7 @@ public class MetadataCtrl implements IMetadataCtrl
                             Page page = new Page();
 
                             page.noteId = noteId;
-                            page.pageId = Integer.parseInt( atts.getValue( "number" ) ) + 1;
+                            page.pageId = Integer.parseInt( atts.getValue( "number" ) ) + startPage;
                             page.angle = Integer.parseInt( atts.getValue( "rotate_angle" ) );
                             page.width = Float.parseFloat( atts.getValue( "x2" ) ) * PIXEL_TO_DOT_SCALE;
                             page.height = Float.parseFloat( atts.getValue( "y2" ) ) * PIXEL_TO_DOT_SCALE;
@@ -1358,13 +1410,14 @@ public class MetadataCtrl implements IMetadataCtrl
                         {
                             isSymbol = true;
 
-                            int pageId = Integer.parseInt( atts.getValue( "page" ) ) + 1;
+                            int pageId = Integer.parseInt( atts.getValue( "page" ) ) + startPage;
                             float x = Float.parseFloat( atts.getValue( "x" ) ) * PIXEL_TO_DOT_SCALE;
                             float y = Float.parseFloat( atts.getValue( "y" ) ) * PIXEL_TO_DOT_SCALE;
                             float width = Float.parseFloat( atts.getValue( "width" ) ) * PIXEL_TO_DOT_SCALE;
                             float height = Float.parseFloat( atts.getValue( "height" ) ) * PIXEL_TO_DOT_SCALE;
+                            String type = atts.getValue( "type" );
  
-							symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height );
+							symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height, type );
 						}
 						else if ( isSymbol && tag.equals( "command" ) )
 						{
@@ -1418,7 +1471,7 @@ public class MetadataCtrl implements IMetadataCtrl
                             float margin_bottom = Float.parseFloat( crops[3] ) * PIXEL_TO_DOT_SCALE;
                             Page page = new Page();
                             page.noteId = noteId;
-                            page.pageId = Integer.parseInt( atts.getValue( "number" ) ) + 1;
+                            page.pageId = Integer.parseInt( atts.getValue( "number" ) ) + startPage;
                             page.angle = Integer.parseInt( atts.getValue( "rotate_angle" ) );
                             page.width = x2 - x1 - margin_left - margin_right;
                             page.height = y2 - y1 - margin_top - margin_bottom;
@@ -1433,13 +1486,14 @@ public class MetadataCtrl implements IMetadataCtrl
                         {
                             isSymbol = true;
 
-                            int pageId = Integer.parseInt( atts.getValue( "page" ) ) + 1;
+                            int pageId = Integer.parseInt( atts.getValue( "page" ) ) + startPage;
                             float x = Float.parseFloat( atts.getValue( "x" ) ) * PIXEL_TO_DOT_SCALE;
                             float y = Float.parseFloat( atts.getValue( "y" ) ) * PIXEL_TO_DOT_SCALE;
                             float width = Float.parseFloat( atts.getValue( "width" ) ) * PIXEL_TO_DOT_SCALE;
                             float height = Float.parseFloat( atts.getValue( "height" ) ) * PIXEL_TO_DOT_SCALE;
+                            String type = atts.getValue( "type" );
 
-							symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height );
+							symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height, type );
 						}
 						else if ( isSymbol && tag.equals( "command" ) )
 						{
@@ -1689,7 +1743,7 @@ public class MetadataCtrl implements IMetadataCtrl
                                 Page page = new Page();
 
                                 page.noteId = noteId;
-                                page.pageId = Integer.parseInt( parser.getAttributeValue( nameSpace, "number" ) ) + 1;
+                                page.pageId = Integer.parseInt( parser.getAttributeValue( nameSpace, "number" ) ) + this.startPage;
                                 page.angle = Integer.parseInt( parser.getAttributeValue( nameSpace, "rotate_angle" ) );
                                 page.width = Float.parseFloat( parser.getAttributeValue( nameSpace, "x2" ) ) * PIXEL_TO_DOT_SCALE;
                                 page.height = Float.parseFloat( parser.getAttributeValue( nameSpace, "y2" ) ) * PIXEL_TO_DOT_SCALE;
@@ -1700,13 +1754,14 @@ public class MetadataCtrl implements IMetadataCtrl
                             {
                                 isSymbol = true;
 
-                                int pageId = Integer.parseInt( parser.getAttributeValue( nameSpace, "page" ) ) + 1;
+                                int pageId = Integer.parseInt( parser.getAttributeValue( nameSpace, "page" ) ) + this.startPage;
                                 float x = Float.parseFloat( parser.getAttributeValue( nameSpace, "x" ) ) * PIXEL_TO_DOT_SCALE;
                                 float y = Float.parseFloat( parser.getAttributeValue( nameSpace, "y" ) ) * PIXEL_TO_DOT_SCALE;
                                 float width = Float.parseFloat( parser.getAttributeValue( nameSpace, "width" ) ) * PIXEL_TO_DOT_SCALE;
                                 float height = Float.parseFloat( parser.getAttributeValue( nameSpace, "height" ) ) * PIXEL_TO_DOT_SCALE;
+                                String type = parser.getAttributeValue( nameSpace, "type" );
 
-								symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height );
+								symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height, type );
 							}
 							else if ( isSymbol && tag.equals( "command" ) )
 							{
@@ -1761,7 +1816,7 @@ public class MetadataCtrl implements IMetadataCtrl
                                 float margin_bottom = Float.parseFloat( crops[3] ) * PIXEL_TO_DOT_SCALE;
                                 Page page = new Page();
                                 page.noteId = noteId;
-                                page.pageId = Integer.parseInt( parser.getAttributeValue( nameSpace, "number" ) ) + 1;
+                                page.pageId = Integer.parseInt( parser.getAttributeValue( nameSpace, "number" ) ) + this.startPage;
                                 page.angle = Integer.parseInt( parser.getAttributeValue( nameSpace, "rotate_angle" ) );
                                 page.width = x2 - x1 - margin_left - margin_right;
                                 page.height = y2 - y1 - margin_top - margin_bottom;
@@ -1776,13 +1831,14 @@ public class MetadataCtrl implements IMetadataCtrl
                             {
                                 isSymbol = true;
 
-                                int pageId = Integer.parseInt( parser.getAttributeValue( nameSpace, "page" ) ) + 1;
+                                int pageId = Integer.parseInt( parser.getAttributeValue( nameSpace, "page" ) ) + this.startPage;
                                 float x = Float.parseFloat( parser.getAttributeValue( nameSpace, "x" ) ) * PIXEL_TO_DOT_SCALE;
                                 float y = Float.parseFloat( parser.getAttributeValue( nameSpace, "y" ) ) * PIXEL_TO_DOT_SCALE;
                                 float width = Float.parseFloat( parser.getAttributeValue( nameSpace, "width" ) ) * PIXEL_TO_DOT_SCALE;
                                 float height = Float.parseFloat( parser.getAttributeValue( nameSpace, "height" ) ) * PIXEL_TO_DOT_SCALE;
+                                String type =  parser.getAttributeValue( nameSpace, "height" );
 
-								symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height );
+								symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height, type );
 							}
 							else if ( isSymbol && tag.equals( "command" ) )
 							{

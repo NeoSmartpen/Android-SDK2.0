@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import kr.neolab.sdk.broadcastreceiver.BTDuplicateRemoveBroadcasterReceiver;
+import kr.neolab.sdk.metadata.IMetadataListener;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
 import kr.neolab.sdk.pen.bluetooth.BTAdt;
 import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
@@ -152,6 +153,14 @@ public class PenCtrl implements IPenCtrl {
         BTAdt.getInstance().setOffLineDataListener(listener);
     }
 
+	@Override
+	public void setMetadataListener( IMetadataListener listener )
+	{
+		if( Build.VERSION.SDK_INT >= 21)
+			BTLEAdt.getInstance().setMetadataListener( listener );
+		BTAdt.getInstance().setMetadataListener( listener );
+	}
+
 
     @Override
     public IPenMsgListener getListener() {
@@ -168,7 +177,13 @@ public class PenCtrl implements IPenCtrl {
         return currentAdt.getOffLineDataListener();
     }
 
-    @Override
+	@Override
+	public IMetadataListener getMetadataListener()
+	{
+		return currentAdt.getMetadataListener();
+	}
+
+	@Override
     public void connect(String address) {
         currentAdt.connect(address);
     }

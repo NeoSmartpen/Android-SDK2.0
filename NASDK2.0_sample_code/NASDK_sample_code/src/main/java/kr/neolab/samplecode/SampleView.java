@@ -95,6 +95,8 @@ public class SampleView extends View
 		}
 
 		Bitmap temp_pdf3 = BitmapFactory.decodeFile( backImagePath );
+		if( temp_pdf3 == null )
+			temp_pdf3 = Bitmap.createBitmap(docWidth, docHeight, Bitmap.Config.ARGB_8888);
 		background = Bitmap.createScaledBitmap( temp_pdf3, docWidth, docHeight, true );
 
 	}

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import kr.neolab.sdk.broadcastreceiver.BTDuplicateRemoveBroadcasterReceiver;
+import kr.neolab.sdk.metadata.IMetadataListener;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
 import kr.neolab.sdk.pen.bluetooth.BTAdt;
 import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
@@ -36,6 +37,7 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 	private IPenMsgListener listener = null;
 	private IPenDotListener dotListener = null;
 	private IOfflineDataListener offlineDataListener = null;
+	private IMetadataListener metadataListener = null;
 	private Context mContext = null;
 
 	private MultiPenCtrl ()
@@ -107,6 +109,16 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 		}
     }
 
+	@Override
+	public void setMetadataListener( IMetadataListener listener )
+	{
+		this.metadataListener = listener;
+		for(IPenAdt pen : mConnectedCollection.values())
+		{
+			pen.setMetadataListener( this.metadataListener );
+		}
+	}
+
 
     @Override
     public IPenMsgListener getListener(String address) {
@@ -135,6 +147,16 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			return null;
     }
 
+	@Override
+	public IMetadataListener getMetadataListener(String address)
+	{
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			return mPenAdt.getMetadataListener();
+		else
+			return null;
+	}
+
     @Override
     public void connect(String address, boolean isLeMode) {
 		if(mConnectedCollection.containsKey(address) && ((isLeMode && mConnectedCollection.get(address) instanceof BTLEAdt) || (!isLeMode && mConnectedCollection.get(address) instanceof BTAdt)))
@@ -156,6 +178,8 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			mBTAdt.setDotListener( this.dotListener );
 			if(offlineDataListener != null)
 				mBTAdt.setOffLineDataListener( this.offlineDataListener );
+			if(metadataListener != null)
+				mBTAdt.setMetadataListener( this.metadataListener );
 			mConnectedCollection.put(address, mBTAdt);
 			if(mBTAdt instanceof BTAdt )
 				((BTAdt)mBTAdt).connect(address);

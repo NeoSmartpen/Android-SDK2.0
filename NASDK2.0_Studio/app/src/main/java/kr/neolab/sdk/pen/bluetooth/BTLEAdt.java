@@ -26,6 +26,11 @@ import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import kr.neolab.sdk.ink.structure.DotType;
+import kr.neolab.sdk.ink.structure.Stroke;
+import kr.neolab.sdk.metadata.IMetadataListener;
+import kr.neolab.sdk.metadata.MetadataCtrl;
+import kr.neolab.sdk.metadata.structure.Symbol;
 import kr.neolab.sdk.pen.IPenAdt;
 import kr.neolab.sdk.pen.bluetooth.cmd.CommandManager;
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor;
@@ -78,6 +83,7 @@ public class BTLEAdt implements IPenAdt
     private IPenMsgListener listener = null;
     private IPenDotListener dotListener = null;
     private IOfflineDataListener offlineDataListener = null;
+    private IMetadataListener metadataListener = null;
 
     private ConnectedThread mConnectionThread;
     /**
@@ -208,6 +214,12 @@ public class BTLEAdt implements IPenAdt
     }
 
     @Override
+    public void setMetadataListener( IMetadataListener listener )
+    {
+        this.metadataListener = listener;
+    }
+
+    @Override
     public IPenMsgListener getListener ()
     {
         return this.listener;
@@ -222,7 +234,13 @@ public class BTLEAdt implements IPenAdt
     @Override
     public IOfflineDataListener getOffLineDataListener ()
     {
-        return null;
+        return this.offlineDataListener;
+    }
+
+    @Override
+    public IMetadataListener getMetadataListener()
+    {
+        return this.metadataListener;
     }
 
     @Override
@@ -1106,9 +1124,18 @@ public class BTLEAdt implements IPenAdt
         }
     }
 
+    private Stroke curStroke;
+
     private void responseDot ( Fdot dot )
     {
         if ( factor != null ) dot.pressure = (int) factor[dot.pressure];
+
+        if( curStroke == null || DotType.isPenActionDown( dot.dotType ) )
+        {
+            curStroke = new Stroke(dot.sectionId, dot.ownerId, dot.noteId, dot.pageId );
+        }
+
+        curStroke.add( dot );
 
         if ( listener != null )
         {
@@ -1120,6 +1147,15 @@ public class BTLEAdt implements IPenAdt
             {
                 if ( dotListener != null ) dotListener.onReceiveDot( penAddress, dot.toDot() );
             }
+        }
+
+
+        if( DotType.isPenActionUp( dot.dotType ) && metadataListener != null )
+        {
+            Symbol[] symbols = MetadataCtrl.getInstance().findApplicableSymbols( curStroke );
+
+            if( symbols != null && symbols.length > 0 )
+                metadataListener.onSymbolDetected( symbols );
         }
     }
 

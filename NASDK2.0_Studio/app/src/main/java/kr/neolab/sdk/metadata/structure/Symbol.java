@@ -14,6 +14,12 @@ public class Symbol extends RectF
  * The Page id.
  */
 pageId;
+
+	/**
+	 * Symbol Type = Rectangle, Trangle, Ellipse, Polygon etc.
+	 */
+	public String type;
+
 	/**
 	 * The Id.
 	 */
@@ -24,6 +30,7 @@ previousId, /**
  * The Next id.
  */
 nextId;
+
 	/**
 	 * The Previous.
 	 */
@@ -31,6 +38,7 @@ nextId;
  * The Next.
  */
 next;
+
 	/**
 	 * The Name.
 	 */
@@ -46,6 +54,7 @@ param;
 	 * The Points.
 	 */
 	public String points;
+
 	/**
 	 * The Index Symbol
 	 */
@@ -64,7 +73,7 @@ param;
 	 * @param right  the right
 	 * @param bottom the bottom
 	 */
-	public Symbol(int noteId, int pageId, String name, String action, String param, float left, float top, float right, float bottom)
+	public Symbol(int noteId, int pageId, String name, String action, String param, float left, float top, float right, float bottom, String type)
 	{
 		super(left, top, right, bottom);
 		
@@ -73,6 +82,17 @@ param;
 		this.name   = name;
 		this.action = action;
 		this.param  = param;
+		this.type = type;
+	}
+
+	/**
+	 * Gets type.
+	 *
+	 * @return the type
+	 */
+	public String getType()
+	{
+		return type;
 	}
 
 	/**
@@ -178,5 +198,68 @@ param;
 	public String toString()
 	{
 		return "Symbol => noteId : " + noteId + ", pageId : " + pageId + ", RectF (" + left + "," + top + "," + width() + "," + height() + "), param : " + param;
+	}
+
+	@Override
+	public boolean contains( float x, float y )
+	{
+		if( type.compareToIgnoreCase( "Rectangle" ) == 0 )
+		{
+			return super.contains( x, y );
+		}
+		else if ( type.compareToIgnoreCase( "Triangle" ) == 0 )
+		{
+			return checkPtInTriangle(x, y);
+		}
+		else if( type.compareToIgnoreCase( "Ellipse" ) == 0 )
+		{
+			return checkPtInEllipse( x, y );
+		}
+
+		return false;
+	}
+
+	public boolean checkPtInTriangle( float x, float y )
+	{
+		boolean isInside = false;
+
+		float halfWidth = this.width() / 2;
+		float centerX = left + halfWidth;
+		float degree = this.height() / halfWidth;
+
+		float yOffset = y - top;
+
+		float xWidth = yOffset / degree;
+
+		if( x < centerX )
+		{
+			isInside =  x < centerX - xWidth ? false : true;
+		}
+		else
+		{
+			isInside = x > centerX + xWidth ? false : true;
+		}
+
+		if( isInside )
+			isInside = ( top <= y && y <= bottom)? true:false;
+
+		return isInside;
+
+	}
+
+	public boolean checkPtInEllipse( float x, float y )
+	{
+		float halfWidth = width() / 2;
+		float halfHeight = height() / 2;
+
+		float cx = left + halfWidth;
+		float cy = top + halfHeight;
+
+		float dx = x - cx;
+		float dy = y - cy;
+
+		float result = (dx*dx) / (halfWidth*halfWidth) + (dy*dy) / (halfHeight*halfHeight);
+
+		return result <= 1.0f;
 	}
 }

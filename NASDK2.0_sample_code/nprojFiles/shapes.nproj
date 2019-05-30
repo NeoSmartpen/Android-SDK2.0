@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nproj>
+<nproj version="2.31" category="simple">
+    <preset>
+        <pattern>PDS3</pattern>
+        <sound set="true" filter="*.mp3"/>
+        <video set="true" filter="*.avi"/>
+        <image set="true" filter="*.png,*.jpg,*.bmp"/>
+        <res_count>4</res_count>
+        <default_res_lang>Korean</default_res_lang>
+        <export_script>pds</export_script>
+        <ncp>true</ncp>
+        <relation_link>true</relation_link>
+        <dummy>true</dummy>
+        <manual_action>false</manual_action>
+        <symbol_setting align="4" bgcolor="#00ff00" bgalpha="70" textcolor="#000000" textsize="9" texton="1"/>
+        <margin left="0" top="0" right="0" bottom="0"/>
+    </preset>
+    <book>
+        <title></title>
+        <author></author>
+        <section>3</section>
+        <owner>27</owner>
+        <code>553</code>
+        <revision>10</revision>
+        <scale>0.001</scale>
+        <start_page side="">0</start_page>
+        <dot_is_line_segment>true</dot_is_line_segment>
+        <line_segment_length>3</line_segment_length>
+        <target_dpi>600</target_dpi>
+        <dotsize>2</dotsize>
+        <segment_info sub_code="" total_size="1" size="1" current_sequence="0" ncode_start_page="0" ncode_end_page="0"/>
+        <extra_info></extra_info>
+        <kind>0</kind>
+    </book>
+    <ticket>
+        <path></path>
+    </ticket>
+    <pdf>
+        <path>shapes.pdf</path>
+    </pdf>
+    <config>
+        <resource_mapping_mode>NORMAL</resource_mapping_mode>
+    </config>
+    <pages count="1">
+        <!--crop_margin="left, right, top, bottom"-->
+        <page_item number="0" rotate_angle="0" x1="0" y1="0" x2="780" y2="540" crop_margin="0,0,0,0" bg_disabled="false" page_type="0"/>
+    </pages>
+    <action_table/>
+    <symbols>
+        <symbol page="0" page_name="000" type="Ellipse" x="28" y="89" width="182" height="74" lock="0">
+            <name>ellipse1</name>
+            <id>{21ab8334-6476-461d-8aee-ff2a7e20757d}</id>
+            <command name="ellipse1" action="show" param="http://neolab.kr"/>
+            <language_resources>
+                <language resource_country="korean" resource_type="" resource_id=""/>
+                <language resource_country="english" resource_type="" resource_id=""/>
+                <language resource_country="chinese" resource_type="" resource_id=""/>
+                <language resource_country="japanese" resource_type="" resource_id=""/>
+            </language_resources>
+            <matching_symbols previous="" next=""/>
+        </symbol>
+        <symbol page="0" page_name="000" type="Ellipse" x="89" y="250" width="121" height="121" lock="0">
+            <name>ellipse2</name>
+            <id>{d8617dc5-a2b9-4ef4-b62e-758f67f7f751}</id>
+            <command name="ellipse2" action="Custom" param="sugar"/>
+            <language_resources>
+                <language resource_country="korean" resource_type="" resource_id=""/>
+                <language resource_country="english" resource_type="" resource_id=""/>
+                <language resource_country="chinese" resource_type="" resource_id=""/>
+                <language resource_country="japanese" resource_type="" resource_id=""/>
+            </language_resources>
+            <matching_symbols previous="" next=""/>
+        </symbol>
+        <symbol page="0" page_name="000" type="Rectangle" x="286" y="128" width="109" height="162" lock="0">
+            <name>rect</name>
+            <id>{49b06059-eb9f-4b53-bb5a-dddeed1157c8}</id>
+            <command name="rect" action="don't know what to do" param=""/>
+            <language_resources>
+                <language resource_country="korean" resource_type="" resource_id=""/>
+                <language resource_country="english" resource_type="" resource_id=""/>
+                <language resource_country="chinese" resource_type="" resource_id=""/>
+                <language resource_country="japanese" resource_type="" resource_id=""/>
+            </language_resources>
+            <matching_symbols previous="" next=""/>
+        </symbol>
+        <symbol page="0" page_name="000" type="Triangle" x="485" y="75" width="133" height="72" lock="0">
+            <name>triangle</name>
+            <id>{b203616a-b415-4b94-ace8-1ea6d82ccc68}</id>
+            <command name="triangle" action="Stop" param=""/>
+            <language_resources>
+                <language resource_country="korean" resource_type="" resource_id=""/>
+                <language resource_country="english" resource_type="" resource_id=""/>
+                <language resource_country="chinese" resource_type="" resource_id=""/>
+                <language resource_country="japanese" resource_type="" resource_id=""/>
+            </language_resources>
+            <matching_symbols previous="" next=""/>
+        </symbol>
+        <symbol page="0" page_name="000" type="Custom" x="459.119" y="265.416" width="231.898" height="175.385" lock="0">
+            <name>polygon</name>
+            <id>{40369860-eca2-42ab-ac0c-28b88c710814}</id>
+            <customshape>
+                <points>0,0.493333,0.121008,0.34,0.242017,0.137778,0.307563,0.197778,0.505882,0.317778,0.621849,0.0955556,0.92437,0,1,0.393333,0.836975,0.282222,0.833613,0.186667,0.719328,0.157778,0.72605,0.317778,0.821849,0.42,0.840336,0.597778,0.744538,0.48,0.593277,0.38,0.647059,0.615556,0.517647,1,0.376471,0.946667,0.368067,0.906667,0.47395,0.742222,0.571429,0.704444,0.591597,0.6</points>
+            </customshape>
+            <command name="polygon" action="Play" param="what.mp3"/>
+            <language_resources>
+                <language resource_country="korean" resource_type="" resource_id=""/>
+                <language resource_country="english" resource_type="" resource_id=""/>
+                <language resource_country="chinese" resource_type="" resource_id=""/>
+                <language resource_country="japanese" resource_type="" resource_id=""/>
+            </language_resources>
+            <matching_symbols previous="" next=""/>
+        </symbol>
+    </symbols>
+    <resources/>
+</nproj>

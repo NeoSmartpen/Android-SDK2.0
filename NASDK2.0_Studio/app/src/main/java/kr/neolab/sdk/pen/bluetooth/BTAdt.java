@@ -22,6 +22,11 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import kr.neolab.sdk.broadcastreceiver.BTDuplicateRemoveBroadcasterReceiver;
+import kr.neolab.sdk.ink.structure.DotType;
+import kr.neolab.sdk.ink.structure.Stroke;
+import kr.neolab.sdk.metadata.IMetadataListener;
+import kr.neolab.sdk.metadata.MetadataCtrl;
+import kr.neolab.sdk.metadata.structure.Symbol;
 import kr.neolab.sdk.pen.IPenAdt;
 import kr.neolab.sdk.pen.bluetooth.cmd.CommandManager;
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor;
@@ -84,6 +89,7 @@ public class BTAdt implements IPenAdt
 	private IPenMsgListener listener = null;
 	private IPenDotListener dotListener = null;
 	private IOfflineDataListener offlineDataListener = null;
+	private IMetadataListener metadataListener = null;
 
 
 	private int status = CONN_STATUS_IDLE;
@@ -186,6 +192,12 @@ public class BTAdt implements IPenAdt
 	}
 
 	@Override
+	public void setMetadataListener( IMetadataListener listener )
+	{
+		this.metadataListener = listener;
+	}
+
+	@Override
 	public IPenMsgListener getListener()
 	{
 		return this.listener;
@@ -201,6 +213,12 @@ public class BTAdt implements IPenAdt
 	public IOfflineDataListener getOffLineDataListener()
 	{
 		return this.offlineDataListener;
+	}
+
+	@Override
+	public IMetadataListener getMetadataListener()
+	{
+		return this.metadataListener;
 	}
 
 	private BluetoothAdapter getBluetoothAdapter()
@@ -1060,8 +1078,17 @@ public class BTAdt implements IPenAdt
 		}
 	}
 
+	private Stroke curStroke;
+
 	private void responseDot( Fdot dot )
 	{
+		if( curStroke == null || DotType.isPenActionDown( dot.dotType ) )
+		{
+			curStroke = new Stroke(dot.sectionId, dot.ownerId, dot.noteId, dot.pageId );
+		}
+
+		curStroke.add( dot );
+
 		if ( listener != null )
 		{
 			if ( USE_QUEUE )
@@ -1073,6 +1100,14 @@ public class BTAdt implements IPenAdt
 				if(dotListener != null)
 					dotListener.onReceiveDot(penAddress, dot.toDot() );
 			}
+		}
+
+		if( DotType.isPenActionUp( dot.dotType ) && metadataListener != null )
+		{
+			Symbol[] symbols = MetadataCtrl.getInstance().findApplicableSymbols( curStroke );
+
+			if( symbols != null && symbols.length > 0 )
+				metadataListener.onSymbolDetected( symbols );
 		}
 	}
 

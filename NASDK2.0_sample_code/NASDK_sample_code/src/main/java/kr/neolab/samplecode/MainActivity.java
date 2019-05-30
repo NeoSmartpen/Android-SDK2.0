@@ -24,7 +24,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.ViewConfiguration;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,8 +36,6 @@ import kr.neolab.samplecode.Const.Broadcast;
 import kr.neolab.samplecode.Const.JsonTag;
 import kr.neolab.sdk.ink.structure.Dot;
 import kr.neolab.sdk.ink.structure.Stroke;
-import kr.neolab.sdk.metadata.MetadataCtrl;
-import kr.neolab.sdk.metadata.structure.Symbol;
 import kr.neolab.sdk.pen.offline.OfflineFileParser;
 import kr.neolab.sdk.pen.penmsg.PenMsgType;
 import kr.neolab.sdk.util.NLog;
@@ -224,7 +221,6 @@ public class MainActivity extends Activity
 		filter.addAction( Broadcast.ACTION_PEN_DOT );
 		filter.addAction( Broadcast.ACTION_OFFLINE_STROKES );
 		filter.addAction( Broadcast.ACTION_WRITE_PAGE_CHANGED );
-		filter.addAction( Broadcast.ACTION_SYMBOL_ACTION );
 
 
 
@@ -859,23 +855,6 @@ public class MainActivity extends Activity
 				currentBookcodeId = noteId;
 				currentPagenumber =pageNum;
 				mSampleView.changePage(sectionId, ownerId,noteId,pageNum );
-			}
-			else if(Broadcast.ACTION_SYMBOL_ACTION.equals( action ))
-			{
-				int sectionId = intent.getIntExtra( Broadcast.EXTRA_SECTION_ID, -1);
-				int ownerId = intent.getIntExtra( Broadcast.EXTRA_OWNER_ID, -1);
-				int noteId = intent.getIntExtra( Broadcast.EXTRA_BOOKCODE_ID, -1);
-				int pageNum = intent.getIntExtra( Broadcast.EXTRA_PAGE_NUMBER, -1);
-				if(currentSectionId == sectionId && currentOwnerId == ownerId && currentBookcodeId == noteId && currentPagenumber == pageNum)
-				{
-					String symbolId = intent.getStringExtra( Broadcast.EXTRA_SYMBOL_ID);
-					MetadataCtrl metadataCtrl = MetadataCtrl.getInstance();
-					Symbol s = metadataCtrl.getInstance().findApplicableSymbol( symbolId );
-					if(s != null)
-					{
-						Toast.makeText(MainActivity.this, "Symbol Check!! Action="+s.getAction()+", Param="+s.getParam(), Toast.LENGTH_LONG).show();
-					}
-				}
 			}
 //			else if ( Broadcast.ACTION_PEN_DOT.equals( action ))
 //			{

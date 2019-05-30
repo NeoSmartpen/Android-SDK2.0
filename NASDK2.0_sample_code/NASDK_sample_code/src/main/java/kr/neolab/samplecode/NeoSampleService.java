@@ -4,7 +4,10 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Queue;
@@ -14,6 +17,7 @@ import kr.neolab.sdk.ink.structure.Dot;
 import kr.neolab.sdk.ink.structure.DotType;
 import kr.neolab.sdk.ink.structure.Stroke;
 import kr.neolab.sdk.metadata.IMetadataCtrl;
+import kr.neolab.sdk.metadata.IMetadataListener;
 import kr.neolab.sdk.metadata.MetadataCtrl;
 import kr.neolab.sdk.metadata.structure.Symbol;
 import kr.neolab.sdk.pen.IPenCtrl;
@@ -55,9 +59,6 @@ public class NeoSampleService extends Service{
 //	private String currentSaveTag = "";
 //	private int currentPageNumber = -1;
 	private boolean ready = false;
-
-	private Dot checkSymbolDownDot = null;
-	ArrayList<Symbol> checkSymbols = new ArrayList<Symbol>();
 
 	IMetadataCtrl metadataCtrl;
 
@@ -120,6 +121,7 @@ public class NeoSampleService extends Service{
 		if(mPenCtrl.getOffLineDataListener() != null)
 			mPenCtrl.setOffLineDataListener( null );
 		mPenCtrl.setOffLineDataListener( mOfflineDataListener );
+		mPenCtrl.setMetadataListener( mMetadataListener );
 
 		MultiPenCtrl.getInstance().setDotListener( mPenReceiveDotListener );
 		MultiPenCtrl.getInstance().setOffLineDataListener( mOfflineDataListener );
@@ -249,59 +251,6 @@ public class NeoSampleService extends Service{
 			NLog.d( "sendBroadcastIfPageChanged ready="+ready );
 		}
 	}
-
-	private void checkSymbol(Dot dot)
-	{
-		if(dot.penTipType != Stroke.PEN_TIP_TYPE_NORMAL)
-			return;
-		if ( DotType.isPenActionDown(dot.dotType)) {
-			checkSymbolDownDot = dot;
-		}
-		else if(DotType.isPenActionUp(dot.dotType))
-		{
-			if(metadataCtrl!= null && checkSymbolDownDot != null)
-			{
-				Symbol[] upSymbols = metadataCtrl.findApplicableSymbols(dot.noteId,dot.pageId, dot.x, dot.y );
-				Symbol[] downSymbols = metadataCtrl.findApplicableSymbols( checkSymbolDownDot.noteId, checkSymbolDownDot.pageId, checkSymbolDownDot.x, checkSymbolDownDot.y );
-				checkSymbolDownDot = null;
-				checkSymbols.clear();
-
-
-//				Symbol[] testSymbols = metadataCtrl.findApplicableSymbols(dot.noteId,dot.pageId );
-//				if(testSymbols != null)
-//				{
-//					for(Symbol symbol: testSymbols)
-//					{
-//						NLog.d( "testSymbols symbol=  x="+symbol.getX()+",y="+symbol.getY()+",w="+symbol.getWidth()+",h="+symbol.getHeight() );
-//					}
-//				}
-
-				if(upSymbols == null && downSymbols == null)
-					return;
-				for(Symbol upSymbol: upSymbols)
-				{
-					for(Symbol downSymbol: downSymbols)
-					{
-						if(upSymbol.getId().equals( downSymbol.getId() ))
-						{
-							checkSymbols.add(upSymbol);
-							break;
-						}
-					}
-				}
-				for(Symbol symbol: checkSymbols)
-				{
-					Intent intent = new Intent(Const.Broadcast.ACTION_SYMBOL_ACTION);
-					intent.putExtra( Const.Broadcast.EXTRA_SECTION_ID, curSectionId);
-					intent.putExtra(Const.Broadcast.EXTRA_OWNER_ID, curOwnerId);
-					intent.putExtra(Const.Broadcast.EXTRA_BOOKCODE_ID, curBookcodeId);
-					intent.putExtra(Const.Broadcast.EXTRA_PAGE_NUMBER, curPageNumber);
-					intent.putExtra(Const.Broadcast.EXTRA_SYMBOL_ID, symbol.getId());
-					sendBroadcast( intent );
-				}
-			}
-		}
-	}
 	
 	private IPenDotListener mPenReceiveDotListener = new IPenDotListener() {
 
@@ -309,7 +258,6 @@ public class NeoSampleService extends Service{
 		public void onReceiveDot ( String macAddress, Dot dot )
 		{
 			NLog.d( "NeoSampleService onReceiveDot mac_address="+macAddress+"dotType=" + dot.dotType+" ,pressure="+dot.pressure+",x="+dot.getX()+",y="+dot.getY() );
-			checkSymbol( dot );
 			sendBroadcastIfPageChanged(dot.sectionId, dot.ownerId, dot.noteId, dot.pageId);
 			enqueueDot( dot );
 			enqueueDotForBroadcast(macAddress, dot);
@@ -322,7 +270,7 @@ public class NeoSampleService extends Service{
 		@Override
 		public void onReceiveOfflineStrokes ( String macAddress, Stroke[] strokes, int sectionId, int ownerId, int noteId )
 		{
-			// 도트가 0인 데이터 필터링
+			// Filtering 0 size dot
 			ArrayList<Stroke> newArrayList = new ArrayList<Stroke>();
 			for(Stroke s : strokes)
 			{
@@ -344,6 +292,31 @@ public class NeoSampleService extends Service{
 
 			// DB 에 insert
 
+		}
+	};
+
+	// MetadataCtrl 에서 nproj 로딩, symbol 체크 시 callback
+	private IMetadataListener mMetadataListener = new IMetadataListener()
+	{
+		@Override
+		public void onSymbolDetected( Symbol[] symbols )
+		{
+			for( final Symbol s: symbols )
+			{
+				if(s != null)
+				{
+					Handler handler = new Handler( Looper.getMainLooper() );
+					handler.post( new Runnable()
+					{
+						@Override
+						public void run()
+						{
+							Toast.makeText( getApplicationContext(), "Symbol Check!! Action="+s.getAction()+", Param="+s.getParam(), Toast.LENGTH_LONG).show();
+						}
+					} );
+
+				}
+			}
 		}
 	};
 	

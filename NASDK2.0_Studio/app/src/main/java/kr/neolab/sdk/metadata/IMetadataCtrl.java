@@ -226,6 +226,15 @@ public interface IMetadataCtrl
     public Symbol findApplicableSymbol ( String id );
 
     /**
+     * Get Stroke that contains the symbol.
+     *
+     * @param symbol the symbol
+     * @param strokes the strokes
+     * @return Stroke[] strokes that contains the symbol
+     */
+    public Stroke[] getInsideStrokes( Symbol symbol, Stroke[] strokes );
+
+    /**
      * find all Symbol.
      *
      * @return symbol [ ]

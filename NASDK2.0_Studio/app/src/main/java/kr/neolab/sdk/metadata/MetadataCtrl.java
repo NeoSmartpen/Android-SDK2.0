@@ -1042,7 +1042,7 @@ public class MetadataCtrl implements IMetadataCtrl
                     result.add( e );
                     break;
                 }
-                else if ( e.type.compareToIgnoreCase( "Rectangle" ) == 0)
+                else if ( e.type.compareToIgnoreCase( Symbol.TYPE_RECTANGLE ) == 0)
                 {
                     if(i != 0)
                     {
@@ -1141,7 +1141,7 @@ public class MetadataCtrl implements IMetadataCtrl
                     list.add( stroke );
                     break;
                 }
-                else if ( symbol.type.compareToIgnoreCase( "Rectangle" ) == 0)
+                else if ( symbol.type.compareToIgnoreCase( Symbol.TYPE_RECTANGLE ) == 0)
 
                 {
                     if(i != 0)

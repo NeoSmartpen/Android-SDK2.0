@@ -7,6 +7,11 @@ import android.graphics.RectF;
  */
 public class Symbol extends RectF
 {
+	public static final String TYPE_RECTANGLE = "Rectangle";
+	public static final String TYPE_TRIANGLE = "Triangle";
+	public static final String TYPE_ELLIPSE = "ELLIPSE";
+	public static final String TYPE_POLYGON = "Polygon";
+
 	/**
 	 * The Note id.
 	 */
@@ -16,7 +21,7 @@ public class Symbol extends RectF
 pageId;
 
 	/**
-	 * Symbol Type = Rectangle, Trangle, Ellipse, Polygon etc.
+	 * Symbol Type = Rectangle, Triangle, Ellipse, Polygon etc.
 	 */
 	public String type;
 
@@ -203,15 +208,15 @@ param;
 	@Override
 	public boolean contains( float x, float y )
 	{
-		if( type.compareToIgnoreCase( "Rectangle" ) == 0 )
+		if( type.compareToIgnoreCase( TYPE_RECTANGLE ) == 0 )
 		{
 			return super.contains( x, y );
 		}
-		else if ( type.compareToIgnoreCase( "Triangle" ) == 0 )
+		else if ( type.compareToIgnoreCase( TYPE_TRIANGLE ) == 0 )
 		{
 			return checkPtInTriangle(x, y);
 		}
-		else if( type.compareToIgnoreCase( "Ellipse" ) == 0 )
+		else if( type.compareToIgnoreCase( TYPE_ELLIPSE ) == 0 )
 		{
 			return checkPtInEllipse( x, y );
 		}

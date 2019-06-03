@@ -1,9 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="kr.neolab.sdk"
-
-    <uses-sdk
-        android:minSdkVersion="16"
-        android:targetSdkVersion="26" />
     android:versionCode="6"
     android:versionName="2.1.7" >
 

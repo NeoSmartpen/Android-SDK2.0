@@ -1,7 +1,6 @@
 apply plugin: 'com.android.library'
 android {
     compileSdkVersion 23
-    buildToolsVersion '27.0.3'
 
     defaultConfig {
         minSdkVersion 16
@@ -30,7 +29,7 @@ task deleteOldJar(type: Delete) {
 //task to export contents as jar
 task exportJar(type: Copy) {
 
-    from('build/intermediates/bundles/release/')
+    from('build/intermediates/packaged-classes/release/')
 
     into('release/')
 

@@ -1516,13 +1516,13 @@ public class BTAdt implements IPenAdt
 				case QUEUE_MSG:
 				{
 					PenMsg pmsg = (PenMsg) msg.obj;
-					pmsg.mac_address = penAddress;
+					pmsg.sppAddress = penAddress;
 					if(pmsg.penMsgType == PenMsgType.PEN_DISCONNECTED || pmsg.penMsgType == PenMsgType.PEN_CONNECTION_FAILURE)
 					{
 						NLog.d( "[BTAdt/mHandler] PenMsgType.PEN_DISCONNECTED" );
 						penAddress = null;
 					}
-					listener.onReceiveMessage(pmsg.mac_address, pmsg );
+					listener.onReceiveMessage(pmsg.sppAddress, pmsg );
 				}
 					break;
 

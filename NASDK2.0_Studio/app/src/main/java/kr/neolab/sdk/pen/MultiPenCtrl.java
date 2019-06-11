@@ -157,14 +157,18 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			return null;
 	}
 
+	public void connect(String address) {
+		connect(address, null, false);
+	}
+
     @Override
-    public void connect(String address, boolean isLeMode) {
-		if(mConnectedCollection.containsKey(address) && ((isLeMode && mConnectedCollection.get(address) instanceof BTLEAdt) || (!isLeMode && mConnectedCollection.get(address) instanceof BTAdt)))
+    public void connect(String sppAddress, String leAddress, boolean isLeMode) {
+		if(mConnectedCollection.containsKey(sppAddress) && ((isLeMode && mConnectedCollection.get(sppAddress) instanceof BTLEAdt) || (!isLeMode && mConnectedCollection.get(sppAddress) instanceof BTAdt)))
 		{
-			if(mConnectedCollection.get(address) instanceof BTAdt)
-				((BTAdt)mConnectedCollection.get(address)).connect(address);
+			if(mConnectedCollection.get(sppAddress) instanceof BTAdt)
+				((BTAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress);
 			else
-				((BTLEAdt)mConnectedCollection.get(address)).connect(address);
+				((BTLEAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress, leAddress);
 
 		}
 		else
@@ -180,11 +184,11 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 				mBTAdt.setOffLineDataListener( this.offlineDataListener );
 			if(metadataListener != null)
 				mBTAdt.setMetadataListener( this.metadataListener );
-			mConnectedCollection.put(address, mBTAdt);
+			mConnectedCollection.put(sppAddress, mBTAdt);
 			if(mBTAdt instanceof BTAdt )
-				((BTAdt)mBTAdt).connect(address);
+				((BTAdt)mBTAdt).connect(sppAddress);
 			else
-				((BTLEAdt)mBTAdt).connect(address);
+				((BTLEAdt)mBTAdt).connect(sppAddress, leAddress);
 		}
     }
 

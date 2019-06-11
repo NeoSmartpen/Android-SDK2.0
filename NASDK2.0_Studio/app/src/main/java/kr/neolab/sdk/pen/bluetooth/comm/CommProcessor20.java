@@ -21,6 +21,7 @@ import kr.neolab.sdk.ink.structure.DotType;
 import kr.neolab.sdk.ink.structure.Stroke;
 import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
 import kr.neolab.sdk.pen.bluetooth.IConnectedThread;
+import kr.neolab.sdk.pen.bluetooth.cmd.AddUsingNoteCommand;
 import kr.neolab.sdk.pen.bluetooth.cmd.CommandManager;
 import kr.neolab.sdk.pen.bluetooth.cmd.FwUpgradeCommand20;
 import kr.neolab.sdk.pen.bluetooth.cmd.SetTimeCommand;
@@ -804,6 +805,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			{
 				int result = pack.getResultCode();
 				NLog.d( "[CommProcessor20] RES_UsingNoteNotify :  resultCode =" + pack.getResultCode() );
+				kill( CMD20.REQ_UsingNoteNotify );
 				boolean isSuccess = result == 1 ? true : false;
 				try
 				{
@@ -2798,23 +2800,38 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		data.noteIds = noteIds;
 		ArrayList<UseNoteData> list = new ArrayList<UseNoteData>();
 		list.add( data );
-		reqAddUsingNote( list );
+
+		AddUsingNoteCommand command = new AddUsingNoteCommand( CMD20.REQ_UsingNoteNotify, this);
+		command.setNote(list);
+		execute( command);
+//		reqAddUsingNote( list );
 	}
 	
 	public void reqAddUsingNote( int sectionId, int ownerId )
 	{
-		write( ProtocolParser20.buildAddUsingNotes( sectionId, ownerId ) );
+		AddUsingNoteCommand command = new AddUsingNoteCommand(CMD20.REQ_UsingNoteNotify, this);
+		command.setNote(new int[]{sectionId},new int[]{ownerId});
+		execute( command);
+
+//		write( ProtocolParser20.buildAddUsingNotes( sectionId, ownerId ) );
 	}
 
 	@Override
 	public void reqAddUsingNote(int[] sectionId, int[] ownerId) {
-		write( ProtocolParser20.buildAddUsingNotes( sectionId, ownerId ) );
+		AddUsingNoteCommand command = new AddUsingNoteCommand(CMD20.REQ_UsingNoteNotify, this);
+		command.setNote(sectionId,ownerId);
+		execute( command);
+//		write( ProtocolParser20.buildAddUsingNotes( sectionId, ownerId ) );
 
 	}
 
 	public void reqAddUsingNoteAll()
 	{
-		write(ProtocolParser20.buildAddUsingAllNotes());
+		AddUsingNoteCommand command = new AddUsingNoteCommand(CMD20.REQ_UsingNoteNotify, this);
+		command.setNoteAll();
+		execute( command);
+
+//		write(ProtocolParser20.buildAddUsingAllNotes());
 	}
 
 	/**

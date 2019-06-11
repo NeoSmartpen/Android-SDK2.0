@@ -169,10 +169,11 @@ public class PenClientCtrl implements IPenMsgListener
 
 	/**
      * Connect.
+	 * If use ble adapter, throws BLENotSupprtedException
      *
      * @param address the address
      */
-    public void connect( String address)
+    public void connect( String address) throws BLENotSupportedException
 	{
 		iPenCtrl.connect( address );
 	}

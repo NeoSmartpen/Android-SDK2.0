@@ -243,12 +243,27 @@ public class BTLEAdt implements IPenAdt
         return this.metadataListener;
     }
 
-    @Override
-    public synchronized void connect(String address) {
-	    if (mBluetoothAdapter == null || address == null) {
-		    NLog.w("BluetoothAdapter not initialized or unspecified address.");
+    public synchronized void connect(String address)  throws BLENotSupportedException
+    {
+        throw new BLENotSupportedException( "isAvailableDevice( String mac ) is supported from Bluetooth LE !!!" );
+    }
+
+    /**
+     * Connects to the GATT server hosted on the Bluetooth LE device.
+     *
+     * @param sppAddress    The device address of the destination device.
+     * @return Return true if the connection is initiated successfully. The connection result
+     * is reported asynchronously through the
+     * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
+     * callback.
+     */
+    public synchronized void connect ( final String sppAddress, final String leAddress )
+    {
+        if ( mBluetoothAdapter == null || sppAddress == null || leAddress == null)
+        {
+            NLog.w( "BluetoothAdapter not initialized or unspecified address." );
             PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE);
-            msg.mac_address = address;
+            msg.sppAddress = sppAddress;
             this.responseMsg( msg );
 
             return;
@@ -259,7 +274,7 @@ public class BTLEAdt implements IPenAdt
             if ( this.penStatus == CONN_STATUS_AUTHORIZED )
             {
                 PenMsg msg = new PenMsg( PenMsgType.PEN_ALREADY_CONNECTED);
-                msg.mac_address = address;
+                msg.sppAddress = sppAddress;
                 this.responseMsg( msg );
                 return;
             }
@@ -269,12 +284,12 @@ public class BTLEAdt implements IPenAdt
             }
         }
 
-        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice( address );
+        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice( leAddress );
         if ( device == null )
         {
             NLog.w( "Device not found.  Unable to connect." );
             PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE);
-            msg.mac_address = address;
+            msg.sppAddress = sppAddress;
             this.responseMsg( msg );
             return;
         }
@@ -284,7 +299,7 @@ public class BTLEAdt implements IPenAdt
         {
             NLog.w( "MacAddress is not Bluetooth LE Type" );
             PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE);
-            msg.mac_address = address;
+            msg.sppAddress = sppAddress;
             this.responseMsg( msg );
             return;
         }
@@ -292,12 +307,12 @@ public class BTLEAdt implements IPenAdt
         if ( this.penStatus != CONN_STATUS_IDLE )
         {
             PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE);
-            msg.mac_address = address;
+            msg.sppAddress = sppAddress;
             this.responseMsg( msg );
             return;
         }
 
-        this.penAddress = address;
+        this.penAddress = sppAddress;
         onConnectionTry();
         responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_TRY ) );
 
@@ -1558,19 +1573,19 @@ public class BTLEAdt implements IPenAdt
                 case QUEUE_MSG:
                 {
                     PenMsg pmsg = (PenMsg) msg.obj;
-                    if(pmsg.mac_address == null || pmsg.mac_address.length() == 0)
-                        pmsg.mac_address = penAddress;
+                    if(pmsg.sppAddress == null || pmsg.sppAddress.length() == 0)
+                        pmsg.sppAddress = penAddress;
                     if ( pmsg.penMsgType == PenMsgType.PEN_DISCONNECTED || pmsg.penMsgType == PenMsgType.PEN_CONNECTION_FAILURE )
                     {
                         NLog.d( "[BTAdt/mHandler] PenMsgType.PEN_DISCONNECTED or PenMsgType.PEN_CONNECTION_FAILURE" );
                         if(listener != null)
-                            listener.onReceiveMessage( pmsg.mac_address, pmsg );
+                            listener.onReceiveMessage( pmsg.sppAddress, pmsg );
                         penAddress = null;
                     }
                     else
                     {
                         if(listener != null)
-                            listener.onReceiveMessage( pmsg.mac_address, pmsg );
+                            listener.onReceiveMessage( pmsg.sppAddress, pmsg );
                     }
 
                 }
@@ -1632,9 +1647,13 @@ public class BTLEAdt implements IPenAdt
                     mtu = mtuLIst[mtuIndex];
                     boolean ret = gatt.requestMtu( mtu );
                     NLog.d( "mtu test result : " + ret );
+                    boolean canReadRssi = mBluetoothGatt.readRemoteRssi();
+                    NLog.d( "canReadRemoteRssi : " + canReadRssi );
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED:
                     NLog.d( "Disconnected" );
+                    boolean discanReadRssi = mBluetoothGatt.readRemoteRssi();
+                    NLog.d( "discanReadRemoteRssi : " + discanReadRssi );
 //                    if ( mConnectionThread != null )
 //                    {
 //                        if(mConnectionThread.getIsEstablished())
@@ -1737,7 +1756,7 @@ public class BTLEAdt implements IPenAdt
         public void onReadRemoteRssi ( BluetoothGatt gatt, int rssi, int status )
         {
             super.onReadRemoteRssi( gatt, rssi, status );
-            NLog.d( "call onReadRemoteRssi" );
+            NLog.d( "call onReadRemoteRssi="+rssi+",status" );
         }
 
         @TargetApi( Build.VERSION_CODES.LOLLIPOP )

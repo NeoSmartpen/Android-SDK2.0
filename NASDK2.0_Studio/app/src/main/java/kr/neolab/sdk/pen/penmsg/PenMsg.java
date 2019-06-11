@@ -1,11 +1,12 @@
 package kr.neolab.sdk.pen.penmsg;
 
-import java.util.LinkedHashMap;
-import java.util.Map.Entry;
-import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * The structure for sent message from pen
@@ -27,7 +28,7 @@ public class PenMsg
 	/**
 	 * The Mac address.
 	 */
-	public String mac_address = "";
+	public String sppAddress = "";
 
 	/**
 	 * Instantiates a new Pen msg.
@@ -47,7 +48,7 @@ public class PenMsg
 	 */
 	public PenMsg( int penMsgType, String MACAddress )
 	{
-		this.mac_address = MACAddress;
+		this.sppAddress = MACAddress;
 		this.penMsgType = penMsgType;
 	}
 

@@ -29,24 +29,6 @@ import kr.neolab.sdk.util.NLog;
 
 public class NeoSampleService extends Service{
 
-	public static Boolean SAVE_QUE_DATA_PLAN_B = false;
-
-
-//	public static final String ACTION_SEND_DOT = "kr.neolab.samplecode" +".broadcast"+".action"+ ".send_dot";
-//	public static final String EXTRA_DOT = "dot";
-
-//	public static final String ACTION_READY_RECEIVE = "kr.neolab.samplecode" +".broadcast"+".action"+ ".ready_receive";
-//	public static final String EXTRA_READY = "ready";
-//	public static final String EXTRA_SAVE_TAG = "save_tag";
-
-//	public static final String ACTION_CURRENT_VIEW_PAGE = "kr.neolab.samplecode" +".broadcast"+".action"+ ".current_view";
-
-//	public static final String ACTION_SYMBOL_ACTION = "kr.neolab.samplecode" +".broadcast"+".action"+ ".symbol_action";
-//	public static final String EXTRA_SYMBOL_ID = "symbolId";
-//	public static final String EXTRA_DOT = "dot";
-
-//	public static final String EXTRA_CURRENT_PAGE = "current_page";
-
 	private IPenCtrl mPenCtrl;
 	private Queue<Dot> mDotQueueForDB = null;
 	private Queue<DotWithAddress> mDotQueueForBroadcast = null;
@@ -55,67 +37,14 @@ public class NeoSampleService extends Service{
 
 	private int curSectionId, curOwnerId,  curBookcodeId, curPageNumber;	
 
-//	private PageInfo currentPageInfo = null;
-//	private String currentSaveTag = "";
-//	private int currentPageNumber = -1;
 	private boolean ready = false;
 
 	IMetadataCtrl metadataCtrl;
-
-//	private BroadcastReceiver readyBroadcastReceiver = new BroadcastReceiver()
-//	{
-//		@Override
-//		public void onReceive ( Context context, Intent intent )
-//		{
-//			if(intent != null && intent.getAction().equals( ACTION_READY_RECEIVE ))
-//			{
-//				ready = intent.getBooleanExtra( EXTRA_READY, false );
-//				NLog.d( "ACTION_READY_RECEIVE ready="+ready );
-//
-////				currentSaveTag = intent.getStringExtra( EXTRA_SAVE_TAG );
-////				currentPageNumber = intent.getIntExtra( EXTRA_CURRENT_PAGE, -1 );
-//
-//				if(ready)
-//				{
-//					if(SAVE_QUE_DATA_PLAN_B)
-//					{
-//						synchronized (mDotQueueForDB) {
-//							mDotQueueForDB.notifyAll();
-//						}
-//						synchronized (mDotQueueForBroadcast) {
-//							mDotQueueForBroadcast.notifyAll();
-//						}
-//					}
-//					else
-//					{
-//						synchronized (mDotQueueForDB) {
-//							mDotQueueForDB.clear();
-//						}
-//						synchronized (mDotQueueForBroadcast) {
-//							mDotQueueForBroadcast.clear();
-//						}
-//					}
-//				}
-//			}
-//			else if(intent != null && intent.getAction().equals( ACTION_CURRENT_VIEW_PAGE ))
-//			{
-//				int sectionId = intent.getIntExtra( EXTRA_SECTION_ID,-1 );
-//				int ownerId = intent.getIntExtra( EXTRA_OWNER_ID,-1 );
-//				int bookcodeId = intent.getIntExtra( EXTRA_BOOKCODE_ID,-1 );
-//				int pagenumber = intent.getIntExtra( EXTRA_PAGE_NUMBER,-1 );
-//				curSectionId = sectionId;
-//				curOwnerId = ownerId;
-//				curBookcodeId = bookcodeId;
-//				curPageNumber = pagenumber;
-//			}
-//		}
-//	};
 
     @Override
 	public void onCreate ()
 	{
 		super.onCreate();
-//		registerBroadcastReceiver();
 		mPenCtrl = PenCtrl.getInstance();
 		mPenCtrl.setDotListener( mPenReceiveDotListener );
 		if(mPenCtrl.getOffLineDataListener() != null)
@@ -130,8 +59,6 @@ public class NeoSampleService extends Service{
 		metadataCtrl = MetadataCtrl.getInstance();
 
 		metadataCtrl.loadFiles( Const.SAMPLE_FOLDER_PATH);
-
-//		NLog.d( "Page Width=" +metadataCtrl.getPageWidth( 8, 2));
 
 		mDotQueueForDB = new ConcurrentLinkedQueue<Dot>();
 		mDotQueueForBroadcast = new ConcurrentLinkedQueue<DotWithAddress>();
@@ -156,23 +83,7 @@ public class NeoSampleService extends Service{
 			mDBThread.interrupt();
 		if(mBroadcastThread != null)
 			mBroadcastThread.interrupt();
-//		unRegisterBroadcastReceiver( );
-
-//		android.os.Process.killProcess( android.os.Process.myPid() );
 	}
-
-//	private void registerBroadcastReceiver()
-//	{
-//		IntentFilter i = new IntentFilter( );
-//		i.addAction(ACTION_READY_RECEIVE);
-//		i.addAction( ACTION_CURRENT_VIEW_PAGE );
-//		registerReceiver( readyBroadcastReceiver,i );
-//	}
-
-//	private void unRegisterBroadcastReceiver()
-//	{
-//		unregisterReceiver( readyBroadcastReceiver );
-//	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -227,7 +138,6 @@ public class NeoSampleService extends Service{
 		intent.putExtra( Const.Broadcast.PEN_ADDRESS, macAddress );
 		intent.putExtra( Const.Broadcast.EXTRA_DOT, dot);
 		sendBroadcast( intent );
-//		LocalBroadcastManager.getInstance( this ).sendBroadcast(intent);
 	}
 
 
@@ -245,7 +155,6 @@ public class NeoSampleService extends Service{
 		
 		if(curPageNumber != pageNumber){
 			curPageNumber = pageNumber;
-//			currentPageInfo = ActionController.getInstance( this ).getPageInfo( sectionId, ownerId, bookcodeId, pageNumber);
 			sendPageChangedBroadcast();
 			ready = false;
 			NLog.d( "sendBroadcastIfPageChanged ready="+ready );
@@ -343,14 +252,11 @@ public class NeoSampleService extends Service{
 		private int currentOwnerId = -1;
 		private int currentBookcodeId = -1;
 		private int currentPageId = -1;
-//		ActionController mActionController;
 		private ArrayList<Dot> dotArray = new ArrayList<Dot>(100);
 
-//		private ArrayList<Dot> eraserDotArray = new ArrayList<Dot>(100);
 
 		public DotConsumerForDBThread(Context context) {
 			super();
-//			mActionController = ActionController.getInstance(context);
 		}
 		
 
@@ -363,14 +269,9 @@ public class NeoSampleService extends Service{
 				
 				while(!mDotQueueForDB.isEmpty()){
 					Dot dot = null;
-//					if(ready)
-//					{
-						dot = mDotQueueForDB.poll();
-//					}
-//					else
-//					{
-//						break;
-//					}
+
+					dot = mDotQueueForDB.poll();
+
 					if(dot != null )
 						insert(dot); // offline data 전송중이면 Symbol 무시
 				}
@@ -380,7 +281,6 @@ public class NeoSampleService extends Service{
 						mDotQueueForDB.wait();
 					}
 				} catch (InterruptedException e){
-//					e.printStackTrace();
 					NLog.d( "DotConsumerThread Interrupted!!" + e );
 				}
 			}
@@ -424,11 +324,6 @@ public class NeoSampleService extends Service{
 			}
 		}
 
-//		private int currentSectionId = -1;
-//		private int currentOwnerId = -1;
-//		private int currentBookcodeId = -1;
-//		private int currentPageId = -1;
-
 		private void checkNotebookAndPageChange(Dot dot) {
 			boolean changed = false;
 			if (currentSectionId != dot.sectionId || currentOwnerId != dot.ownerId || currentBookcodeId != dot.noteId || currentPageId != dot.pageId) {
@@ -469,8 +364,6 @@ public class NeoSampleService extends Service{
 				eraserDotCount = 0;
 			else
 				dotCount = 0;
-			//DB Insert
-//			mActionController.addStroke( s ,currentSaveTag);
 		}
 
 	}
@@ -500,7 +393,6 @@ public class NeoSampleService extends Service{
 						mDotQueueForBroadcast.wait();
 					}
 				} catch (InterruptedException e){
-//					e.printStackTrace();
 					NLog.d( "DotConsumerThread Interrupted!!" + e);
 				}
 			}

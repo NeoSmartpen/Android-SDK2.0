@@ -79,7 +79,7 @@ public interface IPenCtrl
      *
      * @param address MAC address of pen
      */
-    public void connect(String address);
+    public void connect(String address) throws BLENotSupportedException;
 
     /**
      * And disconnect the connection with pen

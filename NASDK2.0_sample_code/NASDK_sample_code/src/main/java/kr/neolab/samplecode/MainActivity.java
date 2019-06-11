@@ -38,6 +38,7 @@ import kr.neolab.sdk.ink.structure.Dot;
 import kr.neolab.sdk.ink.structure.Stroke;
 import kr.neolab.sdk.metadata.MetadataCtrl;
 import kr.neolab.sdk.metadata.structure.Symbol;
+import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
 import kr.neolab.sdk.pen.offline.OfflineFileParser;
 import kr.neolab.sdk.pen.penmsg.PenMsgType;
 import kr.neolab.sdk.util.NLog;
@@ -251,7 +252,13 @@ public class MainActivity extends Activity
 						if(connectionMode == 0)
 						{
 							penClientCtrl.setLeMode( isLe );
-							penClientCtrl.connect( address );
+							try
+							{
+								penClientCtrl.connect( address );
+							} catch ( BLENotSupportedException e )
+							{
+								e.printStackTrace();
+							}
 						}
 						else
 						{
@@ -430,21 +437,6 @@ public class MainActivity extends Activity
 						});
 						builder.create().show();
 					}
-
-
-//					if(penClientCtrl.getProtocolVersion() == 1)
-//					{
-//						// location of firmware (you should locate file in this directory.)
-//						String pathFirmware = getExternalStoragePath() + "/neolab/firmware/NEO1.zip";
-//						// To request a firmware upgrade.
-//						penClientCtrl.upgradePen( new File( pathFirmware ) );
-//					}
-//					else
-//					{
-//						String pathFirmware = getExternalStoragePath() + File.separator + "update_T.02.0003.bin";
-//						// To request a firmware upgrade.
-//						penClientCtrl.upgradePen2( new File( pathFirmware ), "0.03.0003" );
-//					}
 				}
 
 				return true;
@@ -518,7 +510,13 @@ public class MainActivity extends Activity
 
 			case R.id.action_symbol_stroke:
 				// select specific symbol and make Image
-				mSampleView.makeSymbolImage( lastSymbol );
+
+
+				// find page symbols
+				Symbol[] symbols = MetadataCtrl.getInstance().findApplicableSymbols( currentBookcodeId, currentPagenumber );
+
+				if( symbols != null && symbols.length > 0 )
+					mSampleView.makeSymbolImage( symbols[0] );
 				return true;
 
 
@@ -527,29 +525,10 @@ public class MainActivity extends Activity
 		}
 	}
 
-	public String getExternalStoragePath()
-	{
-		if ( Environment.getExternalStorageState().equals( Environment.MEDIA_MOUNTED ) )
-		{
-			return Environment.getExternalStorageDirectory().getAbsolutePath();
-		}
-		else
-		{
-			return Environment.MEDIA_UNMOUNTED;
-		}
-	}
-
-	private Symbol lastSymbol;
 	private void handleDot(String penAddress, Dot dot )
 	{
-
 		NLog.d( "penAddress="+penAddress+",handleDot type =" + dot.dotType );
 		mSampleView.addDot(penAddress, dot );
-
-		// this is for Symbol Stroke menu
-		Symbol[] symbols = MetadataCtrl.getInstance().findApplicableSymbols( dot );
-		if( symbols != null && symbols.length >0 )
-			lastSymbol = symbols[0];
 	}
 
 	private void handleMsg(String penAddress, int penMsgType, String content )
@@ -759,31 +738,6 @@ public class MainActivity extends Activity
 		}
 	}
 
-//	private void onUpgrading( int total, int progress )
-//	{
-//		mBuilder.setContentText( "Sending" ).setProgress( total, progress, false );
-//		mNotifyManager.notify( 0, mBuilder.build() );
-//	}
-//
-//	private void onUpgradeFailure( boolean isSuspend )
-//	{
-//		if ( isSuspend )
-//		{
-//			mBuilder.setContentText( "file transfer is suspended." ).setProgress( 0, 0, false );
-//		}
-//		else
-//		{
-//			mBuilder.setContentText( "file transfer has failed." ).setProgress( 0, 0, false );
-//		}
-//		mNotifyManager.notify( 0, mBuilder.build() );
-//	}
-//
-//	private void onUpgradeSuccess()
-//	{
-//		mBuilder.setContentText( "The file transfer is complete." ).setProgress( 0, 0, false );
-//		mNotifyManager.notify( 0, mBuilder.build() );
-//	}
-
 	private void parseOfflineData(String penAddress)
 	{
 		// obtain saved offline data file list
@@ -850,7 +804,7 @@ public class MainActivity extends Activity
 				if(array != null)
 				{
 					Stroke[] strokes  = new Stroke[array.length];
-//					ArrayList<Stroke> offList = new ArrayList<Stroke>();
+					//					ArrayList<Stroke> offList = new ArrayList<Stroke>();
 					for (int i = 0; i < array.length; i++) {
 						strokes[i] = ((Stroke) array[i]);
 					}
@@ -869,38 +823,18 @@ public class MainActivity extends Activity
 				currentPagenumber =pageNum;
 				mSampleView.changePage(sectionId, ownerId,noteId,pageNum );
 			}
-//			else if ( Broadcast.ACTION_PEN_DOT.equals( action ))
-//			{
-//				penClientCtrl.suspendPenUpgrade();
-//			}
 		}
 	};
 
-//	@Override
-//	public void onFinish ()
-//	{
-//
-//	}
-//
-//	@Override
-//	public void onCatchSingleTab ()
-//	{
-//
-//	}
-
-//    private BroadcastReceiver mBTDuplicateRemoveBroadcasterReceiver = new BroadcastReceiver()
-//    {
-//
-//        @Override
-//        public void onReceive ( Context context, Intent intent )
-//        {
-//            if(intent != null && intent.getAction().equals( BTDuplicateRemoveBroadcasterReceiver.ACTION_BT_CONNECTED ))
-//            {
-//                String packageName = intent.getStringExtra( BTDuplicateRemoveBroadcasterReceiver.EXTRA_BT_CONNECT_PACKAGENAME );
-//                NLog.d( "mBTDuplicateRemoveBroadcasterReceiver connect packageName="+packageName );
-//                Util.showToast( context , "packageName �� BT�� ����Ǿ� �ִ� �����Դϴ�. packageName ���� BT ������ ����õ��ϼ���" );
-//            }
-//        }
-//    };
-
+	public String getExternalStoragePath()
+	{
+		if ( Environment.getExternalStorageState().equals( Environment.MEDIA_MOUNTED ) )
+		{
+			return Environment.getExternalStorageDirectory().getAbsolutePath();
+		}
+		else
+		{
+			return Environment.MEDIA_UNMOUNTED;
+		}
+	}
 }

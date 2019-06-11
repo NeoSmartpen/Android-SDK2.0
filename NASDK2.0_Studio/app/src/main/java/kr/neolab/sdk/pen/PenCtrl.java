@@ -184,7 +184,7 @@ public class PenCtrl implements IPenCtrl {
 	}
 
 	@Override
-    public void connect(String address) {
+    public void connect(String address) throws BLENotSupportedException{
         currentAdt.connect(address);
     }
 

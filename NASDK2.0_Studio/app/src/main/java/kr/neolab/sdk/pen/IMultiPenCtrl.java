@@ -80,10 +80,11 @@ public interface IMultiPenCtrl
     /**
      * Attempts to connect to the pen.
      *
-     * @param address  MAC address of pen
+     * @param sppAddress  MAC address of pen
+     * @param leAddress  leAddress
      * @param isLeMode the is le mode
      */
-    public void connect ( String address, boolean isLeMode );
+    public void connect ( String sppAddress, String leAddress, boolean isLeMode );
 
     /**
      * And disconnect the connection with pen

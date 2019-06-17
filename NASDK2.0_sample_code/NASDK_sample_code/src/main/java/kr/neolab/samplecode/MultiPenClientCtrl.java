@@ -165,7 +165,7 @@ public class MultiPenClientCtrl implements IPenMsgListener
      */
     public void connect( String address, boolean isLeMode)
 	{
-		iPenCtrl.connect( address , isLeMode);
+		iPenCtrl.connect( address, null, isLeMode );
 	}
 
     /**

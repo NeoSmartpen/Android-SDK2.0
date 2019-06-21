@@ -45,6 +45,8 @@ public class NeoSampleService extends Service{
 	public void onCreate ()
 	{
 		super.onCreate();
+
+		// Set Listener at pen Ctrl
 		mPenCtrl = PenCtrl.getInstance();
 		mPenCtrl.setDotListener( mPenReceiveDotListener );
 		if(mPenCtrl.getOffLineDataListener() != null)
@@ -52,14 +54,15 @@ public class NeoSampleService extends Service{
 		mPenCtrl.setOffLineDataListener( mOfflineDataListener );
 		mPenCtrl.setMetadataListener( mMetadataListener );
 
+		// Set Listener at Multi pen Ctrl
 		MultiPenCtrl.getInstance().setDotListener( mPenReceiveDotListener );
 		MultiPenCtrl.getInstance().setOffLineDataListener( mOfflineDataListener );
 
-
+		// metadata load
 		metadataCtrl = MetadataCtrl.getInstance();
-
 		metadataCtrl.loadFiles( Const.SAMPLE_FOLDER_PATH);
 
+		// create Queue
 		mDotQueueForDB = new ConcurrentLinkedQueue<Dot>();
 		mDotQueueForBroadcast = new ConcurrentLinkedQueue<DotWithAddress>();
 

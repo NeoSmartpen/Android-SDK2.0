@@ -162,13 +162,27 @@ public class MultiPenClientCtrl implements IPenMsgListener
      * Connect.
      *
      * @param address the address
+	 * @param isLeMode LeMode
      */
     public void connect( String address, boolean isLeMode)
 	{
-		iPenCtrl.connect( address, null, isLeMode );
+		connect( address, null, isLeMode );
 	}
 
-    /**
+	/**
+	 * Connect.
+	 *
+	 * @param address the address
+	 * @param leAddress the leAddress
+	 * @param isLeMode LeMode
+	 */
+	public void connect( String address, String leAddress, boolean isLeMode)
+	{
+		iPenCtrl.connect( address, leAddress, isLeMode );
+	}
+
+
+	/**
      * Disconnect.
      */
     public void disconnect(String macAddress)
@@ -355,26 +369,6 @@ public class MultiPenClientCtrl implements IPenMsgListener
 	{
 		iPenCtrl.setAllowOfflineData( macAddress,on );
 	}
-
-
-//	@Override
-//	public void onReceiveDot( Dot dot )
-//	{
-//		NLog.d( "onReceiveDot sectionId=" + dot.sectionId + ",ownerId=" + dot.ownerId + ";noteId=" + dot.noteId + ";pageId=" + dot.pageId + ";x=" + dot.x + ";y=" + dot.y +  ";pressure=" + dot.pressure + ";timestamp=" + dot.timestamp + ";type=" + dot.dotType + ";color=" + dot.color + ";tiltX=" + dot.tiltX + ";tiltY=" + dot.tiltY + ";twist=" + dot.twist + ";penTipType=" + dot.penTipType );
-//		sendPenDotByBroadcast( dot );
-//	}
-
-
-//	@Override
-//	public void onReceiveOfflineStrokes ( Stroke[] strokes, int sectionId, int ownerId, int noteId )
-//	{
-//
-//		NLog.d( "onReceiveOfflineStrokes strokes="+strokes.length );
-//		Intent i = new Intent( Const.Broadcast.ACTION_OFFLINE_STROKES );
-//		i.putExtra( Const.Broadcast.EXTRA_OFFLINE_STROKES, strokes );
-//
-//		context.sendBroadcast( i );
-//	}
 
 	@Override
 	public void onReceiveMessage( String macAddress, PenMsg penMsg )

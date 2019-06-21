@@ -178,6 +178,18 @@ public class PenClientCtrl implements IPenMsgListener
 		iPenCtrl.connect( address );
 	}
 
+	/**
+	 * Connect.
+	 * If use ble adapter, throws BLENotSupprtedException
+	 *
+	 * @param sppAddress the spp address
+	 * @param leAddress	the le address
+	 */
+	public void connect( String sppAddress, String leAddress )
+	{
+		iPenCtrl.connect( sppAddress, leAddress );
+	}
+
     /**
      * Disconnect.
      */
@@ -364,26 +376,6 @@ public class PenClientCtrl implements IPenMsgListener
 	{
 		iPenCtrl.setAllowOfflineData( on );
 	}
-
-
-//	@Override
-//	public void onReceiveDot( Dot dot )
-//	{
-//		NLog.d( "onReceiveDot sectionId=" + dot.sectionId + ",ownerId=" + dot.ownerId + ";noteId=" + dot.noteId + ";pageId=" + dot.pageId + ";x=" + dot.x + ";y=" + dot.y +  ";pressure=" + dot.pressure + ";timestamp=" + dot.timestamp + ";type=" + dot.dotType + ";color=" + dot.color + ";tiltX=" + dot.tiltX + ";tiltY=" + dot.tiltY + ";twist=" + dot.twist + ";penTipType=" + dot.penTipType );
-//		sendPenDotByBroadcast( dot );
-//	}
-
-
-//	@Override
-//	public void onReceiveOfflineStrokes ( Stroke[] strokes, int sectionId, int ownerId, int noteId )
-//	{
-//
-//		NLog.d( "onReceiveOfflineStrokes strokes="+strokes.length );
-//		Intent i = new Intent( Const.Broadcast.ACTION_OFFLINE_STROKES );
-//		i.putExtra( Const.Broadcast.EXTRA_OFFLINE_STROKES, strokes );
-//
-//		context.sendBroadcast( i );
-//	}
 
 	@Override
 	public void onReceiveMessage( String macAddress, PenMsg penMsg )

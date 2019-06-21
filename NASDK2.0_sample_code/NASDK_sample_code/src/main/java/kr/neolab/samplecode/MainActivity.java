@@ -244,25 +244,35 @@ public class MainActivity extends Activity
 				// When DeviceListActivity returns with a device to connect
 				if ( resultCode == Activity.RESULT_OK )
 				{
-					String address = null;
+					String sppAddress = null;
 
-					if ( (address = data.getStringExtra( DeviceListActivity.EXTRA_DEVICE_ADDRESS )) != null )
+					if ( (sppAddress = data.getStringExtra( DeviceListActivity.EXTRA_DEVICE_SPP_ADDRESS )) != null )
 					{
 						boolean isLe = data.getBooleanExtra( DeviceListActivity.EXTRA_IS_BLUETOOTH_LE, false);
+						String leAddress = data.getStringExtra( DeviceListActivity.EXTRA_DEVICE_LE_ADDRESS );
+
 						if(connectionMode == 0)
 						{
-							penClientCtrl.setLeMode( isLe );
-							try
+							boolean leResult = penClientCtrl.setLeMode( isLe );
+
+							if( leResult )
 							{
-								penClientCtrl.connect( address );
-							} catch ( BLENotSupportedException e )
+								penClientCtrl.connect( sppAddress, leAddress );
+							}
+							else
 							{
-								e.printStackTrace();
+								try
+								{
+									penClientCtrl.connect( sppAddress );
+								} catch ( BLENotSupportedException e )
+								{
+									e.printStackTrace();
+								}
 							}
 						}
 						else
 						{
-							multiPenClientCtrl.connect(address, isLe );
+							multiPenClientCtrl.connect(sppAddress, leAddress, isLe );
 						}
 					}
 				}
@@ -509,16 +519,17 @@ public class MainActivity extends Activity
 					return true;
 
 			case R.id.action_symbol_stroke:
-				// select specific symbol and make Image
+				// 특정 페이지의 심볼 리스트를 추출, 스트로크 데이터를 입력하여서 이미지를 추출할 수 있는 샘플
 
-
-				// find page symbols
+				// 특정 페이지의 심볼 리스트를 추출
 				Symbol[] symbols = MetadataCtrl.getInstance().findApplicableSymbols( currentBookcodeId, currentPagenumber );
 
+				// 해당 심볼 중, 원하는 심볼을 선택해서 이미지를 만든다.
+				// 본 샘플에서는 임의로 첫번째 심볼을 선택하였음. 아래 부분을 수정하여 원하는 심볼을 선택할 수 있다.
 				if( symbols != null && symbols.length > 0 )
 					mSampleView.makeSymbolImage( symbols[0] );
-				return true;
 
+				return true;
 
 			default:
 				return super.onOptionsItemSelected( item );
@@ -652,6 +663,7 @@ public class MainActivity extends Activity
 				break;
 
 			// Progress of the data transfer process offline
+			// 오프라인 데이타를 전송 받을 때, 얼만큼 받았는지 확인 가능
 			case PenMsgType.OFFLINE_DATA_SEND_STATUS:
 			{
 				try
@@ -760,6 +772,7 @@ public class MainActivity extends Activity
 
 				if ( strokes != null )
 				{
+					// check offline symbol
 //					ArrayList<Stroke> strokeList = new ArrayList( Arrays.asList( strokes ));
 					mSampleView.addStrokes( penAddress, strokes );
 				}

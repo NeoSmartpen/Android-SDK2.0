@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 
+import java.util.Locale;
+
 import kr.neolab.sdk.ink.structure.Dot;
 import kr.neolab.sdk.ink.structure.Stroke;
 import kr.neolab.sdk.renderer.Renderer;
@@ -73,5 +75,43 @@ public class StrokeUtil
         Renderer.draw( canvas, strokes, scale, -offsetX, -offsetY, Stroke.STROKE_TYPE_PEN );
 
         return bitmap;
+    }
+
+    public static String StrokeToNeoInk( String captureDevice, Stroke s )
+    {
+        String str = String.format( Locale.getDefault(),
+                                    "[\"%s\"," +
+                                            " \"%s\"," +
+                                            " \"#%06X\"," +
+                                            " \"%d\"," +
+                                            " \"%d\",",
+                                    captureDevice,
+                                    s.penTipType== 2 ? "highlight" : "solid",
+                                    ( 0xFFFFFF & s.color ),
+                                    s.thickness,
+                                    s.timeStampStart );
+
+        if( s.getDots().size() > 0 )
+            str += "[";
+
+
+        StringBuilder builder = new StringBuilder( str );
+        for( Dot d : s.getDots() )
+        {
+               String dotStr = String.format( Locale.getDefault(),
+                                              "\"%d\"," +
+                                                      "\"%.2f\"," +
+                                                      "\"%.2f\",\"%.2f\"," +
+                                                      "\"%d\",\"%d\"",
+                                              d.timestamp - s.timeStampStart,
+                                              d.x, d.y,
+                                              (float) d.pressure * 100f / 255f,
+                                              d.tiltX, d.twist );
+               builder.append( dotStr );
+        }
+
+        builder.append( "]]" );
+
+        return  builder.toString();
     }
 }

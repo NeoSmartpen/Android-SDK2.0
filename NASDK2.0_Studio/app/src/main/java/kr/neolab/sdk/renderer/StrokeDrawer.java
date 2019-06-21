@@ -5,8 +5,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 
-import junit.framework.Assert;
-
 import kr.neolab.sdk.ink.structure.Stroke;
 
 public class StrokeDrawer
@@ -280,7 +278,7 @@ public class StrokeDrawer
 	//		다음 startWith가 될 값
 	private void drawFountainPen(Canvas canvas, float scale, float offset_x, float offset_y ) 
 	{
-		Assert.assertTrue( mN>=2 );
+//		Assert.assertTrue( mN>=2 );
 		
 		final float scaled_pen_thickness = getScaledPenThickness( mPenThickness, scale );
 		float x0, x1, x2, x3, y0, y1, y2, y3, p0, p1, p2, p3;

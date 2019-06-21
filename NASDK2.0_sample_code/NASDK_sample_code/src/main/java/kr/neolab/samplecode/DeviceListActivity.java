@@ -29,6 +29,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -45,7 +46,8 @@ import kr.neolab.sdk.util.NLog;
 public class DeviceListActivity extends Activity
 {
     // Return Intent extra
-    public static String EXTRA_DEVICE_ADDRESS = "device_address";
+    public static String EXTRA_DEVICE_SPP_ADDRESS = "device_spp_address";
+    public static String EXTRA_DEVICE_LE_ADDRESS = "device_le_address";
     public static String EXTRA_IS_BLUETOOTH_LE = "is_bluetooth_le";
 
     // Member fields
@@ -57,7 +59,7 @@ public class DeviceListActivity extends Activity
     private List<ScanFilter> mScanFilters;
     private ArrayAdapter<String> mPairedDevicesArrayAdapter;
     private ArrayAdapter<String> mNewDevicesArrayAdapter;
-    ArrayList<String> temp = new  ArrayList<String>();
+    HashMap<String, String> temp = new HashMap<>();
     Button scanButton;
     Button scanLEButton;
     boolean is_le_scan = false;
@@ -70,25 +72,26 @@ public class DeviceListActivity extends Activity
             BluetoothDevice device = result.getDevice();
             if ( device != null )
             {
-//                String sppAddress = changeAddressFromLeToSpp()
-                String msg = device.getName() + "\n" +"[RSSI : " + result.getRssi() + "dBm]" + device.getAddress();
+                String sppAddress = changeAddressFromLeToSpp(result.getScanRecord().getBytes());
+                String msg = device.getName() + "\n" +"[RSSI : " + result.getRssi() + "dBm]" + sppAddress;
                 NLog.d( "onLeScan " + msg );
                 /**
                  * have to change adapter to BLE
                  */
-//                PenClientCtrl.getInstance( getApplicationContext() ).setLeMode(true);
-//                if(PenClientCtrl.getInstance( getApplicationContext() ).isAvailableDevice(result.getScanRecord().getBytes())) {
-                    if (!temp.contains(device.getAddress())) {
-                        NLog.d("ACTION_FOUND onLeScan : " + device.getName() + " address : " + device.getAddress() + ", COD:" + device.getBluetoothClass());
+                if( !temp.containsKey( sppAddress ) )
+                {
+                    NLog.d( "ACTION_FOUND onLeScan : " + device.getName() + " sppAddress : " + sppAddress + ", COD:" + device.getBluetoothClass() );
 
-                        PenClientCtrl.getInstance( DeviceListActivity.this ).setLeMode( true );
-                        if(PenClientCtrl.getInstance( DeviceListActivity.this ).isAvailableDevice(result.getScanRecord().getBytes()  ))
-                        {
-                            temp.add(device.getAddress());
-                            mNewDevicesArrayAdapter.add(msg);
-                        }
-                    } else {
+                    PenClientCtrl.getInstance( DeviceListActivity.this ).setLeMode( true );
+                    if( PenClientCtrl.getInstance( DeviceListActivity.this ).isAvailableDevice( result.getScanRecord().getBytes() ) )
+                    {
+                        temp.put( sppAddress, device.getAddress() );
+                        mNewDevicesArrayAdapter.add( msg );
                     }
+                }
+                else
+                {
+                }
             }
         }
 
@@ -354,13 +357,14 @@ public class DeviceListActivity extends Activity
 
             // Get the device MAC address, which is the last 17 chars in the View
             String info = ((TextView) v).getText().toString();
-            String address = info.substring(info.length() - 17);
-            NLog.d("[SdkSampleCode] select address : " + address);
+            String sppAddress = info.substring(info.length() - 17);
+            NLog.d("[SdkSampleCode] select address : " + sppAddress);
 
 
             // Create the result Intent and include the MAC address           
             Intent intent = new Intent();
-            intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
+            intent.putExtra(EXTRA_DEVICE_SPP_ADDRESS, sppAddress);
+            intent.putExtra(EXTRA_DEVICE_LE_ADDRESS, temp.get( sppAddress ) );
             intent.putExtra(EXTRA_IS_BLUETOOTH_LE, is_le_scan);
 
             // Set result and finish this Activity

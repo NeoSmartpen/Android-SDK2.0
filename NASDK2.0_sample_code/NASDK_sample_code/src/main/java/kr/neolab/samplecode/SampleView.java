@@ -194,9 +194,14 @@ public class SampleView extends View
 			{
 				try
 				{
+					// 입력한 stroke 중에 특정 symbol 에 들어가있는 stroke 구하기
 					Stroke[] inStr = MetadataCtrl.getInstance().getInsideStrokes( symbol, strokes.toArray(new Stroke[strokes.size()]) );
+
+					// stroke 으로 이미지 만들기
+					// paper scale 은 본 샘플에서는 기기 화면 크기에 따라 변동
 					Bitmap bitmap = StrokeUtil.StrokeToImage( inStr, paper_scale );
 
+					// 이미지가 지정된 위치에 "symbol 이름.jpg" 로 저장됨
 					String filename = symbol.name + ".jpg";
 					File file = new File( Const.SAMPLE_FOLDER_PATH, filename );
 

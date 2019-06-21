@@ -1305,7 +1305,7 @@ public class BTAdt implements IPenAdt
 					mmOutStream.close();
 					mmSocket.close();
 				}
-				catch ( IOException e )
+				catch ( Exception e )
 				{
 					// TODO Auto-generated catch block
 					NLog.e( "[BTAdt/ConnectedThread] socket closing fail at unbind time.", e );

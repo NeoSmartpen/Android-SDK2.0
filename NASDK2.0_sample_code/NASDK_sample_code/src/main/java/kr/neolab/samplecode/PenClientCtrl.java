@@ -664,6 +664,9 @@ public class PenClientCtrl implements IPenMsgListener
 				catch ( JSONException e )
 				{
 					e.printStackTrace();
+				} catch ( ProtocolNotSupportedException e )
+				{
+					e.printStackTrace();
 				}
 
 				break;

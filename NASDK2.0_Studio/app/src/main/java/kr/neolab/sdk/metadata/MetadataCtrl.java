@@ -1090,7 +1090,7 @@ public class MetadataCtrl implements IMetadataCtrl
             if ( pageId == e.pageId )
             {
 
-                if(e.points != null && e.points.length() > 0)//Custom
+                if(e.points != null && e.points.length() > 0) // custom
                 {
                     if(inSideCustomshape(e, x, y))
                         result.add( e );
@@ -1836,7 +1836,7 @@ public class MetadataCtrl implements IMetadataCtrl
                                 float y = Float.parseFloat( parser.getAttributeValue( nameSpace, "y" ) ) * PIXEL_TO_DOT_SCALE;
                                 float width = Float.parseFloat( parser.getAttributeValue( nameSpace, "width" ) ) * PIXEL_TO_DOT_SCALE;
                                 float height = Float.parseFloat( parser.getAttributeValue( nameSpace, "height" ) ) * PIXEL_TO_DOT_SCALE;
-                                String type =  parser.getAttributeValue( nameSpace, "height" );
+                                String type = parser.getAttributeValue( nameSpace, "type" );
 
 								symbol = new Symbol( noteId, pageId, "", "", "", x, y, x + width, y + height, type );
 							}

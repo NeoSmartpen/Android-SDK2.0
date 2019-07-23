@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import kr.neolab.samplecode.Const;
 import kr.neolab.samplecode.PenClientCtrl;
 import kr.neolab.sdk.ink.structure.Stroke;
+import kr.neolab.sdk.metadata.structure.Symbol;
 import kr.neolab.sdk.pen.offline.OfflineFileParser;
 import kr.neolab.sdk.pen.penmsg.IOfflineDataListener;
 import kr.neolab.sdk.pen.penmsg.PenMsgType;
@@ -116,7 +117,7 @@ public class OfflineDataTest
     IOfflineDataListener listener = new IOfflineDataListener()
     {
         @Override
-        public void onReceiveOfflineStrokes ( String penAddress, Stroke[] strokes, int sectionId, int ownerId, int noteId )
+        public void onReceiveOfflineStrokes ( String penAddress, Stroke[] strokes, int sectionId, int ownerId, int noteId, Symbol[] symbols )
         {
             if ( strokes != null )
             {

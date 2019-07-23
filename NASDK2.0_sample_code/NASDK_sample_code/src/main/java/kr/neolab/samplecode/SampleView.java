@@ -10,8 +10,11 @@ import android.graphics.RectF;
 import android.view.SurfaceHolder;
 import android.view.View;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -218,6 +221,23 @@ public class SampleView extends View
 		} );
 
 
+	}
+
+	public void makeNeoInkFile( String captureDevice )
+	{
+		String neoInk = StrokeUtil.StrokeToNeoInk( captureDevice, strokes.toArray(new Stroke[strokes.size()]) );
+		Stroke stroke = strokes.get( 0 );
+		try {
+			Writer output = null;
+			String filename = stroke.sectionId + "_" + stroke.ownerId + "_" + stroke.noteId + "_" + stroke.pageId+".json";
+			File file = new File( Const.SAMPLE_FOLDER_PATH, filename );
+			output = new BufferedWriter( new FileWriter( file));
+			output.write(neoInk);
+			output.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public class SampleThread extends Thread

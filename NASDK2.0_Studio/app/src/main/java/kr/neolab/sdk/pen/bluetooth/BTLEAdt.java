@@ -19,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.PipedInputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Timer;
@@ -243,10 +244,12 @@ public class BTLEAdt implements IPenAdt
         return this.metadataListener;
     }
 
+    @Override
     public synchronized void connect(String address)  throws BLENotSupportedException
     {
         throw new BLENotSupportedException( "isAvailableDevice( String mac ) is supported from Bluetooth LE !!!" );
     }
+
 
     /**
      * Connects to the GATT server hosted on the Bluetooth LE device.
@@ -871,16 +874,40 @@ public class BTLEAdt implements IPenAdt
     {
         if ( !isConnected() ) return;
 
-        mConnectionThread.getPacketProcessor().reqOfflineData( sectionId, ownerId, noteId );
+        if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )
+            ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqOfflineData( sectionId, ownerId, noteId, true );
+        else
+            mConnectionThread.getPacketProcessor().reqOfflineData( sectionId, ownerId, noteId );
+    }
+
+    @Override
+    public void reqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished) throws ProtocolNotSupportedException
+    {
+        if ( !isConnected() ) return;
+
+        if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )
+            ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqOfflineData( sectionId, ownerId, noteId, deleteOnFinished );
+        else
+        {
+            NLog.e( "reqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished )is supported from protocol 2.0 !!!" );
+            throw new ProtocolNotSupportedException( "reqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished )is supported from protocol 2.0 !!!" );
+        }
+
     }
 
     @Override
     public void reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds ) throws ProtocolNotSupportedException
     {
+        reqOfflineData( sectionId, ownerId, noteId, true, pageIds );
+    }
+
+    @Override
+    public void reqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds ) throws ProtocolNotSupportedException
+    {
         if ( !isConnected() ) return;
 
         if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )
-            ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqOfflineData( sectionId, ownerId, noteId, pageIds );
+            ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqOfflineData( sectionId, ownerId, noteId, deleteOnFinished, pageIds );
         else
         {
             NLog.e( "reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds )is supported from protocol 2.0 !!!" );
@@ -1093,7 +1120,7 @@ public class BTLEAdt implements IPenAdt
 
     private void onLostConnection ()
     {
-        NLog.d( "[BTAdt/ConnectThread] onLostConnection mIsRegularDisconnect=" + mIsRegularDisconnect );
+        NLog.d( "[BTLEAdt/ConnectThread] onLostConnection mIsRegularDisconnect=" + mIsRegularDisconnect );
 	    JSONObject job = new JSONObject();
         if ( mIsRegularDisconnect )
         {
@@ -1224,7 +1251,7 @@ public class BTLEAdt implements IPenAdt
 
         public void run ()
         {
-            NLog.d( "[BTAdt/ConnectedThread] STARTED" );
+            NLog.d( "[BTLEAdt/ConnectedThread] STARTED" );
             setName( "ConnectionThread" );
 
             if ( this.isRunning )
@@ -1241,7 +1268,7 @@ public class BTLEAdt implements IPenAdt
         {
             while ( this.isRunning )
             {
-                NLog.d( "[BTAdt/ConnectedThread]  read" );
+                NLog.d( "[BTLEAdt/ConnectedThread]  read" );
                 synchronized ( readQueue )
                 {
                     try
@@ -1282,7 +1309,7 @@ public class BTLEAdt implements IPenAdt
          */
         public void stopRunning ()
         {
-            NLog.d( "[BTAdt/ConnectedThread] stopRunning()" );
+            NLog.d( "[BTLEAdt/ConnectedThread] stopRunning()" );
 
 	        if (mWriteCharacteristicThread != null)
 	        {
@@ -1577,7 +1604,7 @@ public class BTLEAdt implements IPenAdt
                         pmsg.sppAddress = penAddress;
                     if ( pmsg.penMsgType == PenMsgType.PEN_DISCONNECTED || pmsg.penMsgType == PenMsgType.PEN_CONNECTION_FAILURE )
                     {
-                        NLog.d( "[BTAdt/mHandler] PenMsgType.PEN_DISCONNECTED or PenMsgType.PEN_CONNECTION_FAILURE" );
+                        NLog.d( "[BTLEAdt/mHandler] PenMsgType.PEN_DISCONNECTED or PenMsgType.PEN_CONNECTION_FAILURE" );
                         if(listener != null)
                             listener.onReceiveMessage( pmsg.sppAddress, pmsg );
                         penAddress = null;
@@ -1594,7 +1621,26 @@ public class BTLEAdt implements IPenAdt
                 case QUEUE_OFFLINE:
                 {
                     OfflineByteData offlineByteData = (OfflineByteData) msg.obj;
-                    offlineDataListener.onReceiveOfflineStrokes( penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId );
+
+                    MetadataCtrl metadataCtrl = MetadataCtrl.getInstance();
+                    ArrayList<Symbol> resultSymbol = new ArrayList<>();
+                    if( metadataCtrl != null )
+                    {
+                        for (  Stroke stroke : offlineByteData.strokes )
+                        {
+                            Symbol[] symbols = metadataCtrl.findApplicableSymbols( stroke );
+
+                            if( symbols != null && symbols.length > 0 )
+                            {
+                                for( Symbol symbol : symbols )
+                                {
+                                    if( !resultSymbol.contains( symbol ) )
+                                        resultSymbol.add( symbol );
+                                }
+                            }
+                        }
+                    }
+                    offlineDataListener.onReceiveOfflineStrokes( penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]) );
                 }
                 break;
 
@@ -1614,7 +1660,26 @@ public class BTLEAdt implements IPenAdt
             }
             else
             {
-                offlineDataListener.onReceiveOfflineStrokes( penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId );
+                MetadataCtrl metadataCtrl = MetadataCtrl.getInstance();
+                ArrayList<Symbol> resultSymbol = new ArrayList<>();
+                if( metadataCtrl != null )
+                {
+                    for (  Stroke stroke : offlineByteData.strokes )
+                    {
+                        Symbol[] symbols = metadataCtrl.findApplicableSymbols( stroke );
+
+                        if( symbols != null && symbols.length > 0 )
+                        {
+                            for( Symbol symbol : symbols )
+                            {
+                                if( !resultSymbol.contains( symbol ) )
+                                    resultSymbol.add( symbol );
+                            }
+                        }
+                    }
+                }
+
+                offlineDataListener.onReceiveOfflineStrokes( penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]) );
             }
         }
     }
@@ -1913,5 +1978,11 @@ public class BTLEAdt implements IPenAdt
         }
 
     }
+
+    @Override
+    public void setPipedInputStream( PipedInputStream pipedInputStream) {
+        return;
+    }
+
 
 }

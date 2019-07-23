@@ -72,6 +72,8 @@ color = Color.BLACK;
     public int successImgCount = -1;
     public int sendImgCount = -1;
 
+    public String macAddress = null;
+
     private Dot ()
     {
 
@@ -106,6 +108,8 @@ color = Color.BLACK;
         this.processImgCount = dot.processImgCount;
         this.successImgCount = dot.successImgCount;
         this.sendImgCount = dot.sendImgCount;
+        if(dot.macAddress != null)
+            this.macAddress = dot.macAddress;
     }
 
     /**
@@ -295,6 +299,8 @@ color = Color.BLACK;
         parcel.writeInt( processImgCount );
         parcel.writeInt( successImgCount );
         parcel.writeInt( sendImgCount );
+        parcel.writeString( macAddress );
+
     }
 
     /**
@@ -329,6 +335,7 @@ color = Color.BLACK;
             oDot.processImgCount = source.readInt();
             oDot.successImgCount = source.readInt();
             oDot.sendImgCount = source.readInt();
+            oDot.macAddress = source.readString();
 
             return oDot;
         }

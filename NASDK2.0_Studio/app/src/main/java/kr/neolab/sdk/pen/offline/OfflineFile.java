@@ -104,7 +104,7 @@ public class OfflineFile
 
 		try
 		{
-			tempFile = File.createTempFile( "_offline", ".tmp", path );
+			tempFile = File.createTempFile( "_offline_"+penAddress, ".tmp", path );
 			
 			buffer = new BufferedOutputStream( new FileOutputStream( tempFile ) );
 		}

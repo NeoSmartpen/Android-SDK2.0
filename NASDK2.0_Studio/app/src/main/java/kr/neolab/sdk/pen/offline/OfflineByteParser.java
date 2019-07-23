@@ -89,7 +89,10 @@ public class OfflineByteParser implements IFilterListener
         NLog.i( "[OfflineByteParser] process parseHeader" );
         this.parseHeader();
 
-            // Merge files
+        if(sizeBeforeCompress == 0 && sizeAfterCompress == 0)
+            return strokes;
+
+        // Merge files
         NLog.i( "[OfflineByteParser] process loadData" );
         this.loadData();
 
@@ -114,8 +117,8 @@ public class OfflineByteParser implements IFilterListener
 
     private void loadData() throws Exception
     {
-        try
-        {
+//        try
+//        {
             NLog.d( "[OfflineByteParser] isCompressed="+isCompressed +";sizeAfterCompress="+sizeAfterCompress+"sizeBeforeCompress="+sizeBeforeCompress);
             //buffer is missing SOF / EOF / CMD / LENGTH.
             if(isCompressed)
@@ -128,11 +131,11 @@ public class OfflineByteParser implements IFilterListener
             {
                 data = Arrays.copyOfRange(buffer, 21, 21+ sizeBeforeCompress-1);
             }
-        }
-        catch ( Exception e )
-        {
-            e.printStackTrace();
-        }
+//        }
+//        catch ( Exception e )
+//        {
+//            e.printStackTrace();
+//        }
     }
 
     private void parseHeader() throws Exception
@@ -151,7 +154,7 @@ public class OfflineByteParser implements IFilterListener
 
     private void parseBody() throws Exception
     {
-        NLog.d( "[OfflineByteParser] parse file" );
+        NLog.d( "[OfflineByteParser] parse file strokeCount="+strokeCount );
         long prevTimestamp = 0;
 
         int lhDotTotal = 0;
@@ -160,6 +163,7 @@ public class OfflineByteParser implements IFilterListener
         //The dot of the current line
         ArrayList<Fdot> tempDots = new ArrayList<Fdot>();
         int strokeIndex = 0;
+        int checksumFailCount = 0;
         for(int i = 0; i < strokeCount; i++)
         {
             int pageId =  ByteConverter.byteArrayToInt( Packet.copyOfRange( data, 0 + strokeIndex, 4 ) );
@@ -262,17 +266,25 @@ public class OfflineByteParser implements IFilterListener
                         {
                             filterDot( tempDots.get( k ) );
                         }
+                        NLog.d( "[OfflineByteParser] lhCheckSum Success Stroke cs : " + Integer.toHexString( (int) (lhCheckSum & 0xFF) ) + ", calc : " + Integer.toHexString( (int) (dotCalcCs & 0xFF) ) );
                     }
                     else
                     {
-                        NLog.e( "[OfflineByteParser] Stroke cs : " + Integer.toHexString( (int) (lhCheckSum & 0xFF) ) + ", calc : " + Integer.toHexString( (int) (dotCalcCs & 0xFF) ) );
+
+                        NLog.e( "[OfflineByteParser] lhCheckSum Fail Stroke cs : " + Integer.toHexString( (int) (lhCheckSum & 0xFF) ) + ", calc : " + Integer.toHexString( (int) (dotCalcCs & 0xFF) ) );
+                        checksumFailCount++;
                     }
 
                     tempDots = new ArrayList<Fdot>();
                 }
             }
             strokeIndex += dotIndex;
+
         }
+        if(checksumFailCount > 3)
+            throw new CheckSumException( "lhCheckSum Fail Count="+ checksumFailCount);
+
+
     }
 
     private void filterDot( Fdot mdot )

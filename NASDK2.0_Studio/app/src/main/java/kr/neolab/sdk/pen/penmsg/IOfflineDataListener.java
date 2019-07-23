@@ -1,6 +1,7 @@
 package kr.neolab.sdk.pen.penmsg;
 
 import kr.neolab.sdk.ink.structure.Stroke;
+import kr.neolab.sdk.metadata.structure.Symbol;
 
 /**
  * Created by LMS on 2016-02-16.
@@ -15,7 +16,8 @@ public interface IOfflineDataListener
      * @param sectionId  the section id
      * @param ownerId    the owner id
      * @param noteId     the note id
+     * @param symbols   the detected symbols
      */
-    public void onReceiveOfflineStrokes(String penAddress, Stroke[] strokes,int sectionId, int ownerId, int noteId);
+    public void onReceiveOfflineStrokes(String penAddress, Stroke[] strokes,int sectionId, int ownerId, int noteId, Symbol[] symbols);
 
 }

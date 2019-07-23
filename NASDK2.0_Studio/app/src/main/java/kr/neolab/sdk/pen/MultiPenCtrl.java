@@ -1,6 +1,7 @@
 package kr.neolab.sdk.pen;
 
 import android.content.Context;
+import android.content.IntentFilter;
 import android.os.Build;
 
 import java.io.File;
@@ -75,7 +76,28 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 //        BTAdt.getInstance().setContext(context);
     }
 
-    @Override
+	public void registerBroadcastBTDuplicate() {
+		try {
+			IntentFilter filter = new IntentFilter();
+			filter.addAction(BTDuplicateRemoveBroadcasterReceiver.ACTION_BT_REQ_CONNECT);
+			filter.addAction(BTDuplicateRemoveBroadcasterReceiver.ACTION_BT_RESPONSE_CONNECTED);
+			mContext.registerReceiver(mReceiver, filter);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void unregisterBroadcastBTDuplicate() {
+		try {
+			mContext.unregisterReceiver(mReceiver);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	@Override
     public void setListener(IPenMsgListener listener) {
 		this.listener = listener;
 		for(IPenAdt pen : mConnectedCollection.values())
@@ -407,11 +429,25 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 	}
 
 	@Override
-	public void reqOfflineData(String address, int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException
+	public void reqOfflineData(String address, int sectionId, int ownerId, int noteId, boolean deleteOnFinished) throws ProtocolNotSupportedException
 	{
 		IPenAdt mPenAdt = (mConnectedCollection.get(address));
 		if(mPenAdt != null)
-			mPenAdt.reqOfflineData( sectionId, ownerId, noteId ,pageIds);
+			mPenAdt.reqOfflineData( sectionId, ownerId, noteId, deleteOnFinished );
+	}
+
+	@Override
+	public void reqOfflineData(String address, int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException
+	{
+		reqOfflineData( address, sectionId, ownerId, noteId, true, pageIds);
+	}
+
+	@Override
+	public void reqOfflineData(String address, int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds) throws ProtocolNotSupportedException
+	{
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			mPenAdt.reqOfflineData( sectionId, ownerId, noteId, deleteOnFinished, pageIds);
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package kr.neolab.sdk.pen;
 import android.content.Context;
 
 import java.io.File;
+import java.io.PipedInputStream;
 import java.util.ArrayList;
 
 import kr.neolab.sdk.metadata.IMetadataListener;
@@ -93,7 +94,7 @@ public interface IPenAdt
     public IOfflineDataListener getOffLineDataListener();
 
     /**
-     * get callbac
+     * get listener of metadata processing
      * supported from Protocol 2.0
      *
      * @return IMetadataListener metadata listener
@@ -294,6 +295,18 @@ public interface IPenAdt
 
     /**
      * The pen is stored in an offline transfer of data requested.
+     * (Please note that this function is not synchronized. If multiple threads concurrently try to run this function, explicit synchronization must be done externally.)
+     *
+     * @param sectionId section id of note
+     * @param ownerId   owner id of note
+     * @param noteId    of note
+     * @param deleteOnFinished  delete offline data when transmission is finished
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void reqOfflineData(int sectionId, int ownerId, int noteId, boolean deleteOnFinished) throws ProtocolNotSupportedException;
+
+    /**
+     * The pen is stored in an offline transfer of data requested.
      * supported from Protocol 2.0
      *
      * @param sectionId the section id
@@ -303,6 +316,19 @@ public interface IPenAdt
      * @throws ProtocolNotSupportedException the protocol not supported exception
      */
     public void reqOfflineData(int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException;
+
+    /**
+     * The pen is stored in an offline transfer of data requested.
+     * supported from Protocol 2.0
+     *
+     * @param sectionId the section id
+     * @param ownerId   the owner id
+     * @param noteId    the note id
+     * @param deleteOnFinished  delete offline data when transmission is finished
+     * @param pageIds   the page ids
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void reqOfflineData(int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds) throws ProtocolNotSupportedException;
 
     /**
      * The offline data is stored in the pen to request information.
@@ -575,5 +601,12 @@ public interface IPenAdt
      * Req set current time.
      */
     public void reqSetCurrentTime ();
+
+
+    /**
+     * Set PipedInputStream
+     * @param pipedInputStream
+     */
+    public void setPipedInputStream(PipedInputStream pipedInputStream);
 
 }

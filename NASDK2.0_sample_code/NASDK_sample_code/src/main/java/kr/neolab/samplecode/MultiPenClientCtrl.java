@@ -272,7 +272,40 @@ public class MultiPenClientCtrl implements IPenMsgListener
 		iPenCtrl.reqOfflineDataList(macAddress);
 	}
 
-    /**
+	/**
+	 * Req offline data list.
+	 * @param macAddress mac address
+	 * @param sectionId section Id
+	 * @param ownerId owner Id
+	 */
+	public void reqOfflineDataList(String macAddress, int sectionId, int ownerId) throws ProtocolNotSupportedException
+	{
+		iPenCtrl.reqOfflineDataList(macAddress, sectionId, ownerId);
+	}
+
+	/**
+	 * Req offline data page list.
+	 * @param macAddress mac address
+	 * @param sectionId section Id
+	 * @param ownerId owner Id
+	 * @param noteId	note ID
+	 */
+	public void reqOfflineDataPageList(String macAddress, int sectionId, int ownerId, int noteId) throws ProtocolNotSupportedException
+	{
+		iPenCtrl.reqOfflineDataPageList(macAddress, sectionId, ownerId, noteId);
+	}
+
+	public void removeOfflineData(String macAddress, int sectionId, int ownerId) throws ProtocolNotSupportedException
+	{
+		iPenCtrl.removeOfflineData( macAddress, sectionId, ownerId );
+	}
+
+	public void removeOfflineData(String macAddress, int sectionId, int ownerId, int[] noteIds) throws ProtocolNotSupportedException
+	{
+		iPenCtrl.removeOfflineData( macAddress, sectionId, ownerId, noteIds );
+	}
+
+	/**
      * Req pen status.
      */
     public void reqPenStatus(String macAddress)
@@ -415,11 +448,21 @@ public class MultiPenClientCtrl implements IPenMsgListener
 				iPenCtrl.reqAddUsingNoteAll(macAddress);
 
 				// to request offline data list
+				// 오프라인 데이터 전체 요청
 				iPenCtrl.reqOfflineDataList(macAddress);
-//				iPenCtrl.reqOfflineDataPageList(1,1,1);
 
-				//iPenCtrl.reqOfflineData( 4, 301, 0 );
-//				iPenCtrl.reqOfflineData( USING_SECTION_ID, USING_OWNER_ID, 301 );
+//				// 오프라인 데이터 노트단위 요청
+//				iPenCtrl.reqOfflineData( macAddress, USING_SECTION_ID,USING_OWNER_ID,301, false );
+//
+//				// 오프라인 데이터 페이지 단위 요청
+//				int[] pageIds = {0, 1, 5};
+//				try
+//				{
+//					iPenCtrl.reqOfflineData( macAddress, USING_SECTION_ID, USING_OWNER_ID, 301, false, pageIds );
+//				} catch ( ProtocolNotSupportedException e )
+//				{
+//					e.printStackTrace();
+//				}
 
 				break;
 
@@ -595,11 +638,58 @@ public class MultiPenClientCtrl implements IPenMsgListener
 						int ownerId = jobj.getInt( Const.JsonTag.INT_OWNER_ID );
 						int noteId = jobj.getInt( Const.JsonTag.INT_NOTE_ID );
 						NLog.d( "offline(" + ( i + 1 ) + ") note => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId );
-						if(i == 0)iPenCtrl.reqOfflineData(macAddress, sectionId,  ownerId, noteId );
+
+						// 오프라인 데이터 리스트 노트북 단위로 받기
+						// deleteOnFinished 를 false 로 설정하였다면, 오프라인데이터를 받은 후 직접 삭제해주어야 한다.
+						iPenCtrl.reqOfflineData(macAddress, sectionId,  ownerId, noteId, false );
 					}
 
 				}
 				catch ( JSONException e )
+				{
+					e.printStackTrace();
+				}
+
+				break;
+
+			case PenMsgType.OFFLINE_DATA_PAGE_LIST:
+
+				try
+				{
+					JSONArray list = new JSONArray( penMsg.getContent() );
+
+					int prvSec = -1;
+					int prvOwn = -1;
+					int prvNote = -1;
+					ArrayList<Integer> pageIds = new ArrayList<>( );
+
+					for ( int i = 0; i < list.length(); i++ )
+					{
+						JSONObject jobj = list.getJSONObject( i );
+
+						int sectionId = jobj.getInt( Const.JsonTag.INT_SECTION_ID );
+						int ownerId = jobj.getInt( Const.JsonTag.INT_OWNER_ID );
+						int noteId = jobj.getInt( Const.JsonTag.INT_NOTE_ID );
+						int pageId = jobj.getInt( Const.JsonTag.INT_PAGE_ID );
+						NLog.d( "offline(" + ( i + 1 ) + ") note => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId + ", pageId : " + pageId );
+
+						pageIds.add( pageId );
+
+						// 오프라인 데이터 리스트 페이지 단위로 받기
+						// deleteOnFinished 를 false 로 설정하였다면, 오프라인데이터를 받은 후 직접 삭제해주어야 한다.
+						if( prvSec != sectionId || prvOwn != ownerId || prvNote != noteId )
+						{
+							iPenCtrl.reqOfflineData(macAddress, sectionId, ownerId, noteId, false, Util.convertIntegers( pageIds ) );
+							pageIds.clear();
+						}
+
+					}
+
+				}
+				catch ( JSONException e )
+				{
+					e.printStackTrace();
+				} catch ( ProtocolNotSupportedException e )
 				{
 					e.printStackTrace();
 				}

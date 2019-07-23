@@ -29,7 +29,6 @@ public class ForceCalibrateCommand extends Command
     
     public void run() 
     {
-        // TODO Auto-generated method stub
         this.write();
         super.isAlive = false;
     }

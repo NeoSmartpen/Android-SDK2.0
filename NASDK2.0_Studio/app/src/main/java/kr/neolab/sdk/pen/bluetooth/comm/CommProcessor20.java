@@ -1828,7 +1828,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				// " / timeAdd : " + TIME + " / x : " + X + " / y : " + Y +
 				// " / fx : " + FLOAT_X + " / fy : " + FLOAT_Y);
 
-				NLog.d( "[CommProcessor20] received RES_EventDotData4(0x6C) eventCount = "+eventCount+",sectionId = "+sectionId+",ownerId="+ownerId+",noteId=" + noteId+",X="+X+",Y="+Y+",FLOAT_X="+FLOAT_X+",FLOAT_Y="+FLOAT_Y );
+				NLog.d( "[CommProcessor20] received RES_EventDotData4(0x6C) eventCount = "+eventCount+",sectionId = "+sectionId+",ownerId="+ownerId+",noteId=" + noteId+",X="+X+",Y="+Y+",FLOAT_X="+FLOAT_X+",FLOAT_Y"+FLOAT_Y+",Force="+FORCE );
 				if ( !isStartWithDown )
 				{
 					NLog.e( "[CommProcessor20] this stroke start with middle dot." +
@@ -2137,7 +2137,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 						for ( int i = 0; i < setCnt; i++ )
 						{
 							int pageId = pack.getDataRangeInt( 10 + i * 4 , 4 );
-							NLog.d( "[CommProcessor20] RES_OfflineNoteList => sectionId : " + oSectionId + ", ownerId : " + oOwnerId + ", noteId : " + noteId );
+							NLog.d( "[CommProcessor20] RES_OfflineNoteList => sectionId : " + oSectionId + ", ownerId : " + oOwnerId + ", noteId : " + noteId + ", pageId : " + pageId );
 							offlinePageInfos.put( new JSONObject().put( JsonTag.INT_OWNER_ID, oOwnerId ).put( JsonTag.INT_SECTION_ID, oSectionId ).put( JsonTag.INT_NOTE_ID, noteId ).put( JsonTag.INT_PAGE_ID, pageId ) );
 						}
 						btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_PAGE_LIST, offlinePageInfos ) );
@@ -2214,7 +2214,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					{
 						NLog.e( "[CommProcessor20] deCompress parse Error !!!" );
 						e.printStackTrace();
-						write( ProtocolParser20.buildOfflineChunkResponse( 1, packetId, position ) );
+//						write( ProtocolParser20.buildOfflineChunkResponse( 1, packetId, position ) );
 						mHandler.postDelayed( mChkOfflineFailRunnable, OFFLINE_SEND_FAIL_TIME );
 						return;
 					}
@@ -2847,7 +2847,12 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 	public void reqOfflineData( int sectionId, int ownerId, int noteId )
 	{
-		write( ProtocolParser20.buildReqOfflineData( sectionId, ownerId, noteId ) );
+		reqOfflineData( sectionId, ownerId, noteId, true );
+	}
+
+	public void reqOfflineData( int sectionId, int ownerId, int noteId, boolean deleteOnFinished )
+	{
+		write( ProtocolParser20.buildReqOfflineData( sectionId, ownerId, noteId, deleteOnFinished ) );
 	}
 
 	/**
@@ -2860,7 +2865,21 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 */
 	public void reqOfflineData( int sectionId, int ownerId, int noteId, int[] pageIds )
 	{
-		write( ProtocolParser20.buildReqOfflineData( sectionId, ownerId, noteId, pageIds ) );
+		reqOfflineData( sectionId, ownerId, noteId, true, pageIds );
+	}
+
+	/**
+	 * Req offline data.
+	 *
+	 * @param sectionId the section id
+	 * @param ownerId   the owner id
+	 * @param noteId    the note id
+	 * @param deleteOnFinished	delete offline data when transmission is finished
+	 * @param pageIds   the page ids
+	 */
+	public void reqOfflineData( int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds )
+	{
+		write( ProtocolParser20.buildReqOfflineData( sectionId, ownerId, noteId, deleteOnFinished, pageIds ) );
 	}
 
 
@@ -3274,6 +3293,8 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 	private boolean isF121MG(String macAddress)
 	{
+		if(macAddress == null)
+			return false;
 		final String MG_F121_MAC_START = "9C:7B:D2:22:00:00";
 		final String MG_F121_MAC_END = "9C:7B:D2:22:18:06";
 		String start = MG_F121_MAC_START.replace( ":","" );

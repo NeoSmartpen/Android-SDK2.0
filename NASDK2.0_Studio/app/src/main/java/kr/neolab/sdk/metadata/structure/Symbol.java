@@ -78,6 +78,32 @@ param;
 	 * @param right  the right
 	 * @param bottom the bottom
 	 */
+	public Symbol(int noteId, int pageId, String name, String action, String param, float left, float top, float right, float bottom)
+	{
+		super(left, top, right, bottom);
+
+		this.noteId = noteId;
+		this.pageId = pageId;
+		this.name   = name;
+		this.action = action;
+		this.param  = param;
+		this.type = TYPE_RECTANGLE;
+	}
+
+	/**
+	 * Instantiates a new Symbol.
+	 *
+	 * @param noteId the note id
+	 * @param pageId the page id
+	 * @param name   the name
+	 * @param action the action
+	 * @param param  the param
+	 * @param left   the left
+	 * @param top    the top
+	 * @param right  the right
+	 * @param bottom the bottom
+	 * @param type the symbol type
+	 */
 	public Symbol(int noteId, int pageId, String name, String action, String param, float left, float top, float right, float bottom, String type)
 	{
 		super(left, top, right, bottom);

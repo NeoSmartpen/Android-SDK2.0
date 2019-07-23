@@ -34,11 +34,13 @@ import java.util.ArrayList;
 
 import kr.neolab.samplecode.Const.Broadcast;
 import kr.neolab.samplecode.Const.JsonTag;
+import kr.neolab.samplecode.provider.DbOpenHelper;
 import kr.neolab.sdk.ink.structure.Dot;
 import kr.neolab.sdk.ink.structure.Stroke;
 import kr.neolab.sdk.metadata.MetadataCtrl;
 import kr.neolab.sdk.metadata.structure.Symbol;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
+import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.offline.OfflineFileParser;
 import kr.neolab.sdk.pen.penmsg.PenMsgType;
 import kr.neolab.sdk.util.NLog;
@@ -420,6 +422,58 @@ public class MainActivity extends Activity
 				}
 				return true;
 
+			case R.id.action_offline_list_page:
+			    // 펜에있는 오프라인 데이터 리스트를 페이지단위로 받아온다.
+
+				final int sectionId = 0, ownerId = 0, noteId = 0;
+				//TODO Put section, owner , note
+
+				if(connectionMode == 0)
+				{
+					if ( penClientCtrl.isAuthorized() )
+					{
+						// to process saved offline data
+
+						try
+						{
+							penClientCtrl.reqOfflineDataPageList(sectionId, ownerId, noteId);
+						} catch ( ProtocolNotSupportedException e )
+						{
+							e.printStackTrace();
+						}
+
+					}
+				}
+				else
+				{
+					connectedList = multiPenClientCtrl.getConnectDevice();
+					if(connectedList.size() > 0)
+					{
+						AlertDialog.Builder builder;
+						String[] addresses = connectedList.toArray( new String[connectedList.size()]);
+						builder = new AlertDialog.Builder( this );
+						builder.setSingleChoiceItems( addresses, 0, new DialogInterface.OnClickListener()
+						{
+							@Override
+							public void onClick ( DialogInterface dialog, int which )
+							{
+								try
+								{
+									multiPenClientCtrl.reqOfflineDataPageList( connectedList.get( which ), sectionId, ownerId, noteId );
+								} catch ( ProtocolNotSupportedException e )
+								{
+									e.printStackTrace();
+								}
+
+								dialog.dismiss();
+							}
+						});
+						builder.create().show();
+					}
+				}
+
+				return true;
+
 			case R.id.action_upgrade:
 				if(connectionMode == 0)
 				{
@@ -530,6 +584,49 @@ public class MainActivity extends Activity
 					mSampleView.makeSymbolImage( symbols[0] );
 
 				return true;
+
+			case R.id.action_convert_neoink:
+				// 현재 페이지의 stroke 를 NeoInk format 으로 변환합니다.
+				// 변환된 파일은 json 형식으로 지정된 위치에 저장합니다.
+				if(connectionMode == 0)
+				{
+					String captureDevice = penClientCtrl.getDeviceName();
+					mSampleView.makeNeoInkFile( captureDevice );
+				}
+				else
+				{
+					connectedList = multiPenClientCtrl.getConnectDevice();
+					if(connectedList.size() > 0)
+					{
+						AlertDialog.Builder builder;
+						String[] addresses = connectedList.toArray( new String[connectedList.size()]);
+						builder = new AlertDialog.Builder( this );
+						builder.setSingleChoiceItems( addresses, 0, new DialogInterface.OnClickListener()
+						{
+							@Override
+							public void onClick ( DialogInterface dialog, int which )
+							{
+								String captureDevice = multiPenClientCtrl.getDeviceName( connectedList.get( which ) );
+								mSampleView.makeNeoInkFile( captureDevice );
+								dialog.dismiss();
+							}
+						});
+						builder.create().show();
+					}
+				}
+				return true;
+
+			case R.id.action_db_export:
+
+				// DB Export
+				Util.spliteExport( this );
+
+				return true;
+
+			case R.id.action_db_delete:
+
+				DbOpenHelper mDbOpenHelper = new DbOpenHelper( this);
+				mDbOpenHelper.deleteAllColumns();
 
 			default:
 				return super.onOptionsItemSelected( item );
@@ -814,15 +911,24 @@ public class MainActivity extends Activity
 			{
 				String penAddress = intent.getStringExtra( Broadcast.PEN_ADDRESS );
 				Parcelable[] array = intent.getParcelableArrayExtra( Broadcast.EXTRA_OFFLINE_STROKES );
+				int sectionId = intent.getIntExtra( Broadcast.EXTRA_SECTION_ID, -1 );
+				int ownerId = intent.getIntExtra( Broadcast.EXTRA_OWNER_ID , -1);
+				int noteId = intent.getIntExtra( Broadcast.EXTRA_BOOKCODE_ID , -1);
+
 				if(array != null)
 				{
 					Stroke[] strokes  = new Stroke[array.length];
-					//					ArrayList<Stroke> offList = new ArrayList<Stroke>();
 					for (int i = 0; i < array.length; i++) {
 						strokes[i] = ((Stroke) array[i]);
 					}
 					mSampleView.addStrokes(penAddress, strokes);
 				}
+
+				// DB에 저장 후, 오프라인 데이터를 삭제합니다.
+				// 오프라인 데이터 요청 시, deleteOnFinished 를 true 로 요청했었다면, 아래의 과정은 필요없습니다.
+				// (오프라인 데이터 요청은 PenClientCtrl, MutiPenClientCtrl 에서 확인할 수 있습니다)
+				if( sectionId != -1 && ownerId != -1 && noteId != -1)
+				deleteOfflineData( penAddress, sectionId, ownerId, noteId );
 			}
 			else if(Broadcast.ACTION_WRITE_PAGE_CHANGED.equals( action ))
 			{
@@ -838,6 +944,31 @@ public class MainActivity extends Activity
 			}
 		}
 	};
+
+	private void deleteOfflineData(String address, int section, int owner, int note)
+	{
+		int[] noteArray = {note};
+		if( connectionMode == 0)
+		{
+			try
+			{
+				penClientCtrl.removeOfflineData( section, owner, noteArray );
+			} catch ( ProtocolNotSupportedException e )
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				multiPenClientCtrl.removeOfflineData( address, section, owner, noteArray );
+			} catch ( ProtocolNotSupportedException e )
+			{
+				e.printStackTrace();
+			}
+		}
+	}
 
 	public String getExternalStoragePath()
 	{

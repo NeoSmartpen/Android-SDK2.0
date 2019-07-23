@@ -757,15 +757,21 @@ public class ProtocolParser20
      * @param sectionId the section id
      * @param ownerId   the owner id
      * @param noteId    the note id
+     * @param deleteOnFinished  delete offline data when transmission is finished
      * @return the byte [ ]
      */
-    public static byte[] buildReqOfflineData ( int sectionId, int ownerId, int noteId )
+    public static byte[] buildReqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished )
     {
         byte[] ownerByte = ByteConverter.intTobyte( ownerId );
 
         PacketBuilder sendbyte = new PacketBuilder( 14 );
         sendbyte.setCommand( CMD20.REQ_OfflineDataRequest );
-        sendbyte.write( (byte) 1 );
+
+        // isOffline data remove after transfer
+        // 0: not send req2
+        // 1: send req2(after res1), remove offline data
+        // 2: send req2(after res1), not remove offline data
+        sendbyte.write( (byte) (deleteOnFinished ? 1 : 2) );
 
         // isCompress  1:compress  0:uncompress
         sendbyte.write( (byte) 1 );
@@ -789,9 +795,10 @@ public class ProtocolParser20
      * @param ownerId   the owner id
      * @param noteId    the note id
      * @param pageIds   the page ids
+     * @param deleteOnFinished  delete offline data when transmission is finished
      * @return the byte [ ]
      */
-    public static byte[] buildReqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds )
+    public static byte[] buildReqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds )
     {
         byte[] ownerByte = ByteConverter.intTobyte( ownerId );
         int pageCount = 0;
@@ -802,7 +809,12 @@ public class ProtocolParser20
 
         PacketBuilder sendbyte = new PacketBuilder( 14 + pageCount * 4);
         sendbyte.setCommand( CMD20.REQ_OfflineDataRequest );
-        sendbyte.write( (byte) 1 );
+
+        // isOffline data remove after transfer
+        // 0: not send req2
+        // 1: send req2(after res1), remove offline data
+        // 2: send req2(after res1), not remove offline data
+        sendbyte.write( (byte) (deleteOnFinished ? 1 : 2) );
 
         // isCompress  1:compress  0:uncompress
         sendbyte.write( (byte) 1 );

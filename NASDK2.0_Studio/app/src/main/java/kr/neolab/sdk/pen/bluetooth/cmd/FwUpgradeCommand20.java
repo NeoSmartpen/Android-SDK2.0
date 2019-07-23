@@ -148,6 +148,11 @@ public class FwUpgradeCommand20 extends Command
 				count = 0;
 				try
 				{
+					if(info.status == CommProcessor20.FwPacketInfo.STATUS_END)
+					{
+						comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_SUCCESS ) );
+					}
+
 					int index = chunk.offsetToIndex( info.offset );
 					comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( index ), info.status , isCompress) );
 					if(info.status == CommProcessor20.FwPacketInfo.STATUS_ERROR)
@@ -175,11 +180,6 @@ public class FwUpgradeCommand20 extends Command
 					catch ( JSONException e )
 					{
 						e.printStackTrace();
-					}
-
-					if(info.status == CommProcessor20.FwPacketInfo.STATUS_END)
-					{
-						comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_SUCCESS ) );
 					}
 				}
 				catch ( Exception e )

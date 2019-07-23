@@ -51,8 +51,8 @@ public class AddUsingNoteCommand extends Command
         if(All)
             super.comp.write( ProtocolParser20.buildAddUsingAllNotes() );
         else if(noteList != null)
-            super.comp.write( ProtocolParser20.buildAddUsingNotes( noteList));
+            super.comp.write( ProtocolParser20.buildAddUsingNotes(noteList));
         else
-            super.comp.write( ProtocolParser20.buildAddUsingNotes( sectionId, ownerId) );
+            super.comp.write( ProtocolParser20.buildAddUsingNotes(sectionId, ownerId) );
     }
 }

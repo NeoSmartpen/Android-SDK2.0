@@ -14,11 +14,16 @@
     <string name="clearView">ClearView</string>
     <string name="upgrade">Upgrade Pen</string>
     <string name="viewDot">ViewDot</string>
-    <string name="offline">Show OfflineData</string>
+    <string name="offline">OfflineData(All)</string>
+    <string name="offline_page">OfflineData(Page)</string>
  	<string name="offline_list">OfflineData list</string>
  	<string name="pen_status">Pen Status</string>
  	<string name="pen_unpairing">Pen Unpairing</string>
     <string name="pen_profile">Pen Profile Test</string>
+    <string name="symbol_stroke">Symbol Stroke</string>
+    <string name="convert_neoink">Convert NeoInk</string>
+    <string name="db_export">DB Export</string>
+    <string name="db_delete">DB Delete</string>
 
 
     <string name="log">Log View</string>

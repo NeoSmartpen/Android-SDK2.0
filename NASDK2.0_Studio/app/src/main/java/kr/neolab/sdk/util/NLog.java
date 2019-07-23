@@ -14,11 +14,6 @@ public class NLog
 	private static final boolean W = true;
 
 	/**
-	 * The constant UseExternalLogger.
-	 */
-	public static boolean UseExternalLogger = false;
-
-	/**
 	 * D.
 	 *
 	 * @param text the text
@@ -27,10 +22,6 @@ public class NLog
 	{
 		if (D)
 		{
-			if ( UseExternalLogger ) 
-			{
-				//Microlog4android.debug(text);
-			}
 			Log.d(TAG, text);
 		}
 	}
@@ -45,10 +36,6 @@ public class NLog
 	{
 		if (D)
 		{
-			if ( UseExternalLogger ) 
-			{
-				//Microlog4android.debug( "["+tag+"]   " +text);
-			}
 			Log.d(TAG, text);
 		}
 	}
@@ -62,12 +49,7 @@ public class NLog
 	{
 		if (I)
 		{
-			if ( UseExternalLogger ) 
-			{
-				//Microlog4android.info(text);
-			}
 			Log.i(TAG, text);
-			
 		}
 	}
 
@@ -81,12 +63,7 @@ public class NLog
 	{
 		if (I)
 		{
-			if ( UseExternalLogger ) 
-			{
-				//Microlog4android.info( "["+tag+"]   " +text);
-			}
 			Log.i(TAG, text);
-			
 		}
 	}
 
@@ -99,12 +76,7 @@ public class NLog
 	{
 		if (W)
 		{
-			if ( UseExternalLogger ) 
-			{
-				//Microlog4android.info(text);
-			}
 			Log.w(TAG, text);
-			
 		}
 	}
 
@@ -118,12 +90,7 @@ public class NLog
 	{
 		if (W)
 		{
-			if ( UseExternalLogger ) 
-			{
-				//Microlog4android.info( "["+tag+"]   " +text);
-			}
 			Log.w(TAG, text);
-			
 		}
 	}
 
@@ -136,10 +103,6 @@ public class NLog
 	{
 		if (E)
 		{
-			if ( UseExternalLogger ) 
-			{
-				//Microlog4android.error(text);
-			}
 			Log.e(TAG, text);
 		}
 	}
@@ -154,12 +117,7 @@ public class NLog
 	{
 		if (E)
 		{
-			if ( UseExternalLogger ) 
-			{
-				//Microlog4android.error(text, e);
-			}
 			Log.e(TAG, text, e);
-			
 		}
 	}	
 }

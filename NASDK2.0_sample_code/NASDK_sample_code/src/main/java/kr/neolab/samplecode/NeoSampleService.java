@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import kr.neolab.samplecode.provider.DbOpenHelper;
 import kr.neolab.sdk.ink.structure.Dot;
 import kr.neolab.sdk.ink.structure.DotType;
 import kr.neolab.sdk.ink.structure.Stroke;
@@ -40,6 +41,8 @@ public class NeoSampleService extends Service{
 	private boolean ready = false;
 
 	IMetadataCtrl metadataCtrl;
+
+    private DbOpenHelper mDbOpenHelper;
 
     @Override
 	public void onCreate ()
@@ -73,6 +76,10 @@ public class NeoSampleService extends Service{
 		mBroadcastThread = new DotConsumerForBroadcastThread();
 		mBroadcastThread.setDaemon( true );
 		mBroadcastThread.start();
+
+        mDbOpenHelper = new DbOpenHelper( this);
+        mDbOpenHelper.open();
+        mDbOpenHelper.create();
 
 		NLog.d( "Service Initialize complete" );
 	}
@@ -143,9 +150,6 @@ public class NeoSampleService extends Service{
 		sendBroadcast( intent );
 	}
 
-
-
-
 	private void sendBroadcastIfPageChanged(int sectionId, int ownerId, int bookcodeId, int pageNumber){
 		if(curSectionId != sectionId || curOwnerId != ownerId || curBookcodeId != bookcodeId ){
 			curSectionId = sectionId;
@@ -180,10 +184,18 @@ public class NeoSampleService extends Service{
 	private IOfflineDataListener mOfflineDataListener = new IOfflineDataListener()
 	{
 		@Override
-		public void onReceiveOfflineStrokes ( String macAddress, Stroke[] strokes, int sectionId, int ownerId, int noteId )
+		public void onReceiveOfflineStrokes ( String macAddress, Stroke[] strokes, int sectionId, int ownerId, int noteId, Symbol[] symbols )
 		{
+
+			if( strokes == null || strokes.length <=0 )
+			{
+				NLog.e( "onReceiveOfflineStrokes strokes size =0!!");
+				return;
+			}
+
 			// Filtering 0 size dot
 			ArrayList<Stroke> newArrayList = new ArrayList<Stroke>();
+
 			for(Stroke s : strokes)
 			{
 				if(s.size() > 0 )
@@ -191,18 +203,26 @@ public class NeoSampleService extends Service{
 					NLog.d( "onReceiveOfflineStrokes s sectionId="+s.sectionId+" ownerId="+s.ownerId+" noteId="+s.noteId+" pageId="+s.pageId );
 					s.color = Color.BLACK;
 					newArrayList.add( s );
+
+					// DB에 stroke 를 저장한다.
+					// DB Insert
+					mDbOpenHelper.open();
+					mDbOpenHelper.insertStroke( s );
 				}
 				else
 				{
 					NLog.e( "onReceiveOfflineStrokes Dot size =0!!");
 				}
 			}
+
 			Intent i = new Intent( Const.Broadcast.ACTION_OFFLINE_STROKES );
 			i.putExtra( Const.Broadcast.PEN_ADDRESS, macAddress );
 			i.putExtra( Const.Broadcast.EXTRA_OFFLINE_STROKES, newArrayList.toArray(new Stroke[newArrayList.size()]) );
+			i.putExtra( Const.Broadcast.EXTRA_SECTION_ID, sectionId );
+			i.putExtra( Const.Broadcast.EXTRA_OWNER_ID, ownerId );
+			i.putExtra( Const.Broadcast.EXTRA_BOOKCODE_ID, noteId );
 			getApplicationContext().sendBroadcast( i );
 
-			// DB 에 insert
 
 		}
 	};
@@ -276,7 +296,7 @@ public class NeoSampleService extends Service{
 					dot = mDotQueueForDB.poll();
 
 					if(dot != null )
-						insert(dot); // offline data 전송중이면 Symbol 무시
+						insert(dot);
 				}
 				
 				try{
@@ -367,6 +387,11 @@ public class NeoSampleService extends Service{
 				eraserDotCount = 0;
 			else
 				dotCount = 0;
+
+			// DB에 stroke 를 저장한다.
+			// DB Insert
+            mDbOpenHelper.open();
+            mDbOpenHelper.insertStroke( s );
 		}
 
 	}

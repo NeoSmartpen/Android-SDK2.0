@@ -5,6 +5,7 @@ import android.content.IntentFilter;
 import android.os.Build;
 
 import java.io.File;
+import java.io.PipedInputStream;
 import java.util.ArrayList;
 
 import kr.neolab.sdk.broadcastreceiver.BTDuplicateRemoveBroadcasterReceiver;
@@ -12,6 +13,7 @@ import kr.neolab.sdk.metadata.IMetadataListener;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
 import kr.neolab.sdk.pen.bluetooth.BTAdt;
 import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
+import kr.neolab.sdk.pen.bluetooth.BTOfflineAdt;
 import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IOfflineDataListener;
@@ -34,6 +36,19 @@ public class PenCtrl implements IPenCtrl {
     private PenCtrl()
     {
         currentAdt = BTAdt.getInstance();
+    }
+
+    public boolean setOfflineToOnlineMode(boolean isOfflineToOnlineMode) {
+        if(isOfflineToOnlineMode)
+            currentAdt = BTOfflineAdt.getInstance();
+        else
+            currentAdt = BTAdt.getInstance();
+
+        return isOfflineToOnlineMode;
+    }
+
+    public void setPipedInputStream(PipedInputStream pipedInputStream) {
+        currentAdt.setPipedInputStream(pipedInputStream);
     }
 
     public boolean setLeMode(boolean isLeMode)
@@ -126,10 +141,10 @@ public class PenCtrl implements IPenCtrl {
 
     @Override
     public void setContext(Context context) {
-        // TODO Auto-generated method stub
         if( Build.VERSION.SDK_INT >= 21)
             BTLEAdt.getInstance().setContext( context );
         BTAdt.getInstance().setContext(context);
+        BTOfflineAdt.getInstance().setContext(context);
     }
 
     @Override
@@ -137,6 +152,7 @@ public class PenCtrl implements IPenCtrl {
         if( Build.VERSION.SDK_INT >= 21)
             BTLEAdt.getInstance().setListener( listener );
         BTAdt.getInstance().setListener(listener);
+        BTOfflineAdt.getInstance().setListener(listener);
     }
 
     @Override
@@ -144,6 +160,7 @@ public class PenCtrl implements IPenCtrl {
         if( Build.VERSION.SDK_INT >= 21)
             BTLEAdt.getInstance().setDotListener( listener );
         BTAdt.getInstance().setDotListener(listener);
+        BTOfflineAdt.getInstance().setDotListener(listener);
     }
 
     @Override
@@ -151,6 +168,7 @@ public class PenCtrl implements IPenCtrl {
         if( Build.VERSION.SDK_INT >= 21)
             BTLEAdt.getInstance().setOffLineDataListener( listener );
         BTAdt.getInstance().setOffLineDataListener(listener);
+        BTOfflineAdt.getInstance().setOffLineDataListener(listener);
     }
 
 	@Override
@@ -159,10 +177,10 @@ public class PenCtrl implements IPenCtrl {
 		if( Build.VERSION.SDK_INT >= 21)
 			BTLEAdt.getInstance().setMetadataListener( listener );
 		BTAdt.getInstance().setMetadataListener( listener );
+		BTOfflineAdt.getInstance().setMetadataListener( listener );
 	}
 
-
-    @Override
+	@Override
     public IPenMsgListener getListener() {
         return currentAdt.getListener();
     }
@@ -172,7 +190,7 @@ public class PenCtrl implements IPenCtrl {
 	}
 
 
-    @Override
+	@Override
     public IOfflineDataListener getOffLineDataListener() {
         return currentAdt.getOffLineDataListener();
     }
@@ -184,9 +202,18 @@ public class PenCtrl implements IPenCtrl {
 	}
 
 	@Override
-    public void connect(String address) throws BLENotSupportedException{
-        currentAdt.connect(address);
-    }
+	public void connect(String address) throws BLENotSupportedException{
+		currentAdt.connect(address);
+	}
+
+	@Override
+	public void connect( String sppAddress, String leAddress )
+	{
+		if(currentAdt instanceof BTAdt)
+			((BTAdt)currentAdt).connect(sppAddress);
+		else
+			((BTLEAdt)currentAdt).connect(sppAddress, leAddress);
+	}
 
     @Override
     public void disconnect() {
@@ -328,13 +355,25 @@ public class PenCtrl implements IPenCtrl {
 	@Override
 	public void reqOfflineData(int sectionId, int ownerId, int noteId) 
 	{
-		currentAdt.reqOfflineData( sectionId, ownerId, noteId );
+        currentAdt.reqOfflineData( sectionId, ownerId, noteId);
+	}
+
+	@Override
+	public void reqOfflineData(int sectionId, int ownerId, int noteId, boolean deleteOnFinished) throws ProtocolNotSupportedException
+	{
+		currentAdt.reqOfflineData( sectionId, ownerId, noteId, deleteOnFinished );
 	}
 
 	@Override
 	public void reqOfflineData(int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException
 	{
-		currentAdt.reqOfflineData( sectionId, ownerId, noteId ,pageIds);
+		reqOfflineData( sectionId, ownerId, noteId, true, pageIds);
+	}
+
+	@Override
+	public void reqOfflineData(int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds) throws ProtocolNotSupportedException
+	{
+		currentAdt.reqOfflineData( sectionId, ownerId, noteId, deleteOnFinished, pageIds);
 	}
 
 	@Override

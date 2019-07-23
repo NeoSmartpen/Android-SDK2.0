@@ -64,6 +64,5 @@ public class EstablishCommand extends Command
     @Override
     protected void write() 
     {
-        // TODO Auto-generated method stub
     }
 }

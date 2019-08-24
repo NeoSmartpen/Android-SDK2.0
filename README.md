@@ -1,4 +1,6 @@
-## Android SDK2.0
+## Neo smartpen SDK2.0 for Android Platform
+
+## Android SDK 2.0 
 
 Neo smartpen SDK(also referred to as ‘Pen SDK’) for Android. This open-source library allows you to integrate the Neo smartpen - Neo smartpen N2 and M1 - into your Android app.
 
@@ -7,10 +9,12 @@ Neo smartpen SDK(also referred to as ‘Pen SDK’) for Android. This open-sourc
 The Neo smartpen is designed to seamlessly integrate the real and digital worlds by transforming what you write on paper - everything from sketches and designs to business meeting notes - to your iOS, Android and Windows devices. It works in tandem with N notebooks, powered by NeoLAB Convergence’s patented Ncode™ technology and the accompanying application, Neo Notes. Find out more at www.neosmartpen.com
 Tutorial video - https://goo.gl/MQaVwY
 
-## About Ncode™: service development guide
-‘Natural Handwriting’ technology based on Ncode™(Microscopic data patterns containing various types of data) is a handwriting stroke recovery technology that digitizes paper coordinates obtained by optical pen devices such as Neo smartpen. The coordinates then can be used to store handwriting stroke information, analyzed to extract meaning based on user preferences and serve as the basis for many other types of services.
+## About Ncode™: service development guide 
+
+‘Natural Handwriting’ technology based on Ncode™(Microscopic data patterns containing various types of data) is a handwriting stroke recovery technology that digitizes paper coordinates obtained by optical pen devices such as Neo smartpen. The coordinates then can be used to store handwriting stroke information, analyzed to extract meaning based on user preferences and serve as the basis for many other types of services. 
+
 Click the link below to view a beginners guide to Ncode technology. 
-https://github.com/NeoSmartpen/Documentations/blob/master/Ncode™ Service Development Getting Started Guide v1.01.pdf
+[https://github.com/NeoSmartpen/Documentations/blob/master/Ncode™ Service Development Getting Started Guide v1.01.pdf](https://github.com/NeoSmartpen/Documentations/blob/master/Ncode%E2%84%A2%20Service%20Development%20Getting%20Started%20Guide%20v1.01.pdf)
 
 ## Requirements
 
@@ -26,7 +30,7 @@ https://github.com/NeoSmartpen/Documentations/blob/master/Ncode™ Service Devel
 
 javadoc link :https://neosmartpen.github.io/Android-SDK2.0/
  
-SDK Document link :https://github.com/NeoSmartpen/Android-SDK2.0/blob/master/NeoSmartpen_SDK_Android_V216.pdf
+SDK Document link :https://github.com/NeoSmartpen/Android-SDK2.0/blob/master/NeoSmartpen_SDK_Android_V217.pdf
 
 ## Guide to ‘Finding Bluetooth devices’
 

@@ -17,6 +17,7 @@
     <string name="offline">OfflineData(All)</string>
     <string name="offline_page">OfflineData(Page)</string>
  	<string name="offline_list">OfflineData list</string>
+    <string name="offline_note_info">Offline Note Info</string>
  	<string name="pen_status">Pen Status</string>
  	<string name="pen_unpairing">Pen Unpairing</string>
     <string name="pen_profile">Pen Profile Test</string>

@@ -184,7 +184,7 @@ public class NeoSampleService extends Service{
 	private IOfflineDataListener mOfflineDataListener = new IOfflineDataListener()
 	{
 		@Override
-		public void onReceiveOfflineStrokes ( String macAddress, Stroke[] strokes, int sectionId, int ownerId, int noteId, Symbol[] symbols )
+		public void onReceiveOfflineStrokes ( Object extra, String macAddress, Stroke[] strokes, int sectionId, int ownerId, int noteId, Symbol[] symbols )
 		{
 
 			if( strokes == null || strokes.length <=0 )

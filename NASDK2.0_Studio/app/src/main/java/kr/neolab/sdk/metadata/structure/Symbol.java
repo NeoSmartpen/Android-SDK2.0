@@ -107,7 +107,7 @@ param;
 	public Symbol(int noteId, int pageId, String name, String action, String param, float left, float top, float right, float bottom, String type)
 	{
 		super(left, top, right, bottom);
-		
+
 		this.noteId = noteId;
 		this.pageId = pageId;
 		this.name   = name;

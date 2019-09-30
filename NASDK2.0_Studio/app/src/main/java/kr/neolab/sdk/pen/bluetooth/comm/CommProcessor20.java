@@ -148,6 +148,10 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 	private float[] factor = null;
 
+	private boolean isOfflineNoteListAll = false;
+	private int offlineNoteListSection = 0;
+	private int offlineNoteListOwner = 0;
+
 	/**
 	 * The constant PEN_PROFILE_SUPPORT_PROTOCOL_VERSION.
 	 */
@@ -157,6 +161,16 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 * The constant PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION
 	 */
 	public static final String PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION = "2.12";  //[2018.03.05] Stroke Test
+
+	/**
+	 * The constant PEN_COUNT_LIMIT_PROTOCOL_VERSION.
+	 */
+	public static final float PEN_COUNT_LIMIT_PROTOCOL_VERSION = 2.15f;
+
+	/**
+	 * The constant PEN_OFFLINE_NOTE_INFO_SUPPORT_PROTOCOL_VERSION.
+	 */
+	public static final float PEN_OFFLINE_NOTE_INFO_SUPPORT_PROTOCOL_VERSION = 2.16f;
 
 	/**
 	 * True if the Event of "page change id" was received, false otherwise.
@@ -194,6 +208,15 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 */
 	private int sendImgCount = -1;       //[2018.03.05] Stroke Test
 
+	private Object extraData = null;
+
+	private short colorCode = 0;
+
+	private short companyCode = 0;
+
+	private short productCode = 0;
+
+
 	private class ChkOfflineFailRunnable implements Runnable{
 
 		@Override
@@ -205,10 +228,11 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			{
 				Stroke[] strokes = offlineStrokes.toArray( new Stroke[offlineStrokes.size()] );
 
-				OfflineByteData offlineByteData = new OfflineByteData( strokes, strokes[0].sectionId, strokes[0].ownerId, strokes[0].noteId );
+				OfflineByteData offlineByteData = new OfflineByteData( extraData, strokes, strokes[0].sectionId, strokes[0].ownerId, strokes[0].noteId );
 				btConnection.onCreateOfflineStrokes( offlineByteData );
 				offlineStrokes.clear();
 			}
+			extraData = null;
 			btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_FAILURE ) );
 		}
 	}
@@ -345,7 +369,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 			Stroke[] strokes = offlineStrokes.toArray( new Stroke[offlineStrokes.size()] );
 
-			OfflineByteData offlineByteData = new OfflineByteData( strokes, strokes[0].sectionId, strokes[0].ownerId, strokes[0].noteId );
+			OfflineByteData offlineByteData = new OfflineByteData( extraData, strokes, strokes[0].sectionId, strokes[0].ownerId, strokes[0].noteId );
 			btConnection.onCreateOfflineStrokes( offlineByteData );
 			offlineStrokes.clear();
 		}
@@ -467,6 +491,29 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		btConnection.write( buffer );
 	}
 
+	private void parsePenTypeCode(byte[] data)
+	{
+		int index = 0;
+		if(data.length < 4)
+			return;
+
+		byte[] companyData = new byte[2];
+		System.arraycopy(data, index, companyData, 0, 2);
+		companyCode = ByteConverter.byteArrayToShort(companyData);
+
+		index += 2;
+		byte[] productData = new byte[1];
+		System.arraycopy(data, index, productData, 0, 1);
+
+		productCode = productData[0];
+
+		index += 1;
+		byte[] colorData = new byte[1];
+		System.arraycopy(data, index, colorData, 0, 1);
+
+		colorCode = colorData[0];
+
+	}
 	/**
 	 * Incoming packet analysis
 	 * 
@@ -531,13 +578,20 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					{
 						e.printStackTrace();
 					}
+					try
+					{
+						byte[] code = pack.getDataRange( 65, 4 );
+						parsePenTypeCode(code);
+					}catch ( Exception e )
+					{
+						e.printStackTrace();
+					}
 
 					NLog.d( "[CommProcessor20] version of connected pen is " + FW_VER +";deviceName is"+connectedDeviceName+";subName is "+connectedSubName+";receiveProtocolVer is "+receiveProtocolVer+",sensorType="+sensorType);
 
 					try
 					{
-						JSONObject job = new JSONObject()
-								.put( JsonTag.STRING_PEN_FW_VERSION, FW_VER );
+						JSONObject job = new JSONObject().put( JsonTag.STRING_PEN_FW_VERSION, FW_VER );
 
 						job.put(  JsonTag.STRING_PROTOCOL_VERSION, "2");
 						job.put(  JsonTag.STRING_DEVICE_NAME, connectedDeviceName);
@@ -569,6 +623,9 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			 * ------------------------------------------------------------------
 			 *
 			 * RES_PenStatus (0x84)
+			 * BOOL_PENCAP_OFF:
+			 * NAP400 based model - pencap off
+			 * MT2523 based model(NWP-F51) - pencap off 0/ on 1
 			 *
 			 * ------------------------------------------------------------------
 			 */
@@ -591,6 +648,9 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 						maxPress = 852;
 					}
 					int stat_usedmem = pack.getDataRangeInt( 15, 1 );
+
+					// NAP400 model: pencap 0ff
+					// MT2523 model(NWP-F51): pencap off 0 / on 1
 					boolean stat_pencap_off = pack.getDataRangeInt( 16, 1 ) == 0 ? false : true;
 					boolean stat_autopower = pack.getDataRangeInt( 17, 1 ) == 0 ? false : true;
 					boolean stat_beep = pack.getDataRangeInt( 18, 1 ) == 0 ? false : true;
@@ -684,6 +744,11 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				NLog.d( "[CommProcessor20] received RES_Password(0x82) command. resultCode="+resultCode );
 				if ( resultCode == 0x00)
 				{
+					// status
+					// 0: success
+					// 1: old password wrong
+					// 2: reset( retry count == max count)
+					// 3: system error
 					int status = pack.getDataRangeInt( 0, 1 );
 					int countRetry = pack.getDataRangeInt( 1, 1 );
 					int countReset = pack.getDataRangeInt( 2, 1 );
@@ -719,7 +784,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					}
 					else
 					{
-						NLog.d( "[CommProcessor20] RES_Password ( " + countRetry + " / " + countReset + " )" );
+						NLog.d( "[CommProcessor20] Status: " + status +"RES_Password ( " + countRetry + " / " + countReset + " )" );
 						JSONObject job = null;
 
 						try
@@ -769,27 +834,45 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				int countRetry = pack.getDataRangeInt( 0, 1 );
 				int countReset = pack.getDataRangeInt( 1, 1 );
 
+				// status
+				// 0: success
+				// 1: old password wrong
+				// 2: reset( retry count == max count)
+				// 3: system error
+				int status= 0;
+				if( isSupportCountLimit() )
+					status = pack.getDataRangeInt( 2, 1 );
+
+
 				if ( result == 0x00 )
 				{
-					reChkPassword = true;
-					write( ProtocolParser20.buildPasswordInput( this.newPassword ));
+					if( status == 0 )
+					{
+						reChkPassword = true;
+						write( ProtocolParser20.buildPasswordInput( this.newPassword ) );
+					}
+					else
+					{
+						this.newPassword = "";
+						try
+						{
+							JSONObject job = null;
+							job = new JSONObject();
+							job.put( JsonTag.INT_PASSWORD_RETRY_COUNT, countRetry );
+							job.put( JsonTag.INT_PASSWORD_RESET_COUNT, countReset );
+
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.PASSWORD_SETUP_FAILURE, job ) );
+						}
+						catch ( JSONException e )
+						{
+							e.printStackTrace();
+						}
+					}
 				}
 				else
 				{
-					this.newPassword = "";
-					try
-					{
-						JSONObject job = null;
-						job = new JSONObject();
-						job.put( JsonTag.INT_PASSWORD_RETRY_COUNT, countRetry );
-						job.put( JsonTag.INT_PASSWORD_RESET_COUNT, countReset );
-
-						btConnection.onCreateMsg( new PenMsg( PenMsgType.PASSWORD_SETUP_FAILURE, job ) );
-					}
-					catch ( JSONException e )
-					{
-						e.printStackTrace();
-					}
+					NLog.d( "[CommProcessor20] RES_Password received error. pen will be shutdown." );
+					btConnection.unbind();
 				}
 			}
 			break;
@@ -797,7 +880,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			/*
 			 * ------------------------------------------------------------------
 			 *
-			 * RES_UsingNoteNotify (0x11)
+			 * RES_UsingNoteNotify (0x91)
 			 *
 			 * ------------------------------------------------------------------
 			 */
@@ -806,7 +889,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				int result = pack.getResultCode();
 				NLog.d( "[CommProcessor20] RES_UsingNoteNotify :  resultCode =" + pack.getResultCode() );
 				kill( CMD20.REQ_UsingNoteNotify );
-				boolean isSuccess = result == 1 ? true : false;
+				boolean isSuccess = result == 0 ? true : false;
 				try
 				{
 					JSONObject job = new JSONObject().put( JsonTag.BOOL_RESULT, isSuccess );
@@ -1981,17 +2064,19 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			 * ------------------------------------------------------------------
 			 */
 			case CMD20.RES_PenStatusChange:
+			{
 
 				resultCode = pack.getResultCode();
 				int type = pack.getDataRangeInt( 0, 1 );
+				int status = pack.getDataRangeInt( 1, 1 );
 				NLog.d( "[CommProcessor20] received RES_PenStatusChange(0x04) command. resultCode=" + resultCode + " type=" + type );
 				boolean isSuccess = resultCode == 0x00 ? true : false;
+				isSuccess = isSuccess && ( status == 0x00 );
 				JSONObject job = null;
 				try
 				{
 					job = new JSONObject().put( JsonTag.BOOL_RESULT, isSuccess );
-				}
-				catch ( JSONException e )
+				} catch ( JSONException e )
 				{
 					e.printStackTrace();
 				}
@@ -1999,80 +2084,79 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				switch ( type )
 				{
 					case CMD20.REQ_PenStatusChange_TYPE_CurrentTimeSet:
-						if (isSuccess )
+						if( isSuccess )
 						{
-							int k = (CMD20.REQ_PenStatusChange << 8) & 0xff00 + CMD20.REQ_PenStatusChange_TYPE_CurrentTimeSet ;
+							int k = ( CMD20.REQ_PenStatusChange << 8 ) & 0xff00 + CMD20.REQ_PenStatusChange_TYPE_CurrentTimeSet;
 							kill( k );
 							try
 							{
 
-								JSONObject job2 = new JSONObject()
-										.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
-										.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
+								JSONObject job2 = new JSONObject().put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() ).put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
 								btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job2 ) );
-							}
-							catch ( JSONException e )
+							} catch ( JSONException e )
 							{
 								e.printStackTrace();
 							}
 						}
 						break;
 					case CMD20.REQ_PenStatusChange_TYPE_AutoShutdownTime:
-						if(job != null)
+						if( job != null )
 							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_AUTO_SHUTDOWN_RESULT, job ) );
 						break;
 
 					case CMD20.REQ_PenStatusChange_TYPE_PenCapOnOff:
-						if(job != null)
+						if( job != null )
 							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_PEN_CAP_OFF, job ) );
 						break;
 					case CMD20.REQ_PenStatusChange_TYPE_AutoPowerOnSet:
-						if(job != null)
+						if( job != null )
 							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_AUTO_POWER_ON_RESULT, job ) );
 						break;
 					case CMD20.REQ_PenStatusChange_TYPE_BeepOnOff:
-						if(job != null)
+						if( job != null )
 							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_BEEP_RESULT, job ) );
 						break;
 					case CMD20.REQ_PenStatusChange_TYPE_HoverOnOff:
-						if(job != null)
+						if( job != null )
 							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_HOVER_ONOFF, job ) );
 						break;
 					case CMD20.REQ_PenStatusChange_TYPE_OfflineDataSaveOnOff:
-						if(job != null)
+						if( job != null )
 							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_OFFLINEDATA_SAVE_ONOFF, job ) );
 						break;
 					case CMD20.REQ_PenStatusChange_TYPE_LEDColorSet:
-						if(job != null)
+						if( job != null )
 							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_PEN_COLOR_RESULT, job ) );
 						break;
 					case CMD20.REQ_PenStatusChange_TYPE_SensitivitySet:
-						if(resultCode == 3)
-						{
-							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE) );
-						}
+						if( resultCode == 3 || (resultCode == 5 && isSupportCountLimit()) )
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE ) );
 						else
 						{
-							if(job != null)
+							if( job != null )
 								btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_RESULT, job ) );
 						}
 						break;
 
 					case CMD20.REQ_PenStatusChange_TYPE_SensitivitySet_FSC:
-						if(resultCode == 3)
+						if( resultCode == 3 || (resultCode == 5 && isSupportCountLimit()) )
 						{
-							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE) );
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE ) );
 						}
 						else
 						{
-							if(job != null)
+							if( job != null )
 								btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_RESULT_FSC, job ) );
 						}
 						break;
 
-
+					case CMD20.REQ_PenStatusChange_TYPE_Disk_Reset:
+						if( job != null )
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_DISK_RESET_RESULT, job ) );
+						break;
 				}
-				break;
+			}
+			break;
 
 			/*
 			 * ------------------------------------------------------------------
@@ -2103,6 +2187,21 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 						}
 						btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_NOTE_LIST, offlineNoteInfos ) );
 						offlineNoteInfos = new JSONArray();
+
+						if( isSupportCountLimit() )
+						{
+							if( setCnt == 64 )
+							{
+								if(isOfflineNoteListAll)
+									reqOfflineDataList();
+								else
+									reqOfflineDataList( offlineNoteListSection, offlineNoteListOwner );
+
+								isOfflineNoteListAll = false;
+								offlineNoteListSection = 0;
+								offlineNoteListOwner = 0;
+							}
+						}
 					}
 					catch ( JSONException e )
 					{
@@ -2141,6 +2240,12 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 							offlinePageInfos.put( new JSONObject().put( JsonTag.INT_OWNER_ID, oOwnerId ).put( JsonTag.INT_SECTION_ID, oSectionId ).put( JsonTag.INT_NOTE_ID, noteId ).put( JsonTag.INT_PAGE_ID, pageId ) );
 						}
 						btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_PAGE_LIST, offlinePageInfos ) );
+
+						if( isSupportCountLimit() )
+						{
+							if( setCnt == 128 )
+								reqOfflineDataPageList( oSectionId, oOwnerId, noteId );
+						}
 					}
 					catch ( JSONException e )
 					{
@@ -2173,12 +2278,15 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					NLog.i( "[CommProcessor20] offline file transfer is started ( oTotalDataSize : " + oTotalDataSize + ", strokeCount:"+strokeCount+" isCompress:" + isCompress + " )" );
 					if(oTotalDataSize > 0)
 						btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_START ) );
-					else
-						btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_FAILURE ) );
+					else {
+						extraData = null;
+						btConnection.onCreateMsg(new PenMsg(PenMsgType.OFFLINE_DATA_SEND_FAILURE));
+					}
 
 				}
 				else
 				{
+					extraData = null;
 					btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_FAILURE ) );
 				}
 
@@ -2227,7 +2335,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 						{
 							Stroke[] strokes = offlineStrokes.toArray( new Stroke[offlineStrokes.size()] );
 
-							OfflineByteData offlineByteData = new OfflineByteData( strokes, strokes[0].sectionId, strokes[0].ownerId, strokes[0].noteId );
+							OfflineByteData offlineByteData = new OfflineByteData( extraData, strokes, strokes[0].sectionId, strokes[0].ownerId, strokes[0].noteId );
 							btConnection.onCreateOfflineStrokes( offlineByteData );
 							offlineStrokes.clear();
 						}
@@ -2254,6 +2362,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				}
 				else
 				{
+					extraData = null;
 					btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_FAILURE ) );
 				}
 			}
@@ -2286,7 +2395,87 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_FILE_DELETED ) );
 				}
 				break;
-			
+
+			/*
+			 * ------------------------------------------------------------------
+			 *
+			 * RES_OfflineNoteInfo (0xA6)
+			 *
+			 * ------------------------------------------------------------------
+			 */
+			case CMD20.RES_OfflineNoteInfo:
+				resultCode = pack.getResultCode();
+				NLog.d( "[CommProcessor20] received RES_OfflineNoteInfo(0xA6) command. resultCode=" + resultCode );
+				if ( resultCode == 0x00 )
+				{
+					int status = pack.getDataRangeInt( 0, 1 );
+					if( status == 0 )
+					{
+						byte[] rxb = pack.getDataRange( 1, 4 );
+						int oSectionId = (int) ( rxb[3] & 0xFF );
+						int oOwnerId = ByteConverter.byteArrayToInt( new byte[]{rxb[0], rxb[1], rxb[2], (byte) 0x00} );
+						int noteId = pack.getDataRangeInt( 5, 4 );
+						int noteVersion = pack.getDataRangeInt( 9, 2 );
+
+						int reserved = 32;
+
+						boolean isInvalidPageId = ( pack.getDataRangeInt( 11+reserved, 1 ) == 1 );
+
+						// max 12800
+						int pageCount = pack.getDataRangeInt( 12+reserved, 2 );
+
+						int pageListCount = pack.getDataRangeInt( 14+reserved, 2 );
+						String pageList = "";
+						int index = 0;
+
+						// get PageList
+						for ( int i = 0; i < pageListCount; i++ )
+						{
+							int pl = pack.getDataRangeInt( 16+reserved + i, 1 );
+
+							if( pl == 0 )
+								continue;
+
+							for( int j = 0; j< 8 ; j++)
+							{
+								if( ( pl % 2 ) == 1 )
+								{
+									pageList += (i * 8 + j)+ ",";
+									index++;
+								}
+								pl >>= 1;
+
+								if(pl == 0)
+									break;
+							}
+						}
+
+						if( pageList.endsWith( "," ))
+							pageList = pageList.substring( 0, pageList.lastIndexOf( "," ) );
+
+						NLog.d( "[CommProcessor20] received RES_OfflineNoteInfo(0xA6) command. oSectionId=" + oSectionId + " oOwnerId="+oOwnerId+" noteId="+noteId + "pageList=" + pageList );
+
+						try
+						{
+							JSONObject jsonObject = new JSONObject();
+							jsonObject.put( JsonTag.INT_SECTION_ID, sectionId );
+							jsonObject.put( JsonTag.INT_OWNER_ID, ownerId );
+							jsonObject.put( JsonTag.INT_NOTE_ID, noteId );
+							jsonObject.put( JsonTag.INT_NOTE_VERSION, noteVersion );
+
+							jsonObject.put( JsonTag.BOOL_OFFLINE_INFO_INVALID_PAGE, isInvalidPageId );
+							jsonObject.put( JsonTag.STRING_OFFLINE_INFO_PAGE_LIST, pageList );
+
+							btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_NOTE_INFO ,jsonObject) );
+						}
+						catch ( Exception e )
+						{
+							e.printStackTrace();
+						}
+					}
+				}
+				break;
+
 
 			/*
 			 * ------------------------------------------------------------------
@@ -2764,6 +2953,15 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	}
 
 	/**
+	 * Req set pen dist reset (v2.15).
+	 *
+	 */
+	public void reqSetPenDiskReset()
+	{
+		write( ProtocolParser20.buildPenDiskReset() );
+	}
+
+	/**
 	 * Req set pen hover.
 	 *
 	 * @param on the on
@@ -2841,7 +3039,6 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 */
 	public void reqAddUsingNote ( ArrayList<UseNoteData> noteList )
 	{
-
 		write(ProtocolParser20.buildAddUsingNotes( noteList ));
 	}
 
@@ -2883,9 +3080,22 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	}
 
 
+	public void reqOfflineData( Object extra, int sectionId, int ownerId, int noteId )
+	{
+		extraData = extra;
+		write( ProtocolParser20.buildReqOfflineData( sectionId, ownerId, noteId ,true) );
+	}
+
+	public void reqOfflineData( Object extra, int sectionId, int ownerId, int noteId, int[] pageIds )
+	{
+		extraData = extra;
+		write( ProtocolParser20.buildReqOfflineData( sectionId, ownerId, noteId, true, pageIds ) );
+	}
+
 
 	public void reqOfflineDataList()
 	{
+		isOfflineNoteListAll = true;
 		write( ProtocolParser20.buildReqOfflineDataListAll() );
 	}
 
@@ -2897,6 +3107,9 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 */
 	public void reqOfflineDataList( int sectionId, int ownerId )
 	{
+		isOfflineNoteListAll = false;
+		offlineNoteListSection = sectionId;
+		offlineNoteListOwner = ownerId;
 		write( ProtocolParser20.buildReqOfflineDataList( sectionId, ownerId ) );
 	}
 
@@ -2922,6 +3135,18 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	public void reqOfflineDataRemove( int sectionId, int ownerId, int[] noteIds)
 	{
 		write( ProtocolParser20.buildReqOfflineDataRemove( sectionId, ownerId, noteIds ) );
+	}
+
+	/**
+	 * Req offline note info.
+	 *
+	 * @param sectionId the section id
+	 * @param ownerId   the owner id
+	 * @param noteId   the note id
+	 */
+	public void reqOfflineNoteInfo( int sectionId, int ownerId, int noteId)
+	{
+		write( ProtocolParser20.buildReqOfflineNoteInfo( sectionId, ownerId, noteId ) );
 	}
 
 	public void reqAutoPowerSetupOnOff( boolean isOn )
@@ -3080,6 +3305,42 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			return false;
 	}
 
+	@Override
+	public boolean isSupportOfflineNoteInfo ()
+	{
+		String[] temp = receiveProtocolVer.split( "\\." );
+		float ver = 0f;
+		try
+		{
+			ver = Float.parseFloat( temp[0]+"."+temp[1] );
+		}catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
+		if(ver >= PEN_OFFLINE_NOTE_INFO_SUPPORT_PROTOCOL_VERSION)
+			return true;
+		else
+			return false;
+	}
+
+	@Override
+	public boolean isSupportCountLimit ()
+	{
+		String[] temp = receiveProtocolVer.split( "\\." );
+		float ver = 0f;
+		try
+		{
+			ver = Float.parseFloat( temp[0]+"."+temp[1] );
+		}catch ( Exception e )
+		{
+			e.printStackTrace();
+		}
+		if(ver >= PEN_COUNT_LIMIT_PROTOCOL_VERSION)
+			return true;
+		else
+			return false;
+	}
+
 	/**
 	 * Request default calibration.
 	 */
@@ -3142,6 +3403,37 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	{
 
 		return sensorType;
+	}
+
+	/**
+	 * unknown :0  1,2,3...
+	 *
+	 * @return the pen color(type) code
+	 */
+	public short getColorCode()
+	{
+
+		return colorCode;
+	}
+	/**
+	 * unknown :0  1,2,3...
+	 *
+	 * @return the pen product code
+	 */
+	public short getProductCode()
+	{
+
+		return productCode;
+	}
+	/**
+	 * unknown :0  1,2,3...
+	 *
+	 * @return the pen company code
+	 */
+	public short getCompanyCode()
+	{
+
+		return companyCode;
 	}
 
 	/**

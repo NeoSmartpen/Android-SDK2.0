@@ -406,6 +406,10 @@ public class ProtocolParser20
      * Build pen cap on off setup byte [ ].
      * 0x04 CMD20.REQ_PenStatus  0x03 REQ_PenStatusChange_TYPE_PenCapOnOff
      *
+     * 2.15 update
+     * NAP400 based model- pen cap off
+     * MT2523 based model(NWP-F51) - pen cap on/off
+     *
      * @param on the on
      * @return the byte [ ]
      */
@@ -536,6 +540,7 @@ public class ProtocolParser20
 
     /**
      * Build pen sensitivity setup fsc byte [ ].
+     * Use only FSC pressure sensor model.
      *
      * @param sensitivity the sensitivity
      * @return the byte [ ]
@@ -546,6 +551,21 @@ public class ProtocolParser20
         sendbyte.setCommand( CMD20.REQ_PenStatusChange );
         sendbyte.write( ByteConverter.intTobyte( CMD20.REQ_PenStatusChange_TYPE_SensitivitySet_FSC ), 1 );
         sendbyte.write( ByteConverter.shortTobyte( sensitivity ), 1 );
+        NLog.d( "[ProtocolParser20] REQ buildPenSensitivitySetupFSC." + "Packet:" + sendbyte.showPacket() );
+        return sendbyte.getPacket();
+    }
+
+    /**
+     * Build pen disk reset byte [ ].
+     *
+     * @return the byte [ ]
+     */
+    public static byte[] buildPenDiskReset ( )
+    {
+        PacketBuilder sendbyte = new PacketBuilder( 5 );
+        sendbyte.setCommand( CMD20.REQ_PenStatusChange );
+        sendbyte.write( ByteConverter.intTobyte( CMD20.REQ_PenStatusChange_TYPE_Disk_Reset ), 1 );
+        sendbyte.write( ByteConverter.intTobyte( 0x4F1C0B42 ), 4 );
         NLog.d( "[ProtocolParser20] REQ buildPenSensitivitySetupFSC." + "Packet:" + sendbyte.showPacket() );
         return sendbyte.getPacket();
     }
@@ -773,7 +793,7 @@ public class ProtocolParser20
         // 2: send req2(after res1), not remove offline data
         sendbyte.write( (byte) (deleteOnFinished ? 1 : 2) );
 
-        // isCompress  1:compress  0:uncompress
+        // isCompress  1:compress(recommend)  0:uncompress
         sendbyte.write( (byte) 1 );
 
         sendbyte.write( ownerByte[0] );
@@ -895,6 +915,30 @@ public class ProtocolParser20
     }
 
     /**
+     * Build req offline note Info byte [ ].
+     *
+     * v2.16
+     * @param sectionId the section id
+     * @param ownerId   the owner id
+     * @param noteId   the note id
+     * @return the byte [ ]
+     */
+    public static byte[] buildReqOfflineNoteInfo ( int sectionId, int ownerId, int noteId)
+    {
+        byte[] ownerByte = ByteConverter.intTobyte( ownerId );
+
+        PacketBuilder sendbyte = new PacketBuilder( 4 + 4 );
+        sendbyte.setCommand( CMD20.REQ_OfflineNoteInfo );
+        sendbyte.write( ownerByte[0] );
+        sendbyte.write( ownerByte[1] );
+        sendbyte.write( ownerByte[2] );
+        sendbyte.write( (byte) sectionId );
+        sendbyte.write( ByteConverter.intTobyte( noteId ) );
+        NLog.d( "[ProtocolParser20] REQ buildReqOfflineNoteInfo :" + sendbyte.showPacket() );
+        return sendbyte.getPacket();
+    }
+
+    /**
      * Build pen sw upgrade byte [ ].
      * 0x31 CMD20.REQ_PenFWUpgrade
      *
@@ -964,11 +1008,11 @@ public class ProtocolParser20
             else
             {
                 compressData = data;
-                afterCompressSize = beforeCompressSize;
+                afterCompressSize = 0;
             }
 
 
-            PacketBuilder sendbyte = new PacketBuilder( 1 + 4 + 1 + 4 + 4 + afterCompressSize, 0 );
+            PacketBuilder sendbyte = new PacketBuilder( 1 + 4 + 1 + 4 + 4 + compressData.length, 0 );
             sendbyte.setCommand( CMD20.ACK_UploadPenFWChunk );
             sendbyte.write( (byte) 0 );
             sendbyte.write( ByteConverter.intTobyte( offset ) );
@@ -1005,7 +1049,7 @@ public class ProtocolParser20
         // sector size
         sendbyte.write( ByteConverter.shortTobyte( (short)32 ),2 );
         // sector count(2^N Currently fixed 2^8)
-        sendbyte.write( ByteConverter.shortTobyte( (short)8 ),2 );
+        sendbyte.write( ByteConverter.shortTobyte( (short)128 ),2 );
         NLog.d( "[ProtocolParser20] REQ  buildProfileCreate.showPacket"+sendbyte.showPacket());
         sendbyte.showPacket();
         return sendbyte.getPacket();

@@ -16,6 +16,7 @@ import java.util.HashMap;
 import kr.neolab.sdk.pen.IMultiPenCtrl;
 import kr.neolab.sdk.pen.MultiPenCtrl;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
+import kr.neolab.sdk.pen.bluetooth.lib.OutOfRangeException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IPenMsgListener;
 import kr.neolab.sdk.pen.penmsg.JsonTag;
@@ -303,6 +304,11 @@ public class MultiPenClientCtrl implements IPenMsgListener
 	public void removeOfflineData(String macAddress, int sectionId, int ownerId, int[] noteIds) throws ProtocolNotSupportedException
 	{
 		iPenCtrl.removeOfflineData( macAddress, sectionId, ownerId, noteIds );
+	}
+
+	public void reqOfflineNoteInfo( String macAddress, int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException
+	{
+		iPenCtrl.reqOfflineNoteInfo( macAddress, sectionId, ownerId, noteId );
 	}
 
 	/**
@@ -693,6 +699,9 @@ public class MultiPenClientCtrl implements IPenMsgListener
 				{
 					e.printStackTrace();
 				} catch ( ProtocolNotSupportedException e )
+				{
+					e.printStackTrace();
+				} catch ( OutOfRangeException e )
 				{
 					e.printStackTrace();
 				}

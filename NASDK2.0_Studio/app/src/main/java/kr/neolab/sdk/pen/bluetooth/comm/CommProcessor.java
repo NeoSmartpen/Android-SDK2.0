@@ -136,6 +136,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	public static final String PEN_MODEL_NAME_F110C = "NWP-F110C";
 
 
+	private Object extraData = null;
 
 	private class ChkOfflineFailRunnable implements Runnable{
 
@@ -143,6 +144,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 		public void run() {
 			// fail process
 			NLog.d( "[CommProcessor20] ChkOfflineFailRunnable Fail!!" );
+			extraData = null;
 			btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_FAILURE ) );
 		}
 	}
@@ -984,6 +986,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 				}
 				else
 				{
+					extraData = null;
 					btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_FAILURE ) );
 				}
 
@@ -992,6 +995,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 			case CMD.A_OfflineResultResponse:
 				if ( pack.getDataRangeInt( 0, 1 ) == 0x00 )
 				{
+					extraData = null;
 					btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_FAILURE ) );
 				}
 				else
@@ -1074,7 +1078,8 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 								job.put( JsonTag.INT_NOTE_ID, olFile.getNoteId() );
 								job.put( JsonTag.INT_PAGE_ID, olFile.getPageId() );
 								job.put( JsonTag.STRING_FILE_PATH, output );
-
+								if(extraData != null)
+									job.put( JsonTag.OFFLINE_EXTRA, extraData);
 								btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_FILE_CREATED, job ) );
 							}
 							catch ( JSONException e )
@@ -1585,6 +1590,22 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 		write( ProtocolParser.buildReqOfflineData( sectionId, ownerId, noteId ) );
 	}
 
+	public void reqOfflineData( Object extra, int sectionId, int ownerId, int noteId )
+	{
+		if(extra instanceof Integer || extra instanceof Long || extra instanceof String || extra instanceof Double || extra instanceof JSONObject || extra instanceof JSONArray)
+		{
+			extraData = extra;
+			write( ProtocolParser.buildReqOfflineData( sectionId, ownerId, noteId ) );
+		}
+		else
+		{
+			extraData = null;
+			write( ProtocolParser.buildReqOfflineData( sectionId, ownerId, noteId ) );
+			NLog.e( "[CommProcessor] reqOfflineData Unsupported extra Type!! Support extra Type is Integer, Long , Double, String, JSONObject, JSONArray" );
+
+		}
+	}
+
 	public void reqOfflineDataList()
 	{
 		write( ProtocolParser.buildReqOfflineDataList() );
@@ -1711,6 +1732,18 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 //			else
 //				return false;
 //		}
+		return false;
+	}
+
+	@Override
+	public boolean isSupportOfflineNoteInfo()
+	{
+		return false;
+	}
+
+	@Override
+	public boolean isSupportCountLimit()
+	{
 		return false;
 	}
 

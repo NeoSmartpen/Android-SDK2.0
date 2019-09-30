@@ -36,6 +36,7 @@ import kr.neolab.sdk.pen.IPenAdt;
 import kr.neolab.sdk.pen.bluetooth.cmd.CommandManager;
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor;
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20;
+import kr.neolab.sdk.pen.bluetooth.lib.OutOfRangeException;
 import kr.neolab.sdk.pen.bluetooth.lib.PenProfile;
 import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
@@ -60,6 +61,11 @@ import kr.neolab.sdk.util.UseNoteData;
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class BTLEAdt implements IPenAdt
 {
+    public static enum UUID_VER
+    {
+        VER_2, VER_5
+    }
+
     private static BTLEAdt instance = null;
 
     /**
@@ -138,6 +144,12 @@ public class BTLEAdt implements IPenAdt
     private static final UUID ServiceUuidV2 = UUID.fromString( "000019F1-0000-1000-8000-00805F9B34FB" );
     private static final UUID WriteCharacteristicsUuidV2 = UUID.fromString( "00002BA0-0000-1000-8000-00805F9B34FB" );
     private static final UUID IndicateCharacteristicsUuidV2 = UUID.fromString( "00002BA1-0000-1000-8000-00805F9B34FB" );
+
+    private static final UUID ServiceUuidV5 = UUID.fromString( "4f99f138-9d53-5bfa-9e50-b147491afe68" );
+    private static final UUID WriteCharacteristicsUuidV5 = UUID.fromString( "8bc8cc7d-88ca-56b0-af9a-9bf514d0d61a" );
+    private static final UUID IndicateCharacteristicsUuidV5 = UUID.fromString( "64cd86b1-2256-5aeb-9f04-2caf6c60ae57" );
+
+    private UUID_VER curr_uuid_ver = UUID_VER.VER_2;
     /**
      *Descriptor uuid for setting Notify or Indicate
      */
@@ -245,11 +257,11 @@ public class BTLEAdt implements IPenAdt
     }
 
     @Override
+    @Deprecated
     public synchronized void connect(String address)  throws BLENotSupportedException
     {
         throw new BLENotSupportedException( "isAvailableDevice( String mac ) is supported from Bluetooth LE !!!" );
     }
-
 
     /**
      * Connects to the GATT server hosted on the Bluetooth LE device.
@@ -259,9 +271,25 @@ public class BTLEAdt implements IPenAdt
      * is reported asynchronously through the
      * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      * callback.
+     * Use {@link #connect( String, String, UUID_VER)}}
      */
+    @Deprecated
     public synchronized void connect ( final String sppAddress, final String leAddress )
     {
+        connect ( sppAddress, leAddress, UUID_VER.VER_2 );
+    }
+    /**
+     * Connects to the GATT server hosted on the Bluetooth LE device.
+     *
+     * @param sppAddress    The device address of the destination device.
+     * @return Return true if the connection is initiated successfully. The connection result
+     * is reported asynchronously through the
+     * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
+     * callback.
+     */
+    public synchronized void connect ( final String sppAddress, final String leAddress, UUID_VER uuid_ver )
+    {
+        curr_uuid_ver = uuid_ver;
         if ( mBluetoothAdapter == null || sppAddress == null || leAddress == null)
         {
             NLog.w( "BluetoothAdapter not initialized or unspecified address." );
@@ -632,8 +660,9 @@ public class BTLEAdt implements IPenAdt
         {
             return;
         }
-
+        mIsRegularDisconnect = true;
         mBluetoothGatt.disconnect();
+
     }
 
     @Override
@@ -828,9 +857,16 @@ public class BTLEAdt implements IPenAdt
     }
 
     @Override
-    public void reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds )
+    public void reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) throws OutOfRangeException
     {
         if ( !isConnected() ) return;
+
+        if( mConnectionThread.getPacketProcessor().isSupportCountLimit() && noteIds.length > 64 )
+        {
+            NLog.e( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 64 from protocol 2.15 !!!" );
+            throw new OutOfRangeException( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 64 from protocol 2.15 !!!" );
+        }
+
         mConnectionThread.getPacketProcessor().reqAddUsingNote( sectionId, ownerId, noteIds );
     }
 
@@ -856,9 +892,15 @@ public class BTLEAdt implements IPenAdt
     }
 
     @Override
-    public void reqAddUsingNote ( ArrayList<UseNoteData> noteList ) throws ProtocolNotSupportedException
+    public void reqAddUsingNote ( ArrayList<UseNoteData> noteList ) throws ProtocolNotSupportedException, OutOfRangeException
     {
         if ( !isConnected() ) return;
+
+        if( mConnectionThread.getPacketProcessor().isSupportCountLimit() && noteList.size() > 64 )
+        {
+            NLog.e( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 64 from protocol 2.15 !!!" );
+            throw new OutOfRangeException( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 64 from protocol 2.15 !!!" );
+        }
 
         if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )
             ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqAddUsingNote( noteList );
@@ -896,15 +938,21 @@ public class BTLEAdt implements IPenAdt
     }
 
     @Override
-    public void reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds ) throws ProtocolNotSupportedException
+    public void reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds ) throws ProtocolNotSupportedException, OutOfRangeException
     {
         reqOfflineData( sectionId, ownerId, noteId, true, pageIds );
     }
 
     @Override
-    public void reqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds ) throws ProtocolNotSupportedException
+    public void reqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds ) throws ProtocolNotSupportedException, OutOfRangeException
     {
         if ( !isConnected() ) return;
+
+        if( mConnectionThread.getPacketProcessor().isSupportCountLimit() && pageIds.length > 128 )
+        {
+            NLog.e( "reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds ) page must less then 128 from protocol 2.15 !!!" );
+            throw new OutOfRangeException( "reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds ) page must less then 128 from protocol 2.15 !!!" );
+        }
 
         if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )
             ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqOfflineData( sectionId, ownerId, noteId, deleteOnFinished, pageIds );
@@ -913,6 +961,28 @@ public class BTLEAdt implements IPenAdt
             NLog.e( "reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds )is supported from protocol 2.0 !!!" );
             throw new ProtocolNotSupportedException( "reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds )is supported from protocol 2.0 !!!" );
         }
+    }
+
+    @Override
+    public void reqOfflineData(Object extra, int sectionId, int ownerId, int noteId) {
+        if ( !isConnected() ) return;
+
+        mConnectionThread.getPacketProcessor().reqOfflineData( extra, sectionId, ownerId, noteId );
+
+    }
+
+    @Override
+    public void reqOfflineData(Object extra, int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException {
+        if ( !isConnected() ) return;
+
+        if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )
+            ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqOfflineData( extra, sectionId, ownerId, noteId, pageIds );
+        else
+        {
+            NLog.e( "reqOfflineData ( Object extra, int sectionId, int ownerId, int noteId, int[] pageIds )is supported from protocol 2.0 !!!" );
+            throw new ProtocolNotSupportedException( "reqOfflineData ( Object extra, int sectionId, int ownerId, int noteId, int[] pageIds )is supported from protocol 2.0 !!!" );
+        }
+
     }
 
     @Override
@@ -987,6 +1057,22 @@ public class BTLEAdt implements IPenAdt
         {
             NLog.e( "removeOfflineData( int sectionId, int ownerId, int[] noteIds ) is supported from protocol 2.0 !!!" );
             throw new ProtocolNotSupportedException( "removeOfflineData( int sectionId, int ownerId, int[] noteIds ) is supported from protocol 2.0 !!!" );
+        }
+    }
+
+    @Override
+    public void reqOfflineNoteInfo( int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException
+    {
+        if ( !isConnected() )
+        {
+            return;
+        }
+        if(mConnectionThread.getPacketProcessor().isSupportOfflineNoteInfo())
+            ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqOfflineNoteInfo( sectionId, ownerId, noteId );
+        else
+        {
+            NLog.e( "reqOfflineNoteInfo( int sectionId, int ownerId, int noteId ) is supported from protocol 2.16 !!!" );
+            throw new ProtocolNotSupportedException( "reqOfflineNoteInfo( int sectionId, int ownerId, int noteId ) is supported from protocol 2.16 !!!" );
         }
     }
 
@@ -1089,6 +1175,20 @@ public class BTLEAdt implements IPenAdt
         if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )
             ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqSetPenHover( on );
         else NLog.e( "reqSetupPenHover ( boolean on ) is supported from protocol 2.0 !!!" );
+
+    }
+
+    @Override
+    public void reqSetupPenDiskReset ()
+    {
+        if ( !isConnected() )
+        {
+            return;
+        }
+
+        if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 && mConnectionThread.getPacketProcessor().isSupportCountLimit() )
+            ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqSetPenDiskReset();
+        else NLog.e( "reqSetupPenDiskReset() is supported from protocol 2.0 !!!" );
 
     }
 
@@ -1368,8 +1468,12 @@ public class BTLEAdt implements IPenAdt
         {
             mIsRegularDisconnect = isRegularDisconnect;
             mProtocolVer = 0;
+            if ( mBluetoothAdapter == null || mBluetoothGatt == null )
+            {
+                return;
+            }
 
-            disconnect();
+            mBluetoothGatt.disconnect();
             stopRunning();
         }
 
@@ -1640,7 +1744,7 @@ public class BTLEAdt implements IPenAdt
                             }
                         }
                     }
-                    offlineDataListener.onReceiveOfflineStrokes( penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]) );
+                    offlineDataListener.onReceiveOfflineStrokes( offlineByteData.extraData, penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]) );
                 }
                 break;
 
@@ -1679,7 +1783,7 @@ public class BTLEAdt implements IPenAdt
                     }
                 }
 
-                offlineDataListener.onReceiveOfflineStrokes( penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]) );
+                offlineDataListener.onReceiveOfflineStrokes( offlineByteData.extraData, penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]) );
             }
         }
     }
@@ -1748,7 +1852,15 @@ public class BTLEAdt implements IPenAdt
             super.onServicesDiscovered( gatt, status );
             if ( status == BluetoothGatt.GATT_SUCCESS )
             {
-                BluetoothGattService service = gatt.getService( ServiceUuidV2 );
+                BluetoothGattService service;
+                if(curr_uuid_ver == UUID_VER.VER_2)
+                {
+                    service= gatt.getService( ServiceUuidV2 );
+                }
+                else
+                {
+                    service= gatt.getService( ServiceUuidV5 );
+                }
                 if ( service != null )
                 {
                     mProtocolVer = 2;
@@ -1831,6 +1943,8 @@ public class BTLEAdt implements IPenAdt
             super.onMtuChanged( gatt, mtu, status );
             if ( status == BluetoothGatt.GATT_SUCCESS )
             {
+                // set mtu automatically
+                BTLEAdt.this.mtu = mtu;
                 NLog.d( "call onMtuChanged" );
                 gatt.discoverServices();
             }
@@ -1925,11 +2039,20 @@ public class BTLEAdt implements IPenAdt
     {
         if ( protocolVer == 2 )
         {
-            BluetoothGattService service = mBluetoothGatt.getService( ServiceUuidV2 );
+            BluetoothGattService service;
+            BluetoothGattCharacteristic gattCharacteristic;
+            if(curr_uuid_ver == UUID_VER.VER_2)
+            {
+                service = mBluetoothGatt.getService( ServiceUuidV2 );
+                mWriteGattChacteristic = service.getCharacteristic( WriteCharacteristicsUuidV2 );
+                gattCharacteristic = service.getCharacteristic( IndicateCharacteristicsUuidV2 );
 
-            mWriteGattChacteristic = service.getCharacteristic( WriteCharacteristicsUuidV2 );
-
-            BluetoothGattCharacteristic gattCharacteristic = service.getCharacteristic( IndicateCharacteristicsUuidV2 );
+            }
+            else {
+                service = mBluetoothGatt.getService(ServiceUuidV5);
+                mWriteGattChacteristic = service.getCharacteristic( WriteCharacteristicsUuidV5 );
+                gattCharacteristic = service.getCharacteristic( IndicateCharacteristicsUuidV5 );
+            }
 
             setCharacteristicIndication( gattCharacteristic, true );
         }
@@ -1980,9 +2103,55 @@ public class BTLEAdt implements IPenAdt
     }
 
     @Override
-    public void setPipedInputStream( PipedInputStream pipedInputStream) {
+    public void setPipedInputStream(PipedInputStream pipedInputStream) {
         return;
     }
 
 
+    @Override
+    public short getColorCode() throws ProtocolNotSupportedException{
+        if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 ) {
+            if ( !isConnected() )
+            {
+                return 0;
+            }
+            return ((CommProcessor20) mConnectionThread.getPacketProcessor()).getColorCode();
+        }
+        else
+        {
+            throw new ProtocolNotSupportedException( "getColorCode ( ) is supported from protocol 2.0 !!!" );
+        }
+    }
+
+    @Override
+    public short getProductCode()throws ProtocolNotSupportedException {
+        if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 ) {
+            if ( !isConnected() )
+            {
+                return 0;
+            }
+            return ((CommProcessor20) mConnectionThread.getPacketProcessor()).getProductCode();
+
+        }
+        else
+        {
+            throw new ProtocolNotSupportedException( "getProductCode ( ) is supported from protocol 2.0 !!!" );
+        }
+    }
+
+    @Override
+    public short getCompanyCode() throws ProtocolNotSupportedException{
+        if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )
+        {
+            if ( !isConnected() )
+            {
+                return 0;
+            }
+            return ((CommProcessor20) mConnectionThread.getPacketProcessor()).getCompanyCode();
+        }
+        else
+        {
+            throw new ProtocolNotSupportedException( "getCompanyCode ( ) is supported from protocol 2.0 !!!" );
+        }
+    }
 }

@@ -13,6 +13,7 @@ import kr.neolab.sdk.metadata.IMetadataListener;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
 import kr.neolab.sdk.pen.bluetooth.BTAdt;
 import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
+import kr.neolab.sdk.pen.bluetooth.lib.OutOfRangeException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IOfflineDataListener;
@@ -183,14 +184,19 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 		connect(address, null, false);
 	}
 
+	@Deprecated
+	public void connect(String sppAddress, String leAddress, boolean isLeMode) {
+		connect(sppAddress, leAddress,isLeMode, BTLEAdt.UUID_VER.VER_2);
+	}
+
     @Override
-    public void connect(String sppAddress, String leAddress, boolean isLeMode) {
+    public void connect(String sppAddress, String leAddress, boolean isLeMode, BTLEAdt.UUID_VER uuidVer) {
 		if(mConnectedCollection.containsKey(sppAddress) && ((isLeMode && mConnectedCollection.get(sppAddress) instanceof BTLEAdt) || (!isLeMode && mConnectedCollection.get(sppAddress) instanceof BTAdt)))
 		{
 			if(mConnectedCollection.get(sppAddress) instanceof BTAdt)
 				((BTAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress);
 			else
-				((BTLEAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress, leAddress);
+				((BTLEAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress, leAddress, uuidVer);
 
 		}
 		else
@@ -210,7 +216,7 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			if(mBTAdt instanceof BTAdt )
 				((BTAdt)mBTAdt).connect(sppAddress);
 			else
-				((BTLEAdt)mBTAdt).connect(sppAddress, leAddress);
+				((BTLEAdt)mBTAdt).connect(sppAddress, leAddress, uuidVer);
 		}
     }
 
@@ -381,7 +387,7 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 	}
 	
 	@Override
-	public void reqAddUsingNote(String address, int sectionId, int ownerId, int[] noteIds)
+	public void reqAddUsingNote(String address, int sectionId, int ownerId, int[] noteIds) throws OutOfRangeException
 	{
 		IPenAdt mPenAdt = (mConnectedCollection.get(address));
 		if(mPenAdt != null)
@@ -413,7 +419,7 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 	}
 
 	@Override
-	public void reqAddUsingNote ( String address, ArrayList<UseNoteData> noteList ) throws ProtocolNotSupportedException
+	public void reqAddUsingNote ( String address, ArrayList<UseNoteData> noteList ) throws ProtocolNotSupportedException, OutOfRangeException
 	{
 		IPenAdt mPenAdt = (mConnectedCollection.get(address));
 		if(mPenAdt != null)
@@ -437,17 +443,33 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 	}
 
 	@Override
-	public void reqOfflineData(String address, int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException
+	public void reqOfflineData(String address, int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException, OutOfRangeException
 	{
 		reqOfflineData( address, sectionId, ownerId, noteId, true, pageIds);
 	}
 
 	@Override
-	public void reqOfflineData(String address, int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds) throws ProtocolNotSupportedException
+	public void reqOfflineData(String address, int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds) throws ProtocolNotSupportedException, OutOfRangeException
 	{
 		IPenAdt mPenAdt = (mConnectedCollection.get(address));
 		if(mPenAdt != null)
 			mPenAdt.reqOfflineData( sectionId, ownerId, noteId, deleteOnFinished, pageIds);
+	}
+
+	@Override
+	public void reqOfflineData(Object extra, String address, int sectionId, int ownerId, int noteId) {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			mPenAdt.reqOfflineData( extra, sectionId, ownerId, noteId );
+
+	}
+
+	@Override
+	public void reqOfflineData(Object extra, String address, int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			mPenAdt.reqOfflineData( extra, sectionId, ownerId, noteId ,pageIds);
+
 	}
 
 	@Override
@@ -488,6 +510,14 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 		IPenAdt mPenAdt = (mConnectedCollection.get(address));
 		if(mPenAdt != null)
 			mPenAdt.removeOfflineData(sectionId, ownerId, noteIds);
+	}
+
+	@Override
+	public void reqOfflineNoteInfo( String address, int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException
+	{
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			mPenAdt.reqOfflineNoteInfo(sectionId, ownerId, noteId);
 	}
 
 	@Override
@@ -553,6 +583,14 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 		if(mPenAdt != null)
 			mPenAdt.reqSetupPenHover( on );
 	}
+
+    @Override
+    public void reqSetupPenDiskReset ( String address )  throws ProtocolNotSupportedException
+    {
+        IPenAdt mPenAdt = (mConnectedCollection.get(address));
+        if(mPenAdt != null)
+            mPenAdt.reqSetupPenDiskReset();
+    }
 
 
 //	@Override
@@ -648,7 +686,6 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 		IPenAdt mPenAdt = (mConnectedCollection.get(address));
 		if(mPenAdt != null)
 			mPenAdt.readProfileValue ( proFileName, keys );
-
 	}
 
 	@Override
@@ -695,6 +732,33 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 		}
 		else
 			return false;
+	}
+
+	@Override
+	public short getColorCode(String address)throws ProtocolNotSupportedException{
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			return mPenAdt.getColorCode();
+		else
+			return 0;
+	}
+
+	@Override
+	public short getProductCode(String address)throws ProtocolNotSupportedException{
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			return mPenAdt.getProductCode();
+		else
+			return 0;
+	}
+
+	@Override
+	public short getCompanyCode(String address)throws ProtocolNotSupportedException{
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			return mPenAdt.getCompanyCode();
+		else
+			return 0;
 	}
 
 	/**

@@ -147,9 +147,16 @@ public class CMD20
     public static final int REQ_PenStatusChange_TYPE_SensitivitySet = 0x09;
 
     /**
+     * v2.08
      * The constant REQ_PenStatusChange_TYPE_SensitivitySet_FSC.
      */
     public static final int REQ_PenStatusChange_TYPE_SensitivitySet_FSC = 0x0D;
+
+    /**
+     * v2.15
+     * The constant REQ_PenStatusChange_TYPE_Disk_Reset.
+     */
+    public static final int REQ_PenStatusChange_TYPE_Disk_Reset = 0x11;
 
     /**
      * The constant REQ_UsingNoteNotify.
@@ -201,6 +208,15 @@ public class CMD20
      * The constant RES_OfflineNoteRemove.
      */
     public static final int RES_OfflineNoteRemove = 0xA5;
+
+    /**
+     * The constant REQ_OfflineNoteInfo.
+     */
+    public static final int REQ_OfflineNoteInfo = 0x26;
+    /**
+     * The constant RES_OfflineNoteInfo.
+     */
+    public static final int RES_OfflineNoteInfo = 0xA6;
 
     /**
      * The constant REQ_PenFWUpgrade.

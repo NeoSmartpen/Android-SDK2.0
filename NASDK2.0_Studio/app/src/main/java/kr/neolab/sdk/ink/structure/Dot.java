@@ -231,7 +231,7 @@ color = Color.BLACK;
     /**
      * Returns the y coordinate of the dot
      *
-     * @return y y
+     * @return y
      */
     public float getY ()
     {

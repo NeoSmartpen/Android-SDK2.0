@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import kr.neolab.sdk.pen.IPenCtrl;
 import kr.neolab.sdk.pen.PenCtrl;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
+import kr.neolab.sdk.pen.bluetooth.lib.OutOfRangeException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IPenMsgListener;
 import kr.neolab.sdk.pen.penmsg.JsonTag;
@@ -312,6 +313,11 @@ public class PenClientCtrl implements IPenMsgListener
 		iPenCtrl.removeOfflineData( sectionId, ownerId, noteIds );
 	}
 
+	public void reqOfflineNoteInfo( int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException
+	{
+		iPenCtrl.reqOfflineNoteInfo( sectionId, ownerId, noteId );
+	}
+
     /**
      * Req pen status.
      */
@@ -456,7 +462,7 @@ public class PenClientCtrl implements IPenMsgListener
 
 				// to request offline data list
 				// 오프라인 데이터 전체 요청
-				iPenCtrl.reqOfflineDataList();
+				//iPenCtrl.reqOfflineDataList();
 
 				// 오프라인 데이터 노트단위 요청
 //				iPenCtrl.reqOfflineData( USING_SECTION_ID,USING_OWNER_ID,301, false );
@@ -664,7 +670,8 @@ public class PenClientCtrl implements IPenMsgListener
 				catch ( JSONException e )
 				{
 					e.printStackTrace();
-				} catch ( ProtocolNotSupportedException e )
+				}
+				catch ( ProtocolNotSupportedException e )
 				{
 					e.printStackTrace();
 				}
@@ -708,6 +715,9 @@ public class PenClientCtrl implements IPenMsgListener
 				{
 					e.printStackTrace();
 				} catch ( ProtocolNotSupportedException e )
+				{
+					e.printStackTrace();
+				} catch ( OutOfRangeException e )
 				{
 					e.printStackTrace();
 				}

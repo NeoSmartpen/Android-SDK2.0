@@ -14,6 +14,7 @@ import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
 import kr.neolab.sdk.pen.bluetooth.BTAdt;
 import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
 import kr.neolab.sdk.pen.bluetooth.BTOfflineAdt;
+import kr.neolab.sdk.pen.bluetooth.lib.OutOfRangeException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IOfflineDataListener;
@@ -123,6 +124,21 @@ public class PenCtrl implements IPenCtrl {
 		return currentAdt.unpairDevice(address);
 	}
 
+	@Override
+	public short getColorCode()throws ProtocolNotSupportedException{
+		return currentAdt.getColorCode();
+	}
+
+	@Override
+	public short getProductCode()throws ProtocolNotSupportedException{
+		return currentAdt.getProductCode();
+	}
+
+	@Override
+	public short getCompanyCode()throws ProtocolNotSupportedException {
+		return currentAdt.getCompanyCode();
+	}
+
 	/**
 	 * Gets an instance of the Pen Controller
 	 *
@@ -206,13 +222,19 @@ public class PenCtrl implements IPenCtrl {
 		currentAdt.connect(address);
 	}
 
-	@Override
+	@Deprecated
 	public void connect( String sppAddress, String leAddress )
+	{
+		connect(sppAddress, leAddress, BTLEAdt.UUID_VER.VER_2);
+	}
+
+	@Override
+	public void connect(String sppAddress, String leAddress, BTLEAdt.UUID_VER uuidVer)
 	{
 		if(currentAdt instanceof BTAdt)
 			((BTAdt)currentAdt).connect(sppAddress);
 		else
-			((BTLEAdt)currentAdt).connect(sppAddress, leAddress);
+			((BTLEAdt)currentAdt).connect(sppAddress, leAddress, uuidVer);
 	}
 
     @Override
@@ -323,7 +345,7 @@ public class PenCtrl implements IPenCtrl {
 	}
 	
 	@Override
-	public void reqAddUsingNote(int sectionId, int ownerId, int[] noteIds) 
+	public void reqAddUsingNote(int sectionId, int ownerId, int[] noteIds) throws OutOfRangeException
 	{
 		currentAdt.reqAddUsingNote( sectionId, ownerId, noteIds );
 	}
@@ -347,7 +369,7 @@ public class PenCtrl implements IPenCtrl {
 	}
 
 	@Override
-	public void reqAddUsingNote ( ArrayList<UseNoteData> noteList ) throws ProtocolNotSupportedException
+	public void reqAddUsingNote ( ArrayList<UseNoteData> noteList ) throws ProtocolNotSupportedException, OutOfRangeException
 	{
 		currentAdt.reqAddUsingNote(noteList);
 	}
@@ -365,15 +387,26 @@ public class PenCtrl implements IPenCtrl {
 	}
 
 	@Override
-	public void reqOfflineData(int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException
+	public void reqOfflineData(int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException, OutOfRangeException
 	{
 		reqOfflineData( sectionId, ownerId, noteId, true, pageIds);
 	}
 
 	@Override
-	public void reqOfflineData(int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds) throws ProtocolNotSupportedException
+	public void reqOfflineData(int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds) throws ProtocolNotSupportedException, OutOfRangeException
 	{
 		currentAdt.reqOfflineData( sectionId, ownerId, noteId, deleteOnFinished, pageIds);
+	}
+
+	@Override
+	public void reqOfflineData(Object extra, int sectionId, int ownerId, int noteId) {
+		currentAdt.reqOfflineData( extra, sectionId, ownerId, noteId );
+	}
+
+
+	@Override
+	public void reqOfflineData(Object extra, int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException {
+		currentAdt.reqOfflineData( extra, sectionId, ownerId, noteId ,pageIds);
 	}
 
 	@Override
@@ -404,6 +437,12 @@ public class PenCtrl implements IPenCtrl {
 	public void removeOfflineData ( int sectionId, int ownerId, int[] noteIds ) throws ProtocolNotSupportedException
 	{
 		currentAdt.removeOfflineData(sectionId, ownerId, noteIds);
+	}
+
+	@Override
+	public void reqOfflineNoteInfo( int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException
+	{
+		currentAdt.reqOfflineNoteInfo( sectionId, ownerId, noteId );
 	}
 
 	@Override
@@ -459,6 +498,12 @@ public class PenCtrl implements IPenCtrl {
 	{
 		currentAdt.reqSetupPenHover( on );
 	}
+
+    @Override
+    public void reqSetupPenDiskReset()  throws ProtocolNotSupportedException
+    {
+        currentAdt.reqSetupPenDiskReset();
+    }
 
 
 	@Override

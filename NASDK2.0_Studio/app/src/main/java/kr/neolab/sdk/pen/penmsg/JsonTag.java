@@ -88,6 +88,9 @@ public class JsonTag
     public final static String INT_MEMORY_STATUS = "used_memory";
     /**
      * Added to Protocol 2.0
+     * Edited to Protocol 2.15
+     * NAP400 based model - pencap off
+     * MT2523 based model(NWP-F51) - pencap on/off
      */
     public final static String BOOL_PENCAP_OFF = "pencap_onoff";
     /**
@@ -123,6 +126,22 @@ public class JsonTag
      * Added to Protocol 2.0
      */
     public final static String BOOL_OFFLINEDATA_SAVE = "offlinedata_save";
+
+    /**
+     * Added to Protocol 2.16
+     */
+    public final static String BOOL_OFFLINE_INFO_INVALID_PAGE = "offline_invalid_page";
+
+    /**
+     * Added to Protocol 2.16
+     */
+    public final static String STRING_OFFLINE_INFO_PAGE_LIST = "offline_page_list";
+
+    /**
+     * Added to Protocol 2.16
+     */
+    public final static String INT_NOTE_VERSION = "note_version";
+
     /**
      * The constant INT_PEN_SENSITIVITY.
      */
@@ -160,6 +179,10 @@ public class JsonTag
      * The constant STRING_FILE_PATH.
      */
     public final static String STRING_FILE_PATH = "file_path";
+    /**
+     * The constant OFFLINE_EXTRA.
+     */
+    public final static String OFFLINE_EXTRA = "offline_extra";
 
     /**
      * The constant INT_PASSWORD_RETRY_COUNT.

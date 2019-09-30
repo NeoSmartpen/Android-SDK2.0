@@ -474,6 +474,49 @@ public class MainActivity extends Activity
 
 				return true;
 
+			case R.id.action_offline_note_info:
+				if(connectionMode == 0)
+				{
+					if(penClientCtrl.isAuthorized())
+					{
+						try
+						{
+							penClientCtrl.reqOfflineNoteInfo( currentSectionId, currentOwnerId, currentBookcodeId );
+						} catch ( ProtocolNotSupportedException e )
+						{
+							e.printStackTrace();
+						}
+					}
+				}
+				else
+				{
+					connectedList = multiPenClientCtrl.getConnectDevice();
+					if(connectedList.size() > 0)
+					{
+						AlertDialog.Builder builder;
+						String[] addresses = connectedList.toArray( new String[connectedList.size()]);
+						builder = new AlertDialog.Builder( this );
+						builder.setSingleChoiceItems( addresses, 0, new DialogInterface.OnClickListener()
+						{
+							@Override
+							public void onClick ( DialogInterface dialog, int which )
+							{
+								try
+								{
+									multiPenClientCtrl.reqOfflineNoteInfo( connectedList.get( which ), currentSectionId, currentOwnerId, currentBookcodeId );
+								} catch ( ProtocolNotSupportedException e )
+								{
+									e.printStackTrace();
+								}
+
+								dialog.dismiss();
+							}
+						});
+						builder.create().show();
+					}
+				}
+				return true;
+
 			case R.id.action_upgrade:
 				if(connectionMode == 0)
 				{
@@ -617,7 +660,6 @@ public class MainActivity extends Activity
 				return true;
 
 			case R.id.action_db_export:
-
 				// DB Export
 				Util.spliteExport( this );
 
@@ -829,6 +871,28 @@ public class MainActivity extends Activity
 				if(inputPassDialog == null)
 					inputPassDialog = new InputPasswordDialog( this, this );
 				inputPassDialog.show(penAddress);
+			}
+
+			case PenMsgType.OFFLINE_NOTE_INFO:
+			{
+				try
+				{
+					JSONObject job = new JSONObject( content );
+
+					int sectionId = job.getInt( JsonTag.INT_SECTION_ID );
+					int ownerId = job.getInt( JsonTag.INT_OWNER_ID );
+					int noteId = job.getInt( JsonTag.INT_NOTE_ID );
+					int noteVersion = job.getInt( kr.neolab.sdk.pen.penmsg.JsonTag.INT_NOTE_VERSION );
+					boolean isInvalidpage = job.getBoolean( kr.neolab.sdk.pen.penmsg.JsonTag.BOOL_OFFLINE_INFO_INVALID_PAGE );
+					String pageList = job.getString( kr.neolab.sdk.pen.penmsg.JsonTag.STRING_OFFLINE_INFO_PAGE_LIST );
+
+					Util.showToast( this, "offline note info => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId + ", isInvalidPage : " + isInvalidpage + " pageList : " + pageList );
+//					Log.d( TAG, "offline note info => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId + ", isInvalidPage : " + isInvalidpage + " pageList : " + msg );
+				}
+				catch ( JSONException e )
+				{
+					e.printStackTrace();
+				}
 			}
 			break;
 

@@ -7,6 +7,8 @@ import java.util.ArrayList;
 
 import kr.neolab.sdk.metadata.IMetadataListener;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
+import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
+import kr.neolab.sdk.pen.bluetooth.lib.OutOfRangeException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IOfflineDataListener;
@@ -86,11 +88,13 @@ public interface IMultiPenCtrl
      */
     public void connect ( String sppAddress, String leAddress, boolean isLeMode );
 
+    public void connect(String sppAddress, String leAddress, boolean isLeMode, BTLEAdt.UUID_VER uuidVer);
+
     /**
-     * And disconnect the connection with pen
-     *
-     * @param address MAC address of pen
-     */
+    * And disconnect the connection with pen
+    *
+    * @param address MAC address of pen
+    */
     public void disconnect ( String address );
 
     /**
@@ -233,7 +237,7 @@ public interface IMultiPenCtrl
      * @param ownerId   owner id of note
      * @param noteIds   array of note id
      */
-    public void reqAddUsingNote ( String address, int sectionId, int ownerId, int[] noteIds );
+    public void reqAddUsingNote ( String address, int sectionId, int ownerId, int[] noteIds ) throws OutOfRangeException;
 
     /**
      * Notes for use in applications specified.
@@ -272,7 +276,7 @@ public interface IMultiPenCtrl
      * @param noteList the note list
      * @throws ProtocolNotSupportedException the protocol not supported exception
      */
-    public void reqAddUsingNote ( String address, ArrayList<UseNoteData> noteList ) throws ProtocolNotSupportedException;
+    public void reqAddUsingNote ( String address, ArrayList<UseNoteData> noteList ) throws ProtocolNotSupportedException, OutOfRangeException;
 
     /**
      * The pen is stored in an offline transfer of data requested.
@@ -309,7 +313,7 @@ public interface IMultiPenCtrl
      * @param pageIds   the page ids
      * @throws ProtocolNotSupportedException the protocol not supported exception
      */
-    public void reqOfflineData ( String address, int sectionId, int ownerId, int noteId, int[] pageIds ) throws ProtocolNotSupportedException;
+    public void reqOfflineData ( String address, int sectionId, int ownerId, int noteId, int[] pageIds ) throws ProtocolNotSupportedException, OutOfRangeException;
 
     /**
      * The pen is stored in an offline transfer of data requested.
@@ -323,7 +327,33 @@ public interface IMultiPenCtrl
      * @param pageIds   the page ids
      * @throws ProtocolNotSupportedException the protocol not supported exception
      */
-    public void reqOfflineData(String address, int sectionId, int ownerId, int noteId,  boolean deleteOnFinished, int[] pageIds) throws ProtocolNotSupportedException;
+    public void reqOfflineData(String address, int sectionId, int ownerId, int noteId,  boolean deleteOnFinished, int[] pageIds) throws ProtocolNotSupportedException, OutOfRangeException;
+
+    /**
+     * The pen is stored in an offline transfer of data requested.
+     * (Please note that this function is not synchronized. If multiple threads concurrently try to run this function, explicit synchronization must be done externally.)
+     *
+     * @param extra extra data
+     * @param address   MAC address of pen
+     * @param sectionId section id of note
+     * @param ownerId   owner id of note
+     * @param noteId    of note
+     */
+    public void reqOfflineData(Object extra,String address, int sectionId, int ownerId, int noteId);
+
+    /**
+     * The pen is stored in an offline transfer of data requested.
+     * supported from Protocol 2.0
+     *
+     * @param extra extra data
+     * @param address   MAC address of pen
+     * @param sectionId the section id
+     * @param ownerId   the owner id
+     * @param noteId    the note id
+     * @param pageIds   the page ids
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void reqOfflineData(Object extra, String address, int sectionId, int ownerId, int noteId , int[] pageIds) throws ProtocolNotSupportedException;
 
     /**
      * The offline data is stored in the pen to request information.
@@ -377,6 +407,18 @@ public interface IMultiPenCtrl
      * @throws ProtocolNotSupportedException the protocol not supported exception
      */
     public void removeOfflineData ( String address, int sectionId, int ownerId, int[] noteIds ) throws ProtocolNotSupportedException;
+
+    /**
+     * Request offline note info.
+     * supported from Protocol 2.16
+     *
+     * @param address   MAC address of pen
+     * @param sectionId the section id
+     * @param ownerId   the owner id
+     * @param noteId   the note id
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void reqOfflineNoteInfo ( String address, int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException;
 
     /**
      * Connected to the current state of the pen provided.
@@ -444,6 +486,15 @@ public interface IMultiPenCtrl
      * @throws ProtocolNotSupportedException the protocol not supported exception
      */
     public void reqSetupPenHover ( String address, boolean on ) throws ProtocolNotSupportedException;
+
+    /**
+     * Req setup pen disk reset.
+     * supported from Protocol 2.0
+     *
+     * @param address MAC address of pen
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void reqSetupPenDiskReset ( String address ) throws ProtocolNotSupportedException;
 
 //    /**
 //     * register Broadcast for remove BT Duplicate connect.
@@ -570,4 +621,25 @@ public interface IMultiPenCtrl
      * @return if success, return true
      */
     public boolean unpairDevice ( String address );
+
+
+    /**
+     * unknown :0  1,2,3...
+     *
+     * @return the pen color(type) code
+     */
+    public short getColorCode(String address)throws ProtocolNotSupportedException;
+    /**
+     * unknown :0  1,2,3...
+     *
+     * @return the pen product code
+     */
+    public short getProductCode(String address)throws ProtocolNotSupportedException;
+    /**
+     * unknown :0  1,2,3...
+     *
+     * @return the pen company code
+     */
+    public short getCompanyCode(String address)throws ProtocolNotSupportedException;
+
 }

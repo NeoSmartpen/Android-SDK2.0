@@ -11,6 +11,7 @@ public interface IOfflineDataListener
     /**
      * On receive offline strokes.
      *
+     * @param extra extra data
      * @param penAddress the pen address
      * @param strokes    the strokes
      * @param sectionId  the section id
@@ -18,6 +19,6 @@ public interface IOfflineDataListener
      * @param noteId     the note id
      * @param symbols   the detected symbols
      */
-    public void onReceiveOfflineStrokes(String penAddress, Stroke[] strokes,int sectionId, int ownerId, int noteId, Symbol[] symbols);
+    public void onReceiveOfflineStrokes(Object extra,String penAddress, Stroke[] strokes,int sectionId, int ownerId, int noteId, Symbol[] symbols);
 
 }

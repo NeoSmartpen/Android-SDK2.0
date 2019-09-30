@@ -13,7 +13,7 @@ import kr.neolab.sdk.renderer.Renderer;
 
 public class StrokeUtil
 {
-    public static Bitmap StrokeToImage( Stroke[] strokes, float scale)
+    public static Bitmap StrokeToImage(Stroke[] strokes, float scale)
     {
         float minX, minY, maxX, maxY, offsetX, offsetY ;
         int width, height;

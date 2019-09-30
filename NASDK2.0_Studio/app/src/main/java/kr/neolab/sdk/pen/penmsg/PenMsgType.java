@@ -92,6 +92,11 @@ public class PenMsgType
      */
     public final static int PEN_SETUP_SENSITIVITY_RESULT_FSC   = 0x19;
 
+    /**
+     * The constant PEN_SETUP_DISK_RESET_RESULT.
+     */
+    public final static int PEN_SETUP_DISK_RESET_RESULT   = 0x28;
+
 
 
     /**
@@ -180,7 +185,7 @@ public class PenMsgType
      * Off-line data stored in the pen's
      * supported from Protocol 2.0
      */
-    public final static int OFFLINE_DATA_PAGE_LIST	    = 0x63;
+    public final static int OFFLINE_DATA_PAGE_LIST	    = 0x39;
 
     /**
      * The constant OFFLINE_DATA_SEND_START.
@@ -214,6 +219,11 @@ public class PenMsgType
      * The constant OFFLINE_DATA_FILE_DELETED.
      */
     public final static int OFFLINE_DATA_FILE_DELETED	= 0x36;
+
+    /**
+     * The constant OFFLINE_NOTE_INFO.
+     */
+    public final static int OFFLINE_NOTE_INFO	= 0x38;
 
     /**
      * The constant PASSWORD_REQUEST.

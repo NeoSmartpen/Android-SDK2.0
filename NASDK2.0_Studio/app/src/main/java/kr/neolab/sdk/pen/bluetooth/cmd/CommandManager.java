@@ -163,6 +163,16 @@ abstract public class CommandManager
     abstract public void reqOfflineData ( int sectionId, int ownerId, int noteId );
 
     /**
+     * Req offline data.
+     *
+     * @param extra extra data
+     * @param sectionId the section id
+     * @param ownerId   the owner id
+     * @param noteId    the note id
+     */
+    abstract public void reqOfflineData ( Object extra, int sectionId, int ownerId, int noteId );
+
+    /**
      * Req offline data list.
      */
     abstract public void reqOfflineDataList ();
@@ -214,6 +224,20 @@ abstract public class CommandManager
      * @return the boolean
      */
     abstract public boolean isSupportPenProfile ();
+
+    /**
+     * Is support offline note Info boolean.
+     *
+     * @return the boolean
+     */
+    abstract public boolean isSupportOfflineNoteInfo ();
+
+    /**
+     * Is support count limit boolean.
+     *
+     * @return the boolean
+     */
+    abstract public boolean isSupportCountLimit ();
 
     /**
      * Create profile.

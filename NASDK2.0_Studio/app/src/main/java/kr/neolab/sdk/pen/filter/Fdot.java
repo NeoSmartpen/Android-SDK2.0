@@ -201,7 +201,9 @@ public class Fdot extends Dot implements Parcelable
      */
     public Dot toDot()
     {
-        return new Dot( x, y, pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color,penTipType,tiltX, tiltY,  twist );
+        Dot d = new Dot( x, y, pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color,penTipType,tiltX, tiltY,  twist);
+        d.macAddress = mac_address;
+        return d;
     }
 
     @Override

@@ -31,6 +31,7 @@ import kr.neolab.sdk.pen.IPenAdt;
 import kr.neolab.sdk.pen.bluetooth.cmd.CommandManager;
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor;
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20;
+import kr.neolab.sdk.pen.bluetooth.lib.OutOfRangeException;
 import kr.neolab.sdk.pen.bluetooth.lib.PenProfile;
 import kr.neolab.sdk.pen.bluetooth.lib.ProfileKeyValueLimitException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
@@ -160,6 +161,51 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
 
     public void setPipedInputStream(PipedInputStream pipedInputStream) {
         mPipedInputStream = pipedInputStream;
+    }
+
+    @Override
+    public short getColorCode() throws ProtocolNotSupportedException {
+        if (mConnectionThread.getPacketProcessor() instanceof CommProcessor20) {
+            if (!isConnected()) {
+                return 0;
+            }
+
+            return ((CommProcessor20) mConnectionThread.getPacketProcessor()).getColorCode();
+        }
+        else
+        {
+            throw new ProtocolNotSupportedException( "getColorCode ( ) is supported from protocol 2.0 !!!" );
+        }
+    }
+
+    @Override
+    public short getProductCode() throws ProtocolNotSupportedException {
+        if (mConnectionThread.getPacketProcessor() instanceof CommProcessor20) {
+            if (!isConnected()) {
+                return 0;
+            }
+
+            return ((CommProcessor20) mConnectionThread.getPacketProcessor()).getProductCode();
+        }
+        else
+        {
+            throw new ProtocolNotSupportedException( "getProductCode ( ) is supported from protocol 2.0 !!!" );
+        }
+    }
+
+    @Override
+    public short getCompanyCode() throws ProtocolNotSupportedException {
+        if (mConnectionThread.getPacketProcessor() instanceof CommProcessor20) {
+            if (!isConnected()) {
+                return 0;
+            }
+
+            return ((CommProcessor20) mConnectionThread.getPacketProcessor()).getColorCode();
+        }
+        else
+        {
+            throw new ProtocolNotSupportedException( "getCompanyCode ( ) is supported from protocol 2.0 !!!" );
+        }
     }
 
     @Override
@@ -1119,7 +1165,7 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
                         }
                     }
                 }
-                offlineDataListener.onReceiveOfflineStrokes( penAddress,  offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]) );
+                offlineDataListener.onReceiveOfflineStrokes( offlineByteData.extraData, penAddress,  offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]) );
             }
         }
     }
@@ -1634,7 +1680,7 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
                             }
                         }
                     }
-                    offlineDataListener.onReceiveOfflineStrokes(penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]));
+                    offlineDataListener.onReceiveOfflineStrokes(offlineByteData.extraData, penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]));
                 }
                 break;
 
@@ -1726,19 +1772,24 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
             throw new ProtocolNotSupportedException( "reqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished )is supported from protocol 2.0 !!!" );
         }
 
-        mConnectionThread.getPacketProcessor().reqOfflineData( sectionId, ownerId, noteId );
     }
 
     @Override
-    public void reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds ) throws ProtocolNotSupportedException
+    public void reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds ) throws ProtocolNotSupportedException, OutOfRangeException
     {
         reqOfflineData( sectionId, ownerId, noteId, true, pageIds );
     }
 
     @Override
-    public void reqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds ) throws ProtocolNotSupportedException
+    public void reqOfflineData ( int sectionId, int ownerId, int noteId, boolean deleteOnFinished, int[] pageIds ) throws ProtocolNotSupportedException, OutOfRangeException
     {
         if ( !isConnected() ) return;
+
+        if( mConnectionThread.getPacketProcessor().isSupportCountLimit() && pageIds.length > 128 )
+        {
+            NLog.e( "reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds ) page must less then 128 from protocol 2.15 !!!" );
+            throw new OutOfRangeException( "reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds ) page must less then 128 from protocol 2.15 !!!" );
+        }
 
         if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )
             ( (CommProcessor20) mConnectionThread.getPacketProcessor() ).reqOfflineData( sectionId, ownerId, noteId, deleteOnFinished, pageIds );
@@ -1746,6 +1797,33 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
         {
             NLog.e( "reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds )is supported from protocol 2.0 !!!" );
             throw new ProtocolNotSupportedException( "reqOfflineData ( int sectionId, int ownerId, int noteId, int[] pageIds )is supported from protocol 2.0 !!!" );
+        }
+
+    }
+
+    @Override
+    public void reqOfflineData(Object extra, int sectionId, int ownerId, int noteId) {
+        if ( !isConnected() )
+        {
+            return;
+        }
+
+        mConnectionThread.getPacketProcessor().reqOfflineData( extra, sectionId, ownerId, noteId );
+
+    }
+
+    @Override
+    public void reqOfflineData(Object extra, int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException {
+        if ( !isConnected() )
+        {
+            return;
+        }
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+            ((CommProcessor20)mConnectionThread.getPacketProcessor()).reqOfflineData( extra, sectionId, ownerId, noteId, pageIds );
+        else
+        {
+            NLog.e( "reqOfflineData ( Object extra, int sectionId, int ownerId, int noteId, int[] pageIds )is supported from protocol 2.0 !!!" );
+            throw new ProtocolNotSupportedException( "reqOfflineData ( Object extra, int sectionId, int ownerId, int noteId, int[] pageIds )is supported from protocol 2.0 !!!" );
         }
 
     }
@@ -1828,6 +1906,22 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
         }
 
 
+    }
+
+    @Override
+    public void reqOfflineNoteInfo( int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException
+    {
+        if ( !isConnected() )
+        {
+            return;
+        }
+        if(mConnectionThread.getPacketProcessor().isSupportOfflineNoteInfo())
+            ((CommProcessor20)mConnectionThread.getPacketProcessor()).reqOfflineNoteInfo( sectionId, ownerId, noteId );
+        else
+        {
+            NLog.e( "reqOfflineNoteInfo( int sectionId, int ownerId, int noteId ) is supported from protocol 2.16 !!!" );
+            throw new ProtocolNotSupportedException( "reqOfflineNoteInfo( int sectionId, int ownerId, int noteId ) is supported from protocol 2.16 !!!" );
+        }
     }
 
     @Override
@@ -1939,6 +2033,23 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
         {
             NLog.e( "reqSetupPenHover ( boolean on ) is supported from protocol 2.0 !!!" );
             throw new ProtocolNotSupportedException( "reqSetupPenHover ( boolean on ) is supported from protocol 2.0 !!!" );
+        }
+    }
+
+    @Override
+    public void reqSetupPenDiskReset ( ) throws ProtocolNotSupportedException
+    {
+        if ( !isConnected() )
+        {
+            return;
+        }
+
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+            ((CommProcessor20)mConnectionThread.getPacketProcessor()).reqSetPenDiskReset();
+        else
+        {
+            NLog.e( "reqSetupPenDiskReset () is supported from protocol 2.0 !!!" );
+            throw new ProtocolNotSupportedException( "reqSetupPenDiskReset () is supported from protocol 2.0 !!!" );
         }
     }
 

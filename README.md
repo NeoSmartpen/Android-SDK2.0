@@ -30,7 +30,7 @@ Click the link below to view a beginners guide to Ncode technology.
 
 javadoc link :https://neosmartpen.github.io/Android-SDK2.0/
  
-SDK Document link :https://github.com/NeoSmartpen/Android-SDK2.0/blob/master/NeoSmartpen_SDK_Android_V217.pdf
+SDK Document link :https://github.com/NeoSmartpen/Android-SDK2.0/blob/master/NeoSmartpen_SDK_Android_V2110.pdf
 
 ## Guide to ‘Finding Bluetooth devices’
 

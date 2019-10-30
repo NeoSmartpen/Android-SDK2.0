@@ -357,8 +357,8 @@ public class BTLEAdt implements IPenAdt
             {
                 watchDogAlreadyCalled = true;
                 NLog.d( "Run WatchDot : connect failed" );
-                responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
                 onDisconnected();
+                responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
                 close();
             }
         };
@@ -1244,9 +1244,9 @@ public class BTLEAdt implements IPenAdt
             }
         }
 
+        onDisconnected();
 	    responseMsg( new PenMsg( PenMsgType.PEN_DISCONNECTED, job ) );
 
-        onDisconnected();
         mIsRegularDisconnect = false;
         mIsWriteSuccessed = true;
     }
@@ -1838,8 +1838,8 @@ public class BTLEAdt implements IPenAdt
 //                    }
                     if ( mConnectionThread == null )
                     {
-                        responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
                         onDisconnected();
+                        responseMsg( new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE ) );
                     }
                     close();
                     break;

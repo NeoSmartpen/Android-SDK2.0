@@ -457,14 +457,14 @@ public class MultiPenClientCtrl implements IPenMsgListener
 				// 오프라인 데이터 전체 요청
 				iPenCtrl.reqOfflineDataList(macAddress);
 
-//				// 오프라인 데이터 노트단위 요청
-//				iPenCtrl.reqOfflineData( macAddress, USING_SECTION_ID,USING_OWNER_ID,301, false );
+//				// to request offline data by note
+//				iPenCtrl.reqOfflineData( macAddress, USING_SECTION_ID,USING_OWNER_ID,301 );
 //
-//				// 오프라인 데이터 페이지 단위 요청
+//				// to request offline data by page
 //				int[] pageIds = {0, 1, 5};
 //				try
 //				{
-//					iPenCtrl.reqOfflineData( macAddress, USING_SECTION_ID, USING_OWNER_ID, 301, false, pageIds );
+//					iPenCtrl.reqOfflineData( macAddress, USING_SECTION_ID, USING_OWNER_ID, 301, pageIds );
 //				} catch ( ProtocolNotSupportedException e )
 //				{
 //					e.printStackTrace();
@@ -645,16 +645,11 @@ public class MultiPenClientCtrl implements IPenMsgListener
 						int noteId = jobj.getInt( Const.JsonTag.INT_NOTE_ID );
 						NLog.d( "offline(" + ( i + 1 ) + ") note => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId );
 
-						// 오프라인 데이터 리스트 노트북 단위로 받기
-						// deleteOnFinished 를 false 로 설정하였다면, 오프라인데이터를 받은 후 직접 삭제해주어야 한다.
-						iPenCtrl.reqOfflineData(macAddress, sectionId,  ownerId, noteId, false );
+						iPenCtrl.reqOfflineData(macAddress, sectionId,  ownerId, noteId );
 					}
 
 				}
 				catch ( JSONException e )
-				{
-					e.printStackTrace();
-				} catch ( ProtocolNotSupportedException e )
 				{
 					e.printStackTrace();
 				}

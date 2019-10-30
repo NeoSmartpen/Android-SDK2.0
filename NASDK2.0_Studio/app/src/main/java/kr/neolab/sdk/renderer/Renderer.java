@@ -12,6 +12,7 @@ import kr.neolab.sdk.ink.structure.Stroke;
  * @author CHY
  *
  */
+@Deprecated
 public class Renderer 
 {
 

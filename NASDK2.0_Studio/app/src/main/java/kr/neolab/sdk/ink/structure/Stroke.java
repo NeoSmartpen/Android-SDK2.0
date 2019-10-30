@@ -8,7 +8,9 @@ import android.os.Parcelable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import kr.neolab.sdk.renderer.ControlPoint;
 import kr.neolab.sdk.util.NLog;
 
 /**
@@ -19,6 +21,10 @@ import kr.neolab.sdk.util.NLog;
 public class Stroke implements Parcelable
 {
 	private ArrayList<Dot> dots = null;
+	private boolean cpRecalcRequired = true;
+
+	// for Rendering
+	private ArrayList<ControlPoint> outputs = null;
 
 	/**
 	 * The constant STROKE_TYPE_NORMAL.
@@ -130,6 +136,7 @@ thickness = 1;
 	public Stroke( int sectionId, int ownerId, int noteId, int pageId, int color, int type )
 	{
 		this.dots = new ArrayList<Dot>();
+		this.outputs = new ArrayList<ControlPoint>();
 		this.sectionId = sectionId;
 		this.ownerId = ownerId;
 		this.noteId = noteId;
@@ -184,9 +191,132 @@ thickness = 1;
 			this.timeStampEnd = dot.timestamp;
 		}
 
+		cpRecalcRequired = true;
 		this.dots.add( dot );
 
 		return true;
+	}
+
+	/**
+	 * Add Dot to Stroke
+	 *
+	 * @param forceUpdate force update
+	 */
+	public void preProcessPoints( boolean forceUpdate )
+	{
+		if( !forceUpdate && !cpRecalcRequired )
+			return;
+
+		outputs.clear();
+
+		int count = dots.size();
+
+		for ( int i = 0; i < count; i++ ) {
+			// if end 2 points are same, put 1 point.
+			if ( i > 0 && i == count - 1 && ( dots.get(i).x == dots.get(i - 1).x && dots.get(i).y == dots.get(i - 1).y ) )
+				continue;
+			else {
+				double force = dots.get(i).pressure == 0 ? 0 : 1.0;
+				outputs.add( new ControlPoint( dots.get(i).x , dots.get(i).y, force ) );
+			}
+		}
+
+		// count again
+		count = outputs.size();
+
+		// after reduce dot, if a only dot remain put one more dot.
+		if ( count == 1 ) {
+			ControlPoint np = new ControlPoint( outputs.get(0).x + 0.1 , outputs.get(0).y + 0.1, outputs.get(0).force );
+			outputs.add(np);
+		}
+
+		getControlPoint( outputs, outputs.size(), false, "catmull-rom" , 0.5 );
+
+		cpRecalcRequired = false;
+	}
+
+	protected void getControlPoint(List< ControlPoint > p, int count, boolean closePath, String type, double factor ) {
+
+		ControlPoint p0 = new ControlPoint();	// prev point
+		ControlPoint p1 = new ControlPoint();	// current point
+		ControlPoint p2 = new ControlPoint();	// next point
+
+		for ( int i = 0; i < count; i++ ) {
+
+			p1.set( p.get( i ) );
+
+			if ( i == 0 ) {
+				if ( closePath )
+					p0.set( p.get( count - 1 ) );
+				else
+					p0.set( p1 );
+			} else {
+				p0.set( p.get( i-1 ) );
+			}
+
+			if ( i == count - 1 ) {
+				if ( closePath )
+					p2.set( p.get( 0 ) );
+				else
+					p2.set( p1 );
+			} else
+				p2.set( p.get( i+1 ) );
+
+			double d1 = p0.getDistance( p1 );
+			double d2 = p1.getDistance( p2 );
+
+			if ( type.equals( "catmull-rom") ) {
+				double d1_a = Math.pow( d1,  factor );	// factor default value : 0.5
+				double d1_2a = d1_a * d1_a;
+				double d2_a = Math.pow( d2,  factor );
+				double d2_2a = d2_a * d2_a;
+
+				if ( i != 0 || closePath ) {
+					double A = 2 * d2_2a + 3 * d2_a * d1_a + d1_2a;
+					double N = 3 * d2_a * ( d2_a + d1_a );
+
+					if ( N != 0 )
+						p.get( i ).setIn( ( d2_2a * p0.x + A * p1.x - d1_2a * p2.x ) / N, ( d2_2a * p0.y + A * p1.y - d1_2a * p2.y ) / N );
+					else
+						p.get( i ).setIn( p1 );
+				} else
+					p.get( i ).setIn( p1 );
+
+				if ( i != count - 1 || closePath ) {
+					double A = 2 * d1_2a + 3 * d1_a * d2_a + d2_2a;
+					double N = 3 * d1_a * ( d1_a + d2_a );
+
+					if ( N != 0 )
+						p.get( i ).setOut( ( d1_2a * p2.x + A * p1.x - d2_2a * p0.x ) / N, ( d1_2a * p2.y + A * p1.y - d2_2a * p0.y ) / N );
+					else
+						p.get( i ).setOut( p1 );
+				} else
+					p.get( i ).setOut( p1 );
+			}
+			else if ( type.equals( "geometric" ) ) {
+				double vx = p0.x - p2.x;
+				double vy = p0.y - p2.y;
+				double t = factor;	// factor default value : 0.5
+				double k = t * d1 / ( d1 + d2 );
+
+				if ( i != 0 || closePath )
+					p.get( i ).setIn( p1.x + vx * k, p1.y + vy * k);
+				else
+					p.get( i ).setIn( p1 );
+
+				if ( i != count - 1 || closePath )
+					p.get( i ).setOut( p1.x + vx * ( k - t ), p1.y + vy * ( k - t ) );
+				else
+					p.get( i ).setOut( p1 );
+			}
+		}
+	}
+
+	public ArrayList<ControlPoint> getOutput()
+	{
+		if( cpRecalcRequired || outputs == null || outputs.size() == 0 )
+			preProcessPoints(false);
+		return outputs;
 	}
 
 	/**

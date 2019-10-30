@@ -5,9 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.view.SurfaceHolder;
 import android.view.View;
 
 import java.io.BufferedWriter;
@@ -23,7 +24,7 @@ import kr.neolab.sdk.ink.structure.DotType;
 import kr.neolab.sdk.ink.structure.Stroke;
 import kr.neolab.sdk.metadata.MetadataCtrl;
 import kr.neolab.sdk.metadata.structure.Symbol;
-import kr.neolab.sdk.renderer.Renderer;
+import kr.neolab.sdk.renderer.Renderer2;
 import kr.neolab.sdk.util.StrokeUtil;
 
 public class SampleView extends View
@@ -34,11 +35,14 @@ public class SampleView extends View
 	}
 
 	// paper background
+	boolean isPenDownOrMove = false;
 	private Bitmap background = null;
+	private Canvas mCanvas = new Canvas();
 
-	public Canvas canvas;
 	// draw the strokes
 	public ArrayList<Stroke> strokes = new ArrayList<Stroke>();
+	private Path path = new Path();
+	private Paint paint = new Paint();
 
 //	private Stroke stroke = null;
 	private HashMap<String, Stroke> mapStroke = new HashMap<String, Stroke>();
@@ -56,7 +60,24 @@ public class SampleView extends View
 	public SampleView( Context context )
 	{
 		super( context );
+		paint.setStyle(Paint.Style.STROKE);
+	}
 
+	private void initView()
+	{
+		strokes.clear();
+		if( background != null) {
+			background.recycle();
+			background = null;
+		}
+
+		paper_scale = 11;
+		offsetX = 0;
+		offsetY = 0;
+		paper_offsetX = 0;
+		paper_offsetY = 0;
+		paper_width = 0;
+		paper_height = 0;
 	}
 
 	public void setPage( float width, float height,float dx, float dy ,String backImagePath)
@@ -80,6 +101,7 @@ public class SampleView extends View
 		else
 			paper_scale = height_ratio;
 
+
 //		paper_scale = Math.max( width_ratio, height_ratio );
 
 		int docWidth = (int) (paper_width * paper_scale);
@@ -100,6 +122,7 @@ public class SampleView extends View
 
 		}
 
+
 		Bitmap temp_pdf3 = BitmapFactory.decodeFile( backImagePath );
 		if( temp_pdf3 == null )
 			temp_pdf3 = Bitmap.createBitmap(docWidth, docHeight, Bitmap.Config.ARGB_8888);
@@ -111,34 +134,38 @@ public class SampleView extends View
 	public void draw( Canvas canvas )
 	{
 		super.draw( canvas );
-		this.canvas = canvas;
 		if(background == null)
 		{
 			canvas.drawColor( Color.LTGRAY );
+
+			if ( strokes != null && strokes.size() > 0 )
+			{
+				float screen_offset_x = -paper_offsetX * paper_scale;
+				float screen_offset_y = -paper_offsetY * paper_scale;
+
+				// draw all strokes
+				Renderer2.draw( canvas, strokes.toArray( new Stroke[0] ), paper_scale, screen_offset_x+offsetX, screen_offset_y+offsetY );
+			}
 		}
 		else
 		{
 			int zoom_w = (int) ( paper_width * paper_scale );
 			int zoom_h = (int) ( paper_height * paper_scale );
-//					소스 렉트값 지정 및 타겟 렉트값 찾기
+
 			Rect source = new Rect( 0, 0, background.getWidth(), background.getHeight() );
 			RectF target = new RectF( offsetX, offsetY, offsetX + zoom_w, offsetY + zoom_h );
+
 			canvas.drawBitmap( background, source, target, null );
+
+			// before pen up(stroke end), draw simple path
+			if (isPenDownOrMove)
+				canvas.drawPath(path, paint);
 		}
 
-		if ( strokes != null && strokes.size() > 0 )
-		{
-			float screen_offset_x = -paper_offsetX * paper_scale;
-			float screen_offset_y = -paper_offsetY * paper_scale;
-
-			Renderer.draw( canvas, strokes.toArray( new Stroke[0] ), paper_scale, screen_offset_x+offsetX, screen_offset_y+offsetY, Stroke.STROKE_TYPE_PEN );
-		}
 	}
 
-	public void addDot( String penAddress, Dot dot )
-	{
-		if ( this.sectionId != dot.sectionId || this.ownerId != dot.ownerId || this.noteId != dot.noteId || this.pageId != dot.pageId )
-		{
+	public void addDot( String penAddress, Dot dot ) {
+		if (this.sectionId != dot.sectionId || this.ownerId != dot.ownerId || this.noteId != dot.noteId || this.pageId != dot.pageId) {
 			strokes = new ArrayList<Stroke>();
 
 			this.sectionId = dot.sectionId;
@@ -147,13 +174,29 @@ public class SampleView extends View
 			this.pageId = dot.pageId;
 		}
 
-		if ( DotType.isPenActionDown( dot.dotType ) || mapStroke.get( penAddress ) == null || mapStroke.get( penAddress ).isReadOnly() )
-		{
-			mapStroke.put(penAddress, new Stroke( sectionId, ownerId, noteId, pageId, dot.color ) ) ;
-			strokes.add( mapStroke.get( penAddress ) );
-		}
+		// calculate dot / paper scale
+		float screen_offset_x = -paper_offsetX * paper_scale;
+		float screen_offset_y = -paper_offsetY * paper_scale;
+		float x = (dot.x * paper_scale)  + screen_offset_x + offsetX;
+		float y = (dot.y * paper_scale) + screen_offset_y + offsetY;
 
-		mapStroke.get( penAddress ).add( dot );
+		if (DotType.isPenActionDown(dot.dotType) || mapStroke.get(penAddress) == null || mapStroke.get(penAddress).isReadOnly()) {
+			mapStroke.put(penAddress, new Stroke(sectionId, ownerId, noteId, pageId, dot.color));
+			strokes.add(mapStroke.get(penAddress));
+			path.reset();
+			path.moveTo(x, y);
+			isPenDownOrMove = true;
+		}
+		else
+			path.lineTo(x, y);
+
+		mapStroke.get(penAddress).add(dot);
+		mapStroke.get(penAddress).preProcessPoints( false );
+
+		if (DotType.isPenActionUp(dot.dotType)) {
+			isPenDownOrMove = false;
+			drawStroke();
+		}
 
 		invalidate();
 	}
@@ -167,14 +210,24 @@ public class SampleView extends View
 		invalidate();
 	}
 
-	public void setBackgroundImage(Bitmap bitmap)
+	private void drawStroke()
 	{
+		path.reset();
+		mCanvas.setBitmap(background);
 
+		if ( strokes != null && strokes.size() > 0 )
+		{
+			float screen_offset_x = -paper_offsetX * paper_scale;
+			float screen_offset_y = -paper_offsetY * paper_scale;
+
+			// if you draw specific stroke, use this
+			Renderer2.draw( mCanvas, strokes.get(strokes.size()-1), paper_scale, screen_offset_x+offsetX, screen_offset_y+offsetY );
+		}
 	}
 
 	public void changePage(int sectionId, int ownerId, int noteId, int pageId)
 	{
-		strokes.clear();
+		initView();
 
 		float width = metadataCtrl.getPageWidth( noteId, pageId );
 		float height = metadataCtrl.getPageHeight( noteId, pageId );
@@ -240,55 +293,55 @@ public class SampleView extends View
 		}
 	}
 
-	public class SampleThread extends Thread
-	{
-		private SurfaceHolder surfaceholder;
-		private SampleView mSampleiView;
-		private boolean running = false;
-
-		public SampleThread( SurfaceHolder surfaceholder, SampleView mView )
-		{
-			this.surfaceholder = surfaceholder;
-			this.mSampleiView = mView;
-		}
-
-		public void setRunning( boolean run )
-		{
-			running = run;
-		}
-
-		@Override
-		public void run()
-		{
-			setName( "SampleThread" );
-
-			Canvas mCanvas;
-
-			while ( running )
-			{
-				mCanvas = null;
-
-				try
-				{
-					mCanvas = surfaceholder.lockCanvas(); // lock canvas
-
-					synchronized ( surfaceholder )
-					{
-						if ( mCanvas != null )
-						{
-							mSampleiView.draw( mCanvas );
-						}
-					}
-				}
-				finally
-				{
-					if ( mCanvas != null )
-					{
-						surfaceholder.unlockCanvasAndPost( mCanvas ); // unlock
-						// canvas
-					}
-				}
-			}
-		}
-	}
+//	public class SampleThread extends Thread
+//	{
+//		private SurfaceHolder surfaceholder;
+//		private SampleView mSampleiView;
+//		private boolean running = false;
+//
+//		public SampleThread( SurfaceHolder surfaceholder, SampleView mView )
+//		{
+//			this.surfaceholder = surfaceholder;
+//			this.mSampleiView = mView;
+//		}
+//
+//		public void setRunning( boolean run )
+//		{
+//			running = run;
+//		}
+//
+//		@Override
+//		public void run()
+//		{
+//			setName( "SampleThread" );
+//
+//			Canvas mCanvas;
+//
+//			while ( running )
+//			{
+//				mCanvas = null;
+//
+//				try
+//				{
+//					mCanvas = surfaceholder.lockCanvas(); // lock canvas
+//
+//					synchronized ( surfaceholder )
+//					{
+//						if ( mCanvas != null )
+//						{
+//							mSampleiView.draw( mCanvas );
+//						}
+//					}
+//				}
+//				finally
+//				{
+//					if ( mCanvas != null )
+//					{
+//						surfaceholder.unlockCanvasAndPost( mCanvas ); // unlock
+//						// canvas
+//					}
+//				}
+//			}
+//		}
+//	}
 }

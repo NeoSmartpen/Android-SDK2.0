@@ -216,6 +216,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 	private short productCode = 0;
 
+	private int stat_battery = 0;
 
 	private class ChkOfflineFailRunnable implements Runnable{
 
@@ -655,8 +656,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					boolean stat_autopower = pack.getDataRangeInt( 17, 1 ) == 0 ? false : true;
 					boolean stat_beep = pack.getDataRangeInt( 18, 1 ) == 0 ? false : true;
 					boolean stat_hovermode = pack.getDataRangeInt( 19, 1 ) == 0 ? false : true;
-					int stat_battery = pack.getDataRangeInt( 20, 1 );
-
+					stat_battery = pack.getDataRangeInt( 20, 1 );
 					boolean stat_offlinedata_save = pack.getDataRangeInt( 21, 1 ) == 0 ? false : true;
 					NLog.d( "[CommProcessor20] received RES_PenStatus(0x84) command. stat_battery="+stat_battery +",isLock="+isLock+",stat_offlinedata_save="+stat_offlinedata_save+",maxPress="+maxPress);
 					int stat_sensitivity = pack.getDataRangeInt( 22, 1 );
@@ -2091,7 +2091,9 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 							try
 							{
 
-								JSONObject job2 = new JSONObject().put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() ).put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
+								JSONObject job2 = new JSONObject().put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
+										.put( JsonTag.INT_BATTERY_STATUS, stat_battery )
+										.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
 								btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job2 ) );
 							} catch ( JSONException e )
 							{

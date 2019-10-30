@@ -7,6 +7,7 @@ import android.graphics.Path;
 
 import kr.neolab.sdk.ink.structure.Stroke;
 
+@Deprecated
 public class StrokeDrawer
 {
 	public static float LINE_THICKNESS_SCALE = 1 / 1400f;

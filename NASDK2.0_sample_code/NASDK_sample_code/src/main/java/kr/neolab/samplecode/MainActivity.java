@@ -802,7 +802,6 @@ public class MainActivity extends Activity
 				break;
 
 			// Progress of the data transfer process offline
-			// 오프라인 데이타를 전송 받을 때, 얼만큼 받았는지 확인 가능
 			case PenMsgType.OFFLINE_DATA_SEND_STATUS:
 			{
 				try
@@ -988,11 +987,6 @@ public class MainActivity extends Activity
 					mSampleView.addStrokes(penAddress, strokes);
 				}
 
-				// DB에 저장 후, 오프라인 데이터를 삭제합니다.
-				// 오프라인 데이터 요청 시, deleteOnFinished 를 true 로 요청했었다면, 아래의 과정은 필요없습니다.
-				// (오프라인 데이터 요청은 PenClientCtrl, MutiPenClientCtrl 에서 확인할 수 있습니다)
-				if( sectionId != -1 && ownerId != -1 && noteId != -1)
-				deleteOfflineData( penAddress, sectionId, ownerId, noteId );
 			}
 			else if(Broadcast.ACTION_WRITE_PAGE_CHANGED.equals( action ))
 			{

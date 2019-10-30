@@ -233,7 +233,6 @@ public class ProfileTestActivity extends Activity
                     byte[][] data = new byte[1][1];
                     data[0] = profile_value_edit.getText().toString().getBytes();
 
-//                    리틀인디언 테스트 가능하게 변수타입에 따라 할수있도록 수정할것
 //                    data[0] = ByteBuffer.allocate( 4 ).putInt( 123 ).array();
 
 //                    PenClientCtrl.getInstance( this ).getIPenCtrl().writeProfileValue( profile_name_edit.getText().toString(), NEOLAB_PROFILE_PASS, new String[]{profile_key_edit.getText().toString()},data);

@@ -49,6 +49,7 @@ public class DeviceListActivity extends Activity
     public static String EXTRA_DEVICE_SPP_ADDRESS = "device_spp_address";
     public static String EXTRA_DEVICE_LE_ADDRESS = "device_le_address";
     public static String EXTRA_IS_BLUETOOTH_LE = "is_bluetooth_le";
+    public static String EXTRA_DEVICE_NAME = "device_name";
 
     // Member fields
     private BluetoothAdapter mBtAdapter;
@@ -359,6 +360,7 @@ public class DeviceListActivity extends Activity
             String info = ((TextView) v).getText().toString();
             String sppAddress = info.substring(info.length() - 17);
             NLog.d("[SdkSampleCode] select address : " + sppAddress);
+            String device_name = info.substring(0, info.indexOf( "\n" )-1);
 
 
             // Create the result Intent and include the MAC address           
@@ -366,6 +368,7 @@ public class DeviceListActivity extends Activity
             intent.putExtra(EXTRA_DEVICE_SPP_ADDRESS, sppAddress);
             intent.putExtra(EXTRA_DEVICE_LE_ADDRESS, temp.get( sppAddress ) );
             intent.putExtra(EXTRA_IS_BLUETOOTH_LE, is_le_scan);
+            intent.putExtra( EXTRA_DEVICE_NAME, device_name );
 
             // Set result and finish this Activity
             setResult(Activity.RESULT_OK, intent);

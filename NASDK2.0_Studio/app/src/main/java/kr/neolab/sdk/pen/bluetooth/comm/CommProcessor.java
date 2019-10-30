@@ -137,6 +137,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 
 
 	private Object extraData = null;
+	private int stat_battery = 0;
 
 	private class ChkOfflineFailRunnable implements Runnable{
 
@@ -758,7 +759,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 				int stat_timezone = pack.getDataRangeInt( 2, 4 );
 				long stat_timetick = pack.getDataRangeLong( 6, 8 );
 				int stat_forcemax = pack.getDataRangeInt( 14, 1 );
-				int stat_battery = pack.getDataRangeInt( 15, 1 );
+				stat_battery = pack.getDataRangeInt( 15, 1 );
 				int stat_usedmem = pack.getDataRangeInt( 16, 1 );
 
 				byte[] cbyte = pack.getDataRange( 17, 4 );
@@ -822,7 +823,9 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 					{
 						JSONObject job = new JSONObject()
 								.put( JsonTag.STRING_PEN_MAC_ADDRESS, btConnection.getMacAddress() )
+								.put( JsonTag.INT_BATTERY_STATUS, stat_battery )
 								.put( JsonTag.STRING_PEN_PASSWORD, currentPassword );
+
 						btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_AUTHORIZED, job ) );
 					}
 					catch ( JSONException e )

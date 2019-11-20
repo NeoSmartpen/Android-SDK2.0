@@ -49,6 +49,7 @@ public class ImageProcess {
         linePaint.setAntiAlias( true );
         linePaint.setStyle( Paint.Style.STROKE );
         linePaint.setStrokeCap( Paint.Cap.ROUND );
+        linePaint.setStrokeWidth( mPenThickness);
     }
 
     private static void drawStrokeLine( Canvas canvas, float scale, float offset_x, float offset_y, List< ControlPoint > mid )

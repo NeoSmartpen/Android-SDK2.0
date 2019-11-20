@@ -37,7 +37,7 @@ captures/
 .idea/workspace.xml
 .idea/tasks.xml
 .idea/gradle.xml
-.idea/libraries
+.idea/libraries/
 
 # Keystore files
 *.jks
@@ -52,3 +52,16 @@ google-services.json
 freeline.py
 freeline/
 freeline_project_description.json
+
+.DS_Store
+*.iml
+NASDK2.0_sample_code/.idea/workspace.xml
+NASDK2.0_sample_code/.idea/tasks.xml
+NASDK2.0_sample_code/.idea/gradle.xml
+NASDK2.0_sample_code/.idea/assetWizardSettings.xml
+NASDK2.0_sample_code/.idea/dictionaries
+NASDK2.0_sample_code/.idea/libraries
+NASDK2.0_sample_code/.idea/caches/
+NASDK2.0_sample_code/.idea/codeStyles/Project.xml
+NASDK2.0_sample_code/.idea/misc.xml
+

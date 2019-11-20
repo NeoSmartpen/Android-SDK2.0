@@ -7,9 +7,7 @@ import android.graphics.Path;
 import java.util.List;
 
 public class PathControl {
-
-    // 세 점의 사이 각을 구하는 함수
-    // 최적화 필요
+    
     protected static double getAngle( ControlPoint p1, ControlPoint p2, ControlPoint p3 ) {
         double a,b,c;
         double angle, temp;
@@ -26,7 +24,6 @@ public class PathControl {
         return angle;
     }
 
-    // 이하 splitPoints를 얻기 위한 private 함수
     private static ControlPoint getPoint12( ControlPoint pts1, double t ) {
         double x1 = pts1.x;
         double y1 = pts1.y;
@@ -87,9 +84,6 @@ public class PathControl {
         return splitPoint;
     }
 
-    // 곡선에 추가 포인트를 넣는 함수
-    // 세 점을 기준으로 각도가 t_angle보다 작으면 가운데 점의 좌우 t만큼의 지점에 추가로 ControlPoint를 넣는다.
-    // 급격하게 선이 꺾일 때 두께가 이상하게 나오는 현상을 감소시킬 수 있다.
     protected static void getSplitPoints( List< ControlPoint > pts, double t, double t_angle ) {
 
         int count = pts.size();
@@ -99,12 +93,12 @@ public class PathControl {
 
         double t2 = 1.0 - t;
 
-        int i = 1;	// 첫번째 가운데 점
+        int i = 1;
         while ( i < pts.size() - 1 ) {
             double angle = getAngle( pts.get(i-1), pts.get(i), pts.get(i+1) );
             if ( angle < t_angle ) {
 
-                {	// 앞쪽에 추가되는 컨트롤 포인트
+                {
                     ControlPoint point12 = getPoint12( pts.get( i-1 ), t2 );
                     ControlPoint point34 = getPoint34( pts.get( i ), t2 );
                     ControlPoint splitPoint = getSplitPoint( pts.get( i-1 ), pts.get( i ), t2 );
@@ -120,7 +114,7 @@ public class PathControl {
                     pts.get( i+1 ).setIn( point34 );
                 }
 
-                {	// 뒤쪽에 추가되는 컨트롤 포인트
+                {
                     ControlPoint point12 = getPoint12( pts.get( i+1 ), t );
                     ControlPoint point34 = getPoint34( pts.get( i+2 ), t );
                     ControlPoint splitPoint = getSplitPoint( pts.get( i+1 ), pts.get( i+2 ), t );
@@ -199,8 +193,6 @@ public class PathControl {
         canvas.drawPath( p, paint );
     }
 
-    // 가까운 점을 제거하고 곡선이 아닌 라인상 거리를 재서 점을 없앨지 판단하는 로직
-    // O(n)으로 처리하기 위해 복잡한 계산을 피하고 그 대신 완벽한 결과물을 요구하지도 않는다.
     private static int isNear( ControlPoint p1, ControlPoint p2, ControlPoint p3, double tp, double tl ) {
 
         double l12 = p1.getDistance( p2 );
@@ -236,41 +228,40 @@ public class PathControl {
         return 0;
     }
 
-    protected static void simplify( List< ControlPoint > pts, int maxThickness ) {
+    protected static void simplify( List< ControlPoint > pts, float maxThickness ) {
 
         int midIndex = 0;
         double forceTemp;
 
         while ( midIndex < pts.size() - 2 && pts.size() > 2 ) {
 
-            double t_point = 0;		// 가까운 점을 제거하기 위한 거리 값
-            double t_line = 0;		// 라인에서 떨어진 값을 제거하기 위한 거리 값
+            double t_point = 0;
+            double t_line = 0;
 
-            t_point = maxThickness / 2.0;
-            t_line = maxThickness / 10.0;
+            t_point = maxThickness / 2.0 / 56f;
+            t_line = maxThickness / 10.0 / 56f;
 
-            // 1, 3, 2 순서로 점을 입력한다
             int result = isNear( pts.get(midIndex), pts.get(midIndex + 2), pts.get(midIndex + 1), t_point, t_line );
 
             switch (result) {
-                case 0:		// 지울 점이 없는 경우
+                case 0:
                     midIndex++;
                     break;
-                case 1:		// 첫 점을 지움
+                case 1:
                     forceTemp = pts.get( midIndex ).force > pts.get( midIndex + 1 ).force
                             ? pts.get( midIndex ).force : pts.get( midIndex + 1 ).force;
                     pts.get( midIndex ).set( pts.get( midIndex + 1 ) );
                     pts.get( midIndex ).force = forceTemp;
                     pts.remove( midIndex + 1 );
                     break;
-                case 2:		// 끝 점을 지움
+                case 2:
                     forceTemp = pts.get( midIndex + 1 ).force > pts.get( midIndex + 2 ).force
                             ? pts.get( midIndex + 1 ).force : pts.get( midIndex + 2 ).force;
                     pts.get( midIndex + 2 ).set( pts.get( midIndex + 1 ) );
                     pts.get( midIndex + 2 ).force = forceTemp;
                     pts.remove( midIndex + 1 );
                     break;
-                case 3:		// 가운데 점을 지움
+                case 3:
                     pts.get( midIndex ).force = pts.get( midIndex ).force > pts.get( midIndex + 1 ).force
                             ? pts.get( midIndex ).force : pts.get( midIndex + 1 ).force;
                     pts.get( midIndex + 2 ).force = pts.get( midIndex + 1 ).force > pts.get( midIndex + 2 ).force
@@ -281,19 +272,19 @@ public class PathControl {
         }
     }
 
-    protected static void removeTail( List< ControlPoint > pts, int maxThickness ) {
+    protected static void removeTail( List< ControlPoint > pts, float maxThickness ) {
 
         double distTailMax = 0;
 
-        distTailMax = maxThickness / 2;
+        distTailMax = maxThickness / 2 / 56f;
 
-        boolean findFirstTail = true;		// 진행중 첫 꼬리를 더 찾을 필요 없어지만 false
-        int firstTailPoint = 0;				// 첫 꼬리로 판단되는 지점의 index
-        int lastTailPoint = 0;				// 마지막 꼬리로 판단되는 지점의 index
-        double distFirstTail = 0;			// 측정중인 첫 꼬리의 길이
-        double finalDistFirstTail = 0;		// 첫 꼬리의 확정적인 길이(꼬리를 찾을 경우에 값이 들어감)
-        double distLastTail = 0;			// 측정중인 마지막 꼬리의 길이
-        double lastTailAngle = 0;			// 마지막 꼬리를 찾았을때 꼬리의 각도
+        boolean findFirstTail = true;
+        int firstTailPoint = 0;
+        int lastTailPoint = 0;
+        double distFirstTail = 0;
+        double finalDistFirstTail = 0;
+        double distLastTail = 0;
+        double lastTailAngle = 0;
 
         for ( int i = 0; i < pts.size() - 2; ++i ) {
             double angle = Math.abs( PathControl.getAngle( pts.get(i), pts.get(i+1), pts.get(i+2) ) );
@@ -316,14 +307,14 @@ public class PathControl {
             }
         }
 
-        // 첫 꼬리 제거
+
         if ( firstTailPoint != 0 ) {
             if ( finalDistFirstTail > 0 && firstTailPoint < pts.size() ) {
                 pts = pts.subList( firstTailPoint, pts.size() );
                 lastTailPoint -= firstTailPoint;
             }
         }
-        // 마지막 꼬리 제거
+
         if ( lastTailPoint != 0 ) {
             if ( distLastTail < (180.0 - lastTailAngle) / 90.0 * distTailMax && lastTailPoint < pts.size() )
                 pts = pts.subList( 0, lastTailPoint + 1 );

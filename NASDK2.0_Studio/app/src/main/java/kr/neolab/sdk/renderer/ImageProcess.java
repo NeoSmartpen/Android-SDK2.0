@@ -22,7 +22,7 @@ public class ImageProcess {
     public static float[] mFP;		// float pressure
 
     // pen attribute
-    protected static int mPenThickness = 1;
+    protected static float mPenThickness = 1;
     protected static int mPenAlpha = 255;
 
     // for line drawing
@@ -40,7 +40,7 @@ public class ImageProcess {
         mFP = new float[mN];
     }
 
-    public static void setPenType(int penThickness, int penColor)
+    public static void setPenType(float penThickness, int penColor)
     {
         mPenThickness = penThickness;
 
@@ -49,11 +49,20 @@ public class ImageProcess {
         linePaint.setAntiAlias( true );
         linePaint.setStyle( Paint.Style.STROKE );
         linePaint.setStrokeCap( Paint.Cap.ROUND );
-        linePaint.setStrokeWidth( mPenThickness);
+        linePaint.setStrokeWidth( mPenThickness );
+        linePaint.setStrokeJoin( Paint.Join.ROUND );
     }
 
     private static void drawStrokeLine( Canvas canvas, float scale, float offset_x, float offset_y, List< ControlPoint > mid )
     {
+        int count = mid.size();
+
+        if ( count > 2 )
+            PathControl.simplify( mid, mPenThickness );
+
+        if ( count > 2 )
+            PathControl.removeTail( mid, mPenThickness );
+
         Path p = PathControl.getBezierPath( mid, scale, offset_x, offset_y, false );
         canvas.drawPath( p, linePaint );
     }

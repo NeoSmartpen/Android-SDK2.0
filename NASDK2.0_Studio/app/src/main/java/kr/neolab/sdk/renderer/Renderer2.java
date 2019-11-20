@@ -34,7 +34,7 @@ public class Renderer2
      * @param width width of complete stroke
      * @param color color of complete stroke
      */
-    public static void draw(Canvas canvas, Stroke stroke, float scale, float offset_x, float offset_y, int width, int color )
+    public static void draw(Canvas canvas, Stroke stroke, float scale, float offset_x, float offset_y, float width, int color )
     {
         int length = stroke.getDots().size();
 
@@ -83,7 +83,7 @@ public class Renderer2
      * @param width width of complete stroke
      * @param color color of complete stroke
      */
-    public static void draw(Canvas canvas, Stroke[] strokes, float scale, float offset_x, float offset_y, int width, int color )
+    public static void draw(Canvas canvas, Stroke[] strokes, float scale, float offset_x, float offset_y, float width, int color )
     {
         for ( int i=0; i<strokes.length; i++ )
         {

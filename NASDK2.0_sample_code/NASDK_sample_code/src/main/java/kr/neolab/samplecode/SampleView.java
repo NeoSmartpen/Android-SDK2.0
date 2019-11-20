@@ -41,8 +41,8 @@ public class SampleView extends View
 
 	// draw the strokes
 	public ArrayList<Stroke> strokes = new ArrayList<Stroke>();
-	private Path path = new Path();
-	private Paint paint = new Paint();
+	private Path prePath = new Path();
+	private Paint prePaint = new Paint();
 
 //	private Stroke stroke = null;
 	private HashMap<String, Stroke> mapStroke = new HashMap<String, Stroke>();
@@ -54,13 +54,17 @@ public class SampleView extends View
 
 	private MetadataCtrl metadataCtrl = MetadataCtrl.getInstance();
 
+	private float strokeWidth = 10;
 
 	private ZoomFitType mZoomFitType = ZoomFitType.FIT_WIDTH;
 
 	public SampleView( Context context )
 	{
 		super( context );
-		paint.setStyle(Paint.Style.STROKE);
+		prePaint.setAntiAlias(true);
+        prePaint.setStyle(Paint.Style.STROKE);
+		prePaint.setStrokeCap(Paint.Cap.ROUND);
+		prePaint.setStrokeWidth(strokeWidth);
 	}
 
 	private void initView()
@@ -144,7 +148,7 @@ public class SampleView extends View
 				float screen_offset_y = -paper_offsetY * paper_scale;
 
 				// draw all strokes
-				Renderer2.draw( canvas, strokes.toArray( new Stroke[0] ), paper_scale, screen_offset_x+offsetX, screen_offset_y+offsetY );
+				Renderer2.draw( canvas, strokes.toArray( new Stroke[0] ), paper_scale, screen_offset_x+offsetX, screen_offset_y+offsetY, strokeWidth , Color.BLACK );
 			}
 		}
 		else
@@ -157,9 +161,9 @@ public class SampleView extends View
 
 			canvas.drawBitmap( background, source, target, null );
 
-			// before pen up(stroke end), draw simple path
+			// before pen up(stroke end), draw simple prePath
 			if (isPenDownOrMove)
-				canvas.drawPath(path, paint);
+				canvas.drawPath(prePath, prePaint);
 		}
 
 	}
@@ -183,12 +187,12 @@ public class SampleView extends View
 		if (DotType.isPenActionDown(dot.dotType) || mapStroke.get(penAddress) == null || mapStroke.get(penAddress).isReadOnly()) {
 			mapStroke.put(penAddress, new Stroke(sectionId, ownerId, noteId, pageId, dot.color));
 			strokes.add(mapStroke.get(penAddress));
-			path.reset();
-			path.moveTo(x, y);
+			prePath.reset();
+			prePath.moveTo(x, y);
 			isPenDownOrMove = true;
 		}
 		else
-			path.lineTo(x, y);
+			prePath.lineTo(x, y);
 
 		mapStroke.get(penAddress).add(dot);
 		mapStroke.get(penAddress).preProcessPoints( false );
@@ -212,7 +216,7 @@ public class SampleView extends View
 
 	private void drawStroke()
 	{
-		path.reset();
+		prePath.reset();
 		mCanvas.setBitmap(background);
 
 		if ( strokes != null && strokes.size() > 0 )
@@ -220,8 +224,7 @@ public class SampleView extends View
 			float screen_offset_x = -paper_offsetX * paper_scale;
 			float screen_offset_y = -paper_offsetY * paper_scale;
 
-			// if you draw specific stroke, use this
-			Renderer2.draw( mCanvas, strokes.get(strokes.size()-1), paper_scale, screen_offset_x+offsetX, screen_offset_y+offsetY );
+			Renderer2.draw( mCanvas, strokes.get(strokes.size()-1), paper_scale, screen_offset_x+offsetX, screen_offset_y+offsetY, strokeWidth , Color.BLACK );
 		}
 	}
 

@@ -19,6 +19,7 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.ParcelUuid;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -33,7 +34,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
 import kr.neolab.sdk.util.NLog;
+import kr.neolab.sdk.util.UuidUtil;
 
 
 /**
@@ -50,6 +53,8 @@ public class DeviceListActivity extends Activity
     public static String EXTRA_DEVICE_LE_ADDRESS = "device_le_address";
     public static String EXTRA_IS_BLUETOOTH_LE = "is_bluetooth_le";
     public static String EXTRA_DEVICE_NAME = "device_name";
+    public static String EXTRA_UUID_VER = "uuid_ver";
+    public static String EXTRA_COLOR_CODE = "device_color_code";
 
     // Member fields
     private BluetoothAdapter mBtAdapter;
@@ -60,7 +65,7 @@ public class DeviceListActivity extends Activity
     private List<ScanFilter> mScanFilters;
     private ArrayAdapter<String> mPairedDevicesArrayAdapter;
     private ArrayAdapter<String> mNewDevicesArrayAdapter;
-    HashMap<String, String> temp = new HashMap<>();
+    HashMap<String, DeviceInfo> deviceMap = new HashMap<>();
     Button scanButton;
     Button scanLEButton;
     boolean is_le_scan = false;
@@ -73,25 +78,41 @@ public class DeviceListActivity extends Activity
             BluetoothDevice device = result.getDevice();
             if ( device != null )
             {
-                String sppAddress = changeAddressFromLeToSpp(result.getScanRecord().getBytes());
+                String sppAddress = UuidUtil.changeAddressFromLeToSpp(result.getScanRecord().getBytes());
                 String msg = device.getName() + "\n" +"[RSSI : " + result.getRssi() + "dBm]" + sppAddress;
                 NLog.d( "onLeScan " + msg );
                 /**
                  * have to change adapter to BLE
                  */
-                if( !temp.containsKey( sppAddress ) )
+                if( !deviceMap.containsKey( sppAddress ) )
                 {
                     NLog.d( "ACTION_FOUND onLeScan : " + device.getName() + " sppAddress : " + sppAddress + ", COD:" + device.getBluetoothClass() );
 
                     PenClientCtrl.getInstance( DeviceListActivity.this ).setLeMode( true );
                     if( PenClientCtrl.getInstance( DeviceListActivity.this ).isAvailableDevice( result.getScanRecord().getBytes() ) )
                     {
-                        temp.put( sppAddress, device.getAddress() );
+                        DeviceInfo info = new DeviceInfo();
+                        info.sppAddress = sppAddress;
+                        info.leAddress = device.getAddress();
+                        info.deviceName = device.getName();
+                        info.isLe = is_le_scan;
+                        info.uuidVer = BTLEAdt.UUID_VER.VER_2.toString();
+                        info.colorCode = 0;
+
+                        List<ParcelUuid> parcelUuids = result.getScanRecord().getServiceUuids();
+                        for(ParcelUuid uuid:parcelUuids)
+                        {
+                            if( uuid.toString().equals(Const.ServiceUuidV5.toString()))
+                            {
+                                info.uuidVer = BTLEAdt.UUID_VER.VER_5.toString();
+                                info.colorCode = UuidUtil.getColorCodeFromUUIDVer5(result.getScanRecord().getBytes());
+                                break;
+                            }
+                        }
+
+                        deviceMap.put( sppAddress, info );
                         mNewDevicesArrayAdapter.add( msg );
                     }
-                }
-                else
-                {
                 }
             }
         }
@@ -110,38 +131,7 @@ public class DeviceListActivity extends Activity
             NLog.d("Scan Failed", "Error Code : " + errorCode);
         }
     };
-    private String changeAddressFromLeToSpp(byte[] data)
-    {
-        int index = 0;
-        int size = 0;
-        byte flag = 0;
-        while(data.length > index)
-        {
-            size = data[index++];
-            if ( data.length <= index )
-                return null;
-            flag = data[index];
-            if ( (flag & 0xFF) == 0xFF )
-            {
-                ++index;
-                byte[] mac = new byte[6];
-                System.arraycopy(data, index, mac, 0, 6);
-                StringBuilder sb = new StringBuilder(18);
-                for (byte b : mac) {
-                    if (sb.length() > 0)
-                        sb.append(':');
-                    sb.append(String.format("%02x", b));
-                }
-                String strMac = sb.toString().toUpperCase();
-                return strMac;
-            }
-            else
-            {
-                index += size;
-            }
-        }
-        return null;
-    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -182,7 +172,7 @@ public class DeviceListActivity extends Activity
                 isScanning = !isScanning;
                 if(isScanning)
                 {
-                    temp.clear();
+                    deviceMap.clear();
                     doDiscovery( true );
                     scanLEButton.setText( "STOP" );
                     scanButton.setEnabled( false );
@@ -292,16 +282,6 @@ public class DeviceListActivity extends Activity
 
         if (le) // scan btle
         {
-//            mHandler.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    if (Build.VERSION.SDK_INT < 21) {
-//                        mBtAdapter.stopLeScan(mLeScanCallback);
-//                    } else {
-//                        mLeScanner.stopScan(mScanCallback);
-//                    }
-//                }
-//            }, SCAN_PERIOD);
             if (Build.VERSION.SDK_INT < 21) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle( "Not Supported BLE under 21" );
@@ -360,15 +340,17 @@ public class DeviceListActivity extends Activity
             String info = ((TextView) v).getText().toString();
             String sppAddress = info.substring(info.length() - 17);
             NLog.d("[SdkSampleCode] select address : " + sppAddress);
-            String device_name = info.substring(0, info.indexOf( "\n" )-1);
 
+            DeviceInfo deviceInfo = deviceMap.get(sppAddress);
 
-            // Create the result Intent and include the MAC address           
+            // Create the result Intent and include the MAC address
             Intent intent = new Intent();
             intent.putExtra(EXTRA_DEVICE_SPP_ADDRESS, sppAddress);
-            intent.putExtra(EXTRA_DEVICE_LE_ADDRESS, temp.get( sppAddress ) );
-            intent.putExtra(EXTRA_IS_BLUETOOTH_LE, is_le_scan);
-            intent.putExtra( EXTRA_DEVICE_NAME, device_name );
+            intent.putExtra(EXTRA_DEVICE_LE_ADDRESS, deviceInfo.leAddress );
+            intent.putExtra(EXTRA_IS_BLUETOOTH_LE, deviceInfo.isLe);
+            intent.putExtra( EXTRA_DEVICE_NAME, deviceInfo.deviceName );
+            intent.putExtra( EXTRA_UUID_VER, deviceInfo.uuidVer);
+            intent.putExtra( EXTRA_COLOR_CODE, deviceInfo.colorCode);
 
             // Set result and finish this Activity
             setResult(Activity.RESULT_OK, intent);
@@ -418,5 +400,15 @@ public class DeviceListActivity extends Activity
             }
         }
     };
+
+    private class DeviceInfo
+    {
+        String sppAddress = "";
+        String leAddress = "";
+        String deviceName = "";
+        boolean isLe = false;
+        String uuidVer = "";
+        int colorCode = 0;
+    }
 
 }

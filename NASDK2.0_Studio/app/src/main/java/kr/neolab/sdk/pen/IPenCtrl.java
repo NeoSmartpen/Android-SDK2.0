@@ -92,7 +92,17 @@ public interface IPenCtrl
      */
     public void connect(String sppAddress, String leAddress);
 
-    public void connect(String sppAddress, String leAddress, BTLEAdt.UUID_VER uuidVer);
+
+    /**
+     * Attempts to connect to the pen.
+     *
+     * @param sppAddress    spp address of pen
+     * @param leAddress     le address of pen
+     * @param uuidVer        uuid version
+     * @param appType       see document(example AOS NeoNotes: 0x1101)
+     * @param reqProtocolVer  input the desired protocol version
+     */
+    public void connect(String sppAddress, String leAddress, BTLEAdt.UUID_VER uuidVer, short appType, String reqProtocolVer);
 
 
         /**
@@ -542,6 +552,42 @@ public interface IPenCtrl
     public boolean setLeMode(boolean isLeMode);
 
     /**
+     * Gets connect device name.
+     * supported from Protocol 2.0
+     *
+     * @return the connect device name
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getConnectDeviceName () throws ProtocolNotSupportedException;
+
+    /**
+     * Gets connect sub name.
+     * supported from Protocol 2.0
+     *
+     * @return the connect sub name
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getConnectSubName () throws ProtocolNotSupportedException;
+
+    /**
+     * Gets Pen ProtocolVer.
+     * supported from Protocol 2.0
+     *
+     * @return the Pen ProtocolVer
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getReceiveProtocolVer () throws ProtocolNotSupportedException;
+
+    /**
+     * Gets FirmwareVer.
+     * supported from Protocol 2.0
+     *
+     * @return the FirmwareVer
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getFirmwareVer () throws ProtocolNotSupportedException;
+
+    /**
      * Create profile.
      *
      * @param proFileName the pro file name
@@ -636,5 +682,18 @@ public interface IPenCtrl
      * @return the pen company code
      */
     public short getCompanyCode()throws ProtocolNotSupportedException;
+
+    /*
+    if do not receive 'Disconnect Msg' when bluetooth turn off, you have to use this method when bluetooth turn off.
+    (Device bug)
+    */
+    public void clear();
+
+    /**
+     * Is support hover command boolean.
+     *
+     * @return the boolean
+     */
+    public boolean isSupportHoverCommand()throws ProtocolNotSupportedException;
 
 }

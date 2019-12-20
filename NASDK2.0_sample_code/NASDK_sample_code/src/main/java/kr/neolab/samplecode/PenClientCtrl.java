@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import kr.neolab.sdk.pen.IPenCtrl;
 import kr.neolab.sdk.pen.PenCtrl;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
+import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
 import kr.neolab.sdk.pen.bluetooth.lib.OutOfRangeException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IPenMsgListener;
@@ -190,6 +191,23 @@ public class PenClientCtrl implements IPenMsgListener
 	public void connect( String sppAddress, String leAddress )
 	{
 		iPenCtrl.connect( sppAddress, leAddress );
+	}
+
+	/**
+	 * Connect.
+	 * If use ble adapter, throws BLENotSupprtedException
+	 *
+	 * @param sppAddress the spp address
+	 * @param leAddress	the le address
+	 */
+	public void connect(String sppAddress, String leAddress, boolean isUuidVer2 )
+	{
+		BTLEAdt.UUID_VER uuidVer;
+		if(isUuidVer2)
+			uuidVer = BTLEAdt.UUID_VER.VER_2;
+		else
+			uuidVer = BTLEAdt.UUID_VER.VER_5;
+		iPenCtrl.connect( sppAddress, leAddress, uuidVer, Const.APP_TYPE_FOR_PEN, Const.REQ_PROTOCOL_VER );
 	}
 
     /**
@@ -462,7 +480,7 @@ public class PenClientCtrl implements IPenMsgListener
 
 				// to request offline data list
 				// 오프라인 데이터 전체 요청
-				//iPenCtrl.reqOfflineDataList();
+				iPenCtrl.reqOfflineDataList();
 
 				// 오프라인 데이터 노트단위 요청
 //				iPenCtrl.reqOfflineData( USING_SECTION_ID,USING_OWNER_ID,301 );
@@ -670,7 +688,6 @@ public class PenClientCtrl implements IPenMsgListener
 				{
 					e.printStackTrace();
 				}
-
 				break;
 
 			case PenMsgType.OFFLINE_DATA_PAGE_LIST:

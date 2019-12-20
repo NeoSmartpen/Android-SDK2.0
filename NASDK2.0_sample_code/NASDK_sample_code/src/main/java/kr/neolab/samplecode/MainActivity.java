@@ -40,6 +40,7 @@ import kr.neolab.sdk.ink.structure.Stroke;
 import kr.neolab.sdk.metadata.MetadataCtrl;
 import kr.neolab.sdk.metadata.structure.Symbol;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
+import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.offline.OfflineFileParser;
 import kr.neolab.sdk.pen.penmsg.PenMsgType;
@@ -247,6 +248,9 @@ public class MainActivity extends Activity
 				if ( resultCode == Activity.RESULT_OK )
 				{
 					String sppAddress = null;
+					String deviceName = data.getStringExtra( DeviceListActivity.EXTRA_DEVICE_NAME );
+					BTLEAdt.UUID_VER uuid_ver = BTLEAdt.UUID_VER.valueOf(data.getStringExtra( DeviceListActivity.EXTRA_UUID_VER));
+					int colorCode = data.getIntExtra( DeviceListActivity.EXTRA_COLOR_CODE, 0);
 
 					if ( (sppAddress = data.getStringExtra( DeviceListActivity.EXTRA_DEVICE_SPP_ADDRESS )) != null )
 					{
@@ -259,7 +263,10 @@ public class MainActivity extends Activity
 
 							if( leResult )
 							{
-								penClientCtrl.connect( sppAddress, leAddress );
+							    if( uuid_ver == BTLEAdt.UUID_VER.VER_5 )
+							        penClientCtrl.connect( sppAddress, leAddress, false );
+							    else
+							        penClientCtrl.connect( sppAddress, leAddress );
 							}
 							else
 							{
@@ -660,6 +667,7 @@ public class MainActivity extends Activity
 				return true;
 
 			case R.id.action_db_export:
+
 				// DB Export
 				Util.spliteExport( this );
 

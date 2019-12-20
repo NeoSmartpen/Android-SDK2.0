@@ -106,6 +106,7 @@ public class FwUpgradeCommand20 extends Command
 
 			int filesize = (int) source.length();
 
+			NLog.d("doUpgrade filesize="+filesize+",packetSize="+packetSize);
 			chunk = new Chunk( is, filesize,packetSize );
 
 			chunk.load();
@@ -148,13 +149,19 @@ public class FwUpgradeCommand20 extends Command
 				count = 0;
 				try
 				{
+					int index = chunk.offsetToIndex( info.offset );
 					if(info.status == CommProcessor20.FwPacketInfo.STATUS_END)
 					{
+						comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( index ), info.status , isCompress) );
 						comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_SUCCESS ) );
+						comp.finishUpgrade();
+						repeat = false;
+						return;
+					}
+					else {
+						comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( index ), info.status , isCompress) );
 					}
 
-					int index = chunk.offsetToIndex( info.offset );
-					comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( index ), info.status , isCompress) );
 					if(info.status == CommProcessor20.FwPacketInfo.STATUS_ERROR)
 					{
 						NLog.e( "[FwUpgradeCommand20] STATUS_ERROR");

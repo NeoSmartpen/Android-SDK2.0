@@ -11,7 +11,7 @@ public class FilterForPaper
 
 	private Fdot dot1, dot2;
 	private Fdot makeDownDot,makeMoveDot;
-	private boolean secondCheck = true, thirdCheck = true;
+	private boolean firstCheck = true, secondCheck = true, thirdCheck = true;
 
 	private static final int MAX_X = 15070, MAX_Y = 8480;
 
@@ -45,18 +45,26 @@ public class FilterForPaper
 		}
 
 		// Start Dot is put in the first dot.
-		if ( DotType.isPenActionDown( mdot.dotType ) )
+		if ( DotType.isPenActionDown( mdot.dotType ))
 		{
+			firstCheck = true;
+			secondCheck = true;
+			thirdCheck = true;
 			dot1 = mdot;
 		}
 
 		// Middle dot inserts the second and verifies from the third
 		// First dot validation failure second -> first, current -> second
 		// Successful first dot verification
-		else if ( DotType.isPenActionMove( mdot.dotType ) )
+		else if ( DotType.isPenActionMove( mdot.dotType ) || DotType.isPenActionHover( mdot.dotType ) )
 		{
+			if(DotType.isPenActionHover( mdot.dotType ) && firstCheck)
+			{
+				dot1 = mdot;
+				firstCheck = false;
+			}
 			// Just put it in the middle of the first
-			if ( secondCheck )
+			else if ( secondCheck )
 			{
 				dot2 = mdot;
 				secondCheck = false;
@@ -82,7 +90,7 @@ public class FilterForPaper
 				}
 				else
 				{
-					if( DotType.isPenActionDown( dot1.dotType ))
+					if( DotType.isPenActionDown( dot1.dotType ) )
 					{
 						dot2.dotType = DotType.PEN_ACTION_DOWN.getValue();
 					}
@@ -107,7 +115,7 @@ public class FilterForPaper
 			}
 
 		}
-		else if ( DotType.isPenActionUp( mdot.dotType ) )
+		else if ( DotType.isPenActionUp( mdot.dotType ) || DotType.isPenActionHover( mdot.dotType ) )
 		{
 			boolean validateStartDot = true;
 			boolean validateMiddleDot = true;

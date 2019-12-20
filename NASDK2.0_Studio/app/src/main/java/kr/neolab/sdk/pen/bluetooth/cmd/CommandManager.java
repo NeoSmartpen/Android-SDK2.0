@@ -240,6 +240,13 @@ abstract public class CommandManager
     abstract public boolean isSupportCountLimit ();
 
     /**
+     * Is support hover Command.
+     *
+     * @return the boolean
+     */
+    abstract public boolean isSupportHoverCommand ();
+
+    /**
      * Create profile.
      *
      * @param proFileName the pro file name
@@ -288,5 +295,10 @@ abstract public class CommandManager
      * @param proFileName the pro file name
      */
     abstract public void getProfileInfo ( String proFileName );
+
+    /**
+     * Is HoverMode On/Off.
+     */
+    abstract public boolean isHoverMode ();
 
 }

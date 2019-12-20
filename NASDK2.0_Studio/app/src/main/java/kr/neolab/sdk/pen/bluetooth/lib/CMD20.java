@@ -55,6 +55,10 @@ public class CMD20
      */
     public static final int RES_EventDotData4 = 0x6C;
     /**
+     * The constant RES_EventDotData5(hover mode).
+     */
+    public static final int RES_EventDotData5 = 0x6F;
+    /**
      * The constant RES_EventErrorDot2.
      */
     public static final int RES_EventErrorDot2 = 0x6D;
@@ -250,7 +254,7 @@ public class CMD20
     public static boolean isEventCMD ( int cmd )
     {
         int CMD = (int) cmd;
-        if((CMD >= 0x60 && CMD <= 0x6F) ||  CMD == CMD20.RES_OfflineChunk || CMD == CMD20.RES_EventUploadPenFWChunk)
+        if((CMD >= 0x60 && CMD <= 0x6F) ||  CMD == CMD20.RES_OfflineChunk || CMD == CMD20.RES_EventUploadPenFWChunk || (CMD >= 0x78 && CMD <= 0x7F) )
             return true;
         else
             return false;

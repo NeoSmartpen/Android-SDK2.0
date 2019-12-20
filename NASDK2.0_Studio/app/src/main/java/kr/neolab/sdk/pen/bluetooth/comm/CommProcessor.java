@@ -365,31 +365,31 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 
                 //[2018.03.05] Stroke Test
                 if ( !isStartWithDown )
-				{
-					NLog.e( "[CommProcessor] this stroke start with middle dot. " +
-									"TimeStamp="+ timeLong + ",ErrorType="+ JsonTag.ERROR_TYPE_MISSING_PEN_DOWN + ",Section=" + sectionId + ",Owner="+ownerId+",Note="+noteId+",Page"+pageId+",X="+X+",Y="+Y+",Force="+FORCE );
+                {
+                    NLog.e( "[CommProcessor] this stroke start with middle dot. " +
+                                    "TimeStamp="+ timeLong + ",ErrorType="+ JsonTag.ERROR_TYPE_MISSING_PEN_DOWN + ",Section=" + sectionId + ",Owner="+ownerId+",Note="+noteId+",Page"+pageId+",X="+X+",Y="+Y+",Force="+FORCE );
 
-					try
-					{
-						JSONObject job = new JSONObject()
-								.put( JsonTag.INT_SECTION_ID, sectionId )
-								.put( JsonTag.INT_OWNER_ID, ownerId )
-								.put( JsonTag.INT_NOTE_ID, noteId )
-								.put( JsonTag.INT_PAGE_ID, pageId )
-								.put( JsonTag.INT_LOG_X, X )
-								.put( JsonTag.INT_LOG_Y, Y )
-								.put( JsonTag.INT_LOG_FX, FLOAT_X)
-								.put( JsonTag.INT_LOG_FY, FLOAT_Y)
-								.put( JsonTag.INT_LOG_FORCE, FORCE )
-								.put( JsonTag.INT_LOG_ERROR_TYPE, JsonTag.ERROR_TYPE_MISSING_PEN_DOWN)
+                    try
+                    {
+                        JSONObject job = new JSONObject()
+                                .put( JsonTag.INT_SECTION_ID, sectionId )
+                                .put( JsonTag.INT_OWNER_ID, ownerId )
+                                .put( JsonTag.INT_NOTE_ID, noteId )
+                                .put( JsonTag.INT_PAGE_ID, pageId )
+                                .put( JsonTag.INT_LOG_X, X )
+                                .put( JsonTag.INT_LOG_Y, Y )
+                                .put( JsonTag.INT_LOG_FX, FLOAT_X)
+                                .put( JsonTag.INT_LOG_FY, FLOAT_Y)
+                                .put( JsonTag.INT_LOG_FORCE, FORCE )
+                                .put( JsonTag.INT_LOG_ERROR_TYPE, JsonTag.ERROR_TYPE_MISSING_PEN_DOWN)
                                 .put( JsonTag.LONG_LOG_PEN_DOWN_TIMESTAMP, -1 )
-								.put( JsonTag.LONG_LOG_TIMESTAMP, timeLong );
-						btConnection.onCreateMsg( new PenMsg( PenMsgType.ERROR_MISSING_PEN_DOWN, job ) );
-					}catch ( Exception e )
-					{
-						e.printStackTrace();
-					}
-					timeLong = System.currentTimeMillis();
+                                .put( JsonTag.LONG_LOG_TIMESTAMP, timeLong );
+                        btConnection.onCreateMsg( new PenMsg( PenMsgType.ERROR_MISSING_PEN_DOWN, job ) );
+                    }catch ( Exception e )
+                    {
+                        e.printStackTrace();
+                    }
+                    timeLong = System.currentTimeMillis();
                     this.isPrevDotDown = true;
                     this.isStartWithDown = true;
 
@@ -1751,6 +1751,12 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	}
 
 	@Override
+	public boolean isSupportHoverCommand()
+	{
+		return false;
+	}
+
+	@Override
 	public void createProfile ( String proFileName, byte[] password )
 	{
 		write( ProtocolParser.buildProfileCreate(proFileName, password ) );
@@ -1912,4 +1918,10 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
         }
         mHandler.postDelayed(mChkMissingPenUpRunnable, 1000);
     }
+
+	@Override
+	public boolean isHoverMode()
+	{
+		return false;
+	}
 }

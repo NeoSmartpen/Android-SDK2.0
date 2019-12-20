@@ -715,6 +715,7 @@ thickness = 1;
 		parcel.writeInt( type );
 		parcel.writeInt( penTipType );
 		parcel.writeList( dots );
+		parcel.writeList( outputs );
 	}
 
 	/**
@@ -735,6 +736,7 @@ thickness = 1;
 			oStroke.penTipType = source.readInt();
 
 			oStroke.dots = source.readArrayList( Dot.class.getClassLoader() );
+			oStroke.outputs = source.readArrayList(ControlPoint.class.getClassLoader());
 			return oStroke;
 		}
 

@@ -364,6 +364,42 @@ public class BTAdt implements IPenAdt
 	}
 
 	@Override
+	public String getReceiveProtocolVer () throws ProtocolNotSupportedException
+	{
+		if ( !isConnected() )
+		{
+			return null;
+		}
+
+		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+			return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getReceiveProtocolVer( );
+		else
+		{
+			NLog.e( "getReceiveProtocolVer( ) is supported from protocol 2.0 !!!" );
+			throw new ProtocolNotSupportedException( "getReceiveProtocolVer( ) is supported from protocol 2.0 !!!");
+		}
+	}
+
+
+	@Override
+	public String getFirmwareVer () throws ProtocolNotSupportedException
+	{
+		if ( !isConnected() )
+		{
+			return null;
+		}
+
+		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+			return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getFirmwareVer( );
+		else
+		{
+			NLog.e( "getFirmwareVer( ) is supported from protocol 2.0 !!!" );
+			throw new ProtocolNotSupportedException( "getFirmwareVer( ) is supported from protocol 2.0 !!!");
+		}
+	}
+
+
+	@Override
 	public void createProfile ( String proFileName, byte[] password ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
 	{
 		if ( !isConnected() )
@@ -1383,6 +1419,10 @@ public class BTAdt implements IPenAdt
 				NLog.d( "[BTAdt/ConnectedThread] socket is null!!" );
 			}
 
+			//2019.10.09 hrlee: set hover mode off when disconnect
+			if( processor instanceof CommProcessor20 )
+				( (CommProcessor20) processor ).isHoverMode = false;
+
 			this.stopRunning();
 			processor = null;
 		}
@@ -2081,6 +2121,41 @@ public class BTAdt implements IPenAdt
 		else
 		{
 			throw new ProtocolNotSupportedException( "getCompanyCode ( ) is supported from protocol 2.0 !!!" );
+		}
+	}
+
+	@Override
+	public void clear() {
+		mIsRegularDisconnect = false;
+
+		forceDisconnect = false;
+		mProtocolVer = 0;
+		if(mConnectionThread != null)
+		{
+			mConnectionThread = null;
+		}
+		if(mConnectThread != null)
+			mConnectThread = null;
+		penAddress = null;
+		penBtName = null;
+		status = CONN_STATUS_IDLE;
+
+	}
+
+	@Override
+	public boolean isSupportHoverCommand() throws ProtocolNotSupportedException
+	{
+		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+		{
+			if ( !isConnected() )
+			{
+				return false;
+			}
+			return ((CommProcessor20)mConnectionThread.getPacketProcessor()).isSupportHoverCommand();
+		}
+		else
+		{
+			throw new ProtocolNotSupportedException( "isSupportHoverCommand () is supported from protocol 2.0 !!!" );
 		}
 	}
 

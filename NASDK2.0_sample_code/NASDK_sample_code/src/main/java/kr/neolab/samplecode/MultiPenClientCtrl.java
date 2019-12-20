@@ -163,11 +163,10 @@ public class MultiPenClientCtrl implements IPenMsgListener
      * Connect.
      *
      * @param address the address
-	 * @param isLeMode LeMode
      */
-    public void connect( String address, boolean isLeMode)
+    public void connect( String address )throws BLENotSupportedException
 	{
-		connect( address, null, isLeMode );
+		iPenCtrl.connect( address );
 	}
 
 	/**

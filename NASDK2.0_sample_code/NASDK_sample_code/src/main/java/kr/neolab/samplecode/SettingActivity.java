@@ -159,11 +159,6 @@ public class SettingActivity extends PreferenceActivity implements OnSharedPrefe
 				multiPenClient.reqSetupPenCapOnOff( address, value );
 			}
 		}
-//		else if ( key.equals( Const.Setting.KEY_HOVER_MODE ) )
-//		{
-//			boolean value = sharedPreferences.getBoolean( Const.Setting.KEY_HOVER_MODE, true );
-//			penClient.reqSetupPenHover( value );
-//		}
 		else if ( key.equals( Const.Setting.KEY_OFFLINE_DATA_SAVE ) )
 		{
 			boolean value = sharedPreferences.getBoolean( Const.Setting.KEY_OFFLINE_DATA_SAVE, true );
@@ -174,6 +169,19 @@ public class SettingActivity extends PreferenceActivity implements OnSharedPrefe
 			else
 			{
 				multiPenClient.setAllowOfflineData( address, value );
+			}
+		}
+		else if ( key.equals( Const.Setting.KEY_HOVER_MODE ) )
+		{
+			boolean value = sharedPreferences.getBoolean( Const.Setting.KEY_HOVER_MODE, true );
+
+			if(isSingleConnectionMode)
+			{
+				penClient.reqSetupPenHover( value );
+			}
+			else
+			{
+				multiPenClient.reqSetupPenHover( address, value );
 			}
 		}
 

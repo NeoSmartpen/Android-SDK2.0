@@ -566,6 +566,25 @@ public interface IPenAdt
     public String getConnectSubName () throws ProtocolNotSupportedException;
 
     /**
+     * Gets Pen ProtocolVer.
+     * supported from Protocol 2.0
+     *
+     * @return the Pen ProtocolVer
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getReceiveProtocolVer () throws ProtocolNotSupportedException;
+
+    /**
+     * Gets FirmwareVer.
+     * supported from Protocol 2.0
+     *
+     * @return the FirmwareVer
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getFirmwareVer () throws ProtocolNotSupportedException;
+
+
+    /**
      * Create profile.
      *
      * @param proFileName the pro file name
@@ -673,5 +692,18 @@ public interface IPenAdt
      */
     public short getCompanyCode()throws ProtocolNotSupportedException;
 
+
+    /*
+        if do not receive 'Disconnect Msg' when bluetooth turn off, you have to use this method when bluetooth turn off.
+        (Device bug)
+     */
+    public void clear();
+
+    /**
+     * Is support hover command boolean.
+     *
+     * @return the boolean
+     */
+    public boolean isSupportHoverCommand()throws ProtocolNotSupportedException;
 
 }

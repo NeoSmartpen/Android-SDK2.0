@@ -44,7 +44,6 @@ public class SampleView extends View
 	private Path prePath = new Path();
 	private Paint prePaint = new Paint();
 
-//	private Stroke stroke = null;
 	private HashMap<String, Stroke> mapStroke = new HashMap<String, Stroke>();
 
 	private int sectionId = 0, ownerId = 0, noteId = 0, pageId = 0;
@@ -54,7 +53,7 @@ public class SampleView extends View
 
 	private MetadataCtrl metadataCtrl = MetadataCtrl.getInstance();
 
-	private float strokeWidth = 10;
+	private float strokeWidth = 1;
 
 	private ZoomFitType mZoomFitType = ZoomFitType.FIT_WIDTH;
 

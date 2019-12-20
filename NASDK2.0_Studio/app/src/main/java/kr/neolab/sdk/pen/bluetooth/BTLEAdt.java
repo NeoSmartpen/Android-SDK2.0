@@ -11,6 +11,7 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Build;
+import android.os.DeadObjectException;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -51,6 +52,8 @@ import kr.neolab.sdk.pen.penmsg.PenMsg;
 import kr.neolab.sdk.pen.penmsg.PenMsgType;
 import kr.neolab.sdk.util.NLog;
 import kr.neolab.sdk.util.UseNoteData;
+
+import static kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20.PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION;
 
 /**
  * Created by CJY on 2017-01-26.
@@ -150,6 +153,11 @@ public class BTLEAdt implements IPenAdt
     private static final UUID IndicateCharacteristicsUuidV5 = UUID.fromString( "64cd86b1-2256-5aeb-9f04-2caf6c60ae57" );
 
     private UUID_VER curr_uuid_ver = UUID_VER.VER_2;
+
+    private short curr_app_type = 0x1101;
+
+    private String curr_req_protocol_ver = PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION;
+
     /**
      *Descriptor uuid for setting Notify or Indicate
      */
@@ -271,24 +279,11 @@ public class BTLEAdt implements IPenAdt
      * is reported asynchronously through the
      * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      * callback.
-     * Use {@link #connect( String, String, UUID_VER)}}
      */
-    @Deprecated
-    public synchronized void connect ( final String sppAddress, final String leAddress )
+    public synchronized void connect ( final String sppAddress, final String leAddress, UUID_VER uuid_ver, short appType, String reqProtocolVer )
     {
-        connect ( sppAddress, leAddress, UUID_VER.VER_2 );
-    }
-    /**
-     * Connects to the GATT server hosted on the Bluetooth LE device.
-     *
-     * @param sppAddress    The device address of the destination device.
-     * @return Return true if the connection is initiated successfully. The connection result
-     * is reported asynchronously through the
-     * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
-     * callback.
-     */
-    public synchronized void connect ( final String sppAddress, final String leAddress, UUID_VER uuid_ver )
-    {
+        curr_req_protocol_ver = reqProtocolVer;
+        curr_app_type = appType;
         curr_uuid_ver = uuid_ver;
         if ( mBluetoothAdapter == null || sppAddress == null || leAddress == null)
         {
@@ -326,7 +321,7 @@ public class BTLEAdt implements IPenAdt
         }
 
         if ( device.getType() != BluetoothDevice.DEVICE_TYPE_LE
-		        && device.getType() != BluetoothDevice.DEVICE_TYPE_UNKNOWN)
+		        && device.getType() != BluetoothDevice.DEVICE_TYPE_UNKNOWN  && device.getType() != BluetoothDevice.DEVICE_TYPE_DUAL)
         {
             NLog.w( "MacAddress is not Bluetooth LE Type" );
             PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE);
@@ -441,6 +436,41 @@ public class BTLEAdt implements IPenAdt
         {
             NLog.e( "getConnectSubName( ) is supported from protocol 2.0 !!!" );
             throw new ProtocolNotSupportedException( "getConnectSubName( ) is supported from protocol 2.0 !!!");
+        }
+    }
+
+    @Override
+    public String getReceiveProtocolVer () throws ProtocolNotSupportedException
+    {
+        if ( !isConnected() )
+        {
+            return null;
+        }
+
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+            return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getReceiveProtocolVer( );
+        else
+        {
+            NLog.e( "getReceiveProtocolVer( ) is supported from protocol 2.0 !!!" );
+            throw new ProtocolNotSupportedException( "getReceiveProtocolVer( ) is supported from protocol 2.0 !!!");
+        }
+    }
+
+
+    @Override
+    public String getFirmwareVer () throws ProtocolNotSupportedException
+    {
+        if ( !isConnected() )
+        {
+            return null;
+        }
+
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+            return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getFirmwareVer( );
+        else
+        {
+            NLog.e( "getFirmwareVer( ) is supported from protocol 2.0 !!!" );
+            throw new ProtocolNotSupportedException( "getFirmwareVer( ) is supported from protocol 2.0 !!!");
         }
     }
 
@@ -1277,7 +1307,8 @@ public class BTLEAdt implements IPenAdt
             curStroke = new Stroke(dot.sectionId, dot.ownerId, dot.noteId, dot.pageId );
         }
 
-        curStroke.add( dot );
+        if(!DotType.isPenActionHover( dot.dotType ))
+            curStroke.add( dot );
 
         if ( listener != null )
         {
@@ -1343,7 +1374,7 @@ public class BTLEAdt implements IPenAdt
                 }
             }
 
-            if ( protocolVer == 2 ) processor = new CommProcessor20( this, version );
+            if ( protocolVer == 2 ) processor = new CommProcessor20( this, version , curr_app_type, curr_req_protocol_ver);
 
             allowOffline = true;
             this.isRunning = true;
@@ -1421,7 +1452,12 @@ public class BTLEAdt implements IPenAdt
             {
                 if ( processor instanceof CommProcessor20 )
                 {
-                    ( (CommProcessor20) processor ).finish();
+                    try {
+                        ( (CommProcessor20) processor ).finish();
+                    }catch (Exception e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
                 else if( processor instanceof CommProcessor )
                 {
@@ -1472,6 +1508,10 @@ public class BTLEAdt implements IPenAdt
             {
                 return;
             }
+
+            //2019.10.09 hrlee: set hover mode off when disconnect
+            if( processor instanceof CommProcessor20 )
+                ( (CommProcessor20) processor ).isHoverMode = false;
 
             mBluetoothGatt.disconnect();
             stopRunning();
@@ -1850,6 +1890,7 @@ public class BTLEAdt implements IPenAdt
         public void onServicesDiscovered ( BluetoothGatt gatt, int status )
         {
             super.onServicesDiscovered( gatt, status );
+            NLog.d( "onServicesDiscovered status="+status );
             if ( status == BluetoothGatt.GATT_SUCCESS )
             {
                 BluetoothGattService service;
@@ -2154,4 +2195,41 @@ public class BTLEAdt implements IPenAdt
             throw new ProtocolNotSupportedException( "getCompanyCode ( ) is supported from protocol 2.0 !!!" );
         }
     }
+
+    @Override
+    public void clear() {
+        mIsRegularDisconnect = false;
+
+        mProtocolVer = 0;
+        penAddress = null;
+        penBtName = null;
+
+        if(USE_QUEUE) {
+            mHandler.removeMessages(QUEUE_DOT);
+            mHandler.removeMessages(QUEUE_MSG);
+            mHandler.removeMessages(QUEUE_OFFLINE);
+
+        }
+
+        onDisconnected();
+        close();
+    }
+
+    @Override
+    public boolean isSupportHoverCommand() throws ProtocolNotSupportedException
+    {
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+        {
+            if ( !isConnected() )
+            {
+                return false;
+            }
+            return ((CommProcessor20)mConnectionThread.getPacketProcessor()).isSupportHoverCommand();
+        }
+        else
+        {
+            throw new ProtocolNotSupportedException( "isSupportHoverCommand () is supported from protocol 2.0 !!!" );
+        }
+    }
+
 }

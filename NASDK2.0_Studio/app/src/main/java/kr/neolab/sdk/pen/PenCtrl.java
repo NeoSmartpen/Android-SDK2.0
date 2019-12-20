@@ -24,6 +24,8 @@ import kr.neolab.sdk.util.NLog;
 import kr.neolab.sdk.util.SDKVersion;
 import kr.neolab.sdk.util.UseNoteData;
 
+import static kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20.PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION;
+
 /**
  * The class that provides the functionality of a pen
  *
@@ -71,6 +73,26 @@ public class PenCtrl implements IPenCtrl {
 
         return true;
     }
+
+	@Override
+	public String getConnectDeviceName() throws ProtocolNotSupportedException {
+		return currentAdt.getConnectDeviceName();
+	}
+
+	@Override
+	public String getConnectSubName() throws ProtocolNotSupportedException {
+		return currentAdt.getConnectSubName();
+	}
+
+	@Override
+	public String getReceiveProtocolVer() throws ProtocolNotSupportedException {
+		return currentAdt.getReceiveProtocolVer();
+	}
+
+	@Override
+	public String getFirmwareVer() throws ProtocolNotSupportedException {
+		return currentAdt.getFirmwareVer();
+	}
 
 	@Override
 	public void createProfile ( String proFileName, byte[] password ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
@@ -225,16 +247,15 @@ public class PenCtrl implements IPenCtrl {
 	@Deprecated
 	public void connect( String sppAddress, String leAddress )
 	{
-		connect(sppAddress, leAddress, BTLEAdt.UUID_VER.VER_2);
+		connect(sppAddress, leAddress, BTLEAdt.UUID_VER.VER_2, (short)0x1101, PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION);
 	}
 
 	@Override
-	public void connect(String sppAddress, String leAddress, BTLEAdt.UUID_VER uuidVer)
-	{
+	public void connect(String sppAddress, String leAddress, BTLEAdt.UUID_VER uuidVer, short appType, String reqProtocolVer) {
 		if(currentAdt instanceof BTAdt)
 			((BTAdt)currentAdt).connect(sppAddress);
 		else
-			((BTLEAdt)currentAdt).connect(sppAddress, leAddress, uuidVer);
+			((BTLEAdt)currentAdt).connect(sppAddress, leAddress, uuidVer, appType, reqProtocolVer);
 	}
 
     @Override
@@ -565,6 +586,19 @@ public class PenCtrl implements IPenCtrl {
 	public IPenAdt getCurrentAdt()
 	{
 		return currentAdt;
+	}
+
+
+
+	public void clear()
+	{
+		currentAdt.clear();
+	}
+
+	@Override
+	public boolean isSupportHoverCommand()  throws ProtocolNotSupportedException
+	{
+		return currentAdt.isSupportHoverCommand();
 	}
 
 }

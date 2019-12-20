@@ -6,6 +6,8 @@ package kr.neolab.sdk.pen.bluetooth.lib;
 import java.io.IOException;
 import java.io.InputStream;
 
+import kr.neolab.sdk.util.NLog;
+
 /**
  * Separate binary files as chunks
  *
@@ -36,7 +38,8 @@ public class Chunk
     {
         size = packetSize;
         istream = is;
-        rows = (int) Math.ceil(filesize / size) + 1;
+        rows = (int) (Math.ceil((double) filesize / (double)size));
+        NLog.d("Chunk packetSize="+packetSize+",rows="+rows);
         rBuffer = new byte[size];
         tBuffer = new byte[rows][size];
         status  = new boolean[rows];
@@ -80,7 +83,8 @@ public class Chunk
                 break;
             }
             
-            tBuffer[i++] = rBuffer;
+            tBuffer[i] = rBuffer;
+            i++;
         }
     }
 

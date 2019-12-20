@@ -424,6 +424,41 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
     }
 
     @Override
+    public String getReceiveProtocolVer () throws ProtocolNotSupportedException
+    {
+        if ( !isConnected() )
+        {
+            return null;
+        }
+
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+            return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getReceiveProtocolVer( );
+        else
+        {
+            NLog.e( "getReceiveProtocolVer( ) is supported from protocol 2.0 !!!" );
+            throw new ProtocolNotSupportedException( "getReceiveProtocolVer( ) is supported from protocol 2.0 !!!");
+        }
+    }
+
+
+    @Override
+    public String getFirmwareVer () throws ProtocolNotSupportedException
+    {
+        if ( !isConnected() )
+        {
+            return null;
+        }
+
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+            return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getFirmwareVer( );
+        else
+        {
+            NLog.e( "getFirmwareVer( ) is supported from protocol 2.0 !!!" );
+            throw new ProtocolNotSupportedException( "getFirmwareVer( ) is supported from protocol 2.0 !!!");
+        }
+    }
+
+    @Override
     public void createProfile ( String proFileName, byte[] password ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
     {
         if ( !isConnected() )
@@ -2084,5 +2119,41 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
         }
 
     }
+    @Override
+    public void clear() {
+        mIsRegularDisconnect = false;
+
+        mProtocolVer = 0;
+        if(mConnectionThread != null)
+        {
+            mConnectionThread = null;
+        }
+        if(mConnectThread != null)
+            mConnectThread = null;
+        penAddress = null;
+        penBtName = null;
+        isFreePass = false;
+        status = CONN_STATUS_IDLE;
+
+    }
+
+    @Override
+    public boolean isSupportHoverCommand() throws ProtocolNotSupportedException
+    {
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+        {
+            if ( !isConnected() )
+            {
+                return false;
+            }
+            return ((CommProcessor20)mConnectionThread.getPacketProcessor()).isSupportHoverCommand();
+        }
+        else
+        {
+            throw new ProtocolNotSupportedException( "isSupportHoverCommand () is supported from protocol 2.0 !!!" );
+        }
+    }
+
+
 
 }

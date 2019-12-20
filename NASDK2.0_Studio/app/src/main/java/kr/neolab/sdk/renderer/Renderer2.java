@@ -18,7 +18,7 @@ public class Renderer2
      * @param offset_x coordinates by moving the draw stroke
      * @param offset_y coordinates by moving the draw stroke
      */
-    public static void draw(Canvas canvas, Stroke stroke, float scale, float offset_x, float offset_y )
+    public static void draw( Canvas canvas, Stroke stroke, float scale, float offset_x, float offset_y )
     {
         draw( canvas, stroke, scale, offset_x, offset_y, 1, color );
     }
@@ -31,10 +31,10 @@ public class Renderer2
      * @param scale To zoom in or out of scale for stroke
      * @param offset_x coordinates by moving the draw stroke
      * @param offset_y coordinates by moving the draw stroke
-     * @param width width of complete stroke
+     * @param width width of complete stroke. pixel.
      * @param color color of complete stroke
      */
-    public static void draw(Canvas canvas, Stroke stroke, float scale, float offset_x, float offset_y, float width, int color )
+    public static void draw( Canvas canvas, Stroke stroke, float scale, float offset_x, float offset_y, float width, int color )
     {
         int length = stroke.getDots().size();
 
@@ -66,7 +66,7 @@ public class Renderer2
      * @param offset_x coordinates by moving the draw stroke
      * @param offset_y coordinates by moving the draw stroke
      */
-    public static void draw(Canvas canvas, Stroke[] strokes, float scale, float offset_x, float offset_y )
+    public static void draw( Canvas canvas, Stroke[] strokes, float scale, float offset_x, float offset_y )
     {
         draw( canvas, strokes, scale, offset_x, offset_y, 1, color );
     }
@@ -80,10 +80,10 @@ public class Renderer2
      * @param scale To zoom in or out of scale for stroke
      * @param offset_x coordinates by moving the draw stroke
      * @param offset_y coordinates by moving the draw stroke
-     * @param width width of complete stroke
+     * @param width width of complete stroke. pixel
      * @param color color of complete stroke
      */
-    public static void draw(Canvas canvas, Stroke[] strokes, float scale, float offset_x, float offset_y, float width, int color )
+    public static void draw( Canvas canvas, Stroke[] strokes, float scale, float offset_x, float offset_y, float width, int color )
     {
         for ( int i=0; i<strokes.length; i++ )
         {

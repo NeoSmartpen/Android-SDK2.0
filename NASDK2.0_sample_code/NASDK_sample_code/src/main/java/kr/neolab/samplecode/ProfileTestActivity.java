@@ -234,9 +234,6 @@ public class ProfileTestActivity extends Activity
                     data[0] = profile_value_edit.getText().toString().getBytes();
 
 //                    data[0] = ByteBuffer.allocate( 4 ).putInt( 123 ).array();
-
-//                    PenClientCtrl.getInstance( this ).getIPenCtrl().writeProfileValue( profile_name_edit.getText().toString(), NEOLAB_PROFILE_PASS, new String[]{profile_key_edit.getText().toString()},data);
-
                     PenClientCtrl.getInstance( this ).getIPenCtrl().writeProfileValue( profile_name_edit.getText().toString(), NEOLAB_PROFILE_PASS, new String[]{profile_key_edit.getText().toString()},data);
                 }
                 catch ( ProtocolNotSupportedException e )

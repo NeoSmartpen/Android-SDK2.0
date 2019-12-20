@@ -1,7 +1,5 @@
 package kr.neolab.sdk.util;
 
-import java.util.TimeZone;
-
 import kr.neolab.sdk.pen.bluetooth.lib.ByteConverter;
 
 /**
@@ -17,7 +15,6 @@ public class UuidUtil
         while(data.length > index)
         {
             size = data[index++];
-           
             if ( data.length <= index )
                 return null;
             flag = data[index];

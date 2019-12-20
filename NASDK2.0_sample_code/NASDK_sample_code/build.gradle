@@ -27,5 +27,4 @@ dependencies {
     androidTestImplementation 'com.android.support.test:rules:0.5'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:2.2.2'
     //compile project(':NASDK')
-    //    compile project(':NeoViewSDK')
 }

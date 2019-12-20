@@ -7,6 +7,7 @@ import android.os.Build;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import kr.neolab.sdk.broadcastreceiver.BTDuplicateRemoveBroadcasterReceiver;
 import kr.neolab.sdk.metadata.IMetadataListener;
@@ -24,6 +25,7 @@ import kr.neolab.sdk.util.SDKVersion;
 import kr.neolab.sdk.util.UseNoteData;
 
 import static kr.neolab.sdk.pen.IPenAdt.CONN_STATUS_IDLE;
+import static kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20.PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION;
 
 /**
  * The class that provides the functionality of a pen
@@ -180,23 +182,25 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			return null;
 	}
 
-	public void connect(String address) {
-		connect(address, null, false);
+	public void connect(String address) throws BLENotSupportedException {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			mPenAdt.connect(address);
 	}
 
 	@Deprecated
 	public void connect(String sppAddress, String leAddress, boolean isLeMode) {
-		connect(sppAddress, leAddress,isLeMode, BTLEAdt.UUID_VER.VER_2);
+		connect(sppAddress, leAddress,isLeMode, BTLEAdt.UUID_VER.VER_2, (short)0x1101, PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION);
 	}
 
-    @Override
-    public void connect(String sppAddress, String leAddress, boolean isLeMode, BTLEAdt.UUID_VER uuidVer) {
+	@Override
+    public void connect(String sppAddress, String leAddress, boolean isLeMode, BTLEAdt.UUID_VER uuidVer, short appType, String reqProtocolVer) {
 		if(mConnectedCollection.containsKey(sppAddress) && ((isLeMode && mConnectedCollection.get(sppAddress) instanceof BTLEAdt) || (!isLeMode && mConnectedCollection.get(sppAddress) instanceof BTAdt)))
 		{
 			if(mConnectedCollection.get(sppAddress) instanceof BTAdt)
 				((BTAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress);
 			else
-				((BTLEAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress, leAddress, uuidVer);
+				((BTLEAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress, leAddress, uuidVer,appType, reqProtocolVer);
 
 		}
 		else
@@ -216,7 +220,7 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			if(mBTAdt instanceof BTAdt )
 				((BTAdt)mBTAdt).connect(sppAddress);
 			else
-				((BTLEAdt)mBTAdt).connect(sppAddress, leAddress, uuidVer);
+				((BTLEAdt)mBTAdt).connect(sppAddress, leAddress, uuidVer,appType, reqProtocolVer);
 		}
     }
 
@@ -655,6 +659,38 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 	}
 
 	@Override
+	public String getConnectDeviceName(String address) throws ProtocolNotSupportedException {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			return mPenAdt.getConnectDeviceName ();
+		return null;
+	}
+
+	@Override
+	public String getConnectSubName(String address) throws ProtocolNotSupportedException {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			return mPenAdt.getConnectSubName ();
+		return null;
+	}
+
+	@Override
+	public String getReceiveProtocolVer(String address) throws ProtocolNotSupportedException {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			return mPenAdt.getReceiveProtocolVer ();
+		return null;
+	}
+
+	@Override
+	public String getFirmwareVer(String address) throws ProtocolNotSupportedException {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			return mPenAdt.getFirmwareVer ();
+		return null;
+	}
+
+	@Override
 	public void createProfile ( String address, String proFileName, byte[] password ) throws ProtocolNotSupportedException,ProfileKeyValueLimitException
 	{
 		IPenAdt mPenAdt = (mConnectedCollection.get(address));
@@ -761,6 +797,18 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			return 0;
 	}
 
+	@Override
+	public void clear() {
+		for (Iterator<String> setKey = mConnectedCollection.keySet().iterator(); setKey.hasNext() ; )
+		{
+			String key = setKey.next();
+			((IPenAdt)mConnectedCollection.get( key )).clear();
+		}
+
+        mConnectedCollection.clear();
+
+	}
+
 	/**
 	 * Gets pen status.
 	 *
@@ -773,6 +821,17 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			return mPenAdt.getPenStatus();
 		else
 			return CONN_STATUS_IDLE;
+	}
+
+
+	@Override
+	public boolean isSupportHoverCommand(String address)  throws ProtocolNotSupportedException
+	{
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			return mPenAdt.isSupportHoverCommand();
+		else
+			return false;
 	}
 
 }

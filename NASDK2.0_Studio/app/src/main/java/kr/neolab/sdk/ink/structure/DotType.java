@@ -16,7 +16,11 @@ public enum DotType
 PEN_ACTION_MOVE(18), /**
  * Pen action up dot type.
  */
-PEN_ACTION_UP(20);
+PEN_ACTION_UP(20), /**
+ * Pen action up dot type.
+ */
+PEN_ACTION_HOVER(25);
+
 	
 	private final int value;
 	
@@ -100,6 +104,17 @@ PEN_ACTION_UP(20);
 	public static boolean isPenActionMove(int type)
 	{
 		return (type == PEN_ACTION_MOVE.getValue())  ? true : false;
+	}
+
+	/**
+	 * Is pen action hover boolean.
+	 *
+	 * @param type the type
+	 * @return the boolean
+	 */
+	public static boolean isPenActionHover(int type)
+	{
+		return (type == PEN_ACTION_HOVER.getValue())  ? true : false;
 	}
 	
 };

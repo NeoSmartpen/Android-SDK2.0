@@ -82,13 +82,30 @@ public interface IMultiPenCtrl
     /**
      * Attempts to connect to the pen.
      *
+     * @param address MAC address of pen
+     */
+    public void connect(String address) throws BLENotSupportedException;
+
+    /**
+     * Attempts to connect to the pen.
+     *
      * @param sppAddress  MAC address of pen
      * @param leAddress  leAddress
      * @param isLeMode the is le mode
      */
     public void connect ( String sppAddress, String leAddress, boolean isLeMode );
 
-    public void connect(String sppAddress, String leAddress, boolean isLeMode, BTLEAdt.UUID_VER uuidVer);
+    /**
+     * Attempts to connect to the pen.
+     *
+     * @param sppAddress    spp address of pen
+     * @param leAddress     le address of pen
+     * @param uuidVer        uuid version
+     * @param appType       see document(example AOS NeoNotes: 0x1101)
+     * @param reqProtocolVer  input the desired protocol version
+     */
+    public void connect(String sppAddress, String leAddress, boolean isLeMode, BTLEAdt.UUID_VER uuidVer, short appType, String reqProtocolVer);
+
 
     /**
     * And disconnect the connection with pen
@@ -539,6 +556,42 @@ public interface IMultiPenCtrl
     public boolean setLeMode ( String address, boolean isLeMode );
 
     /**
+     * Gets connect device name.
+     * supported from Protocol 2.0
+     *
+     * @return the connect device name
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getConnectDeviceName (String address) throws ProtocolNotSupportedException;
+
+    /**
+     * Gets connect sub name.
+     * supported from Protocol 2.0
+     *
+     * @return the connect sub name
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getConnectSubName (String address) throws ProtocolNotSupportedException;
+
+    /**
+     * Gets Pen ProtocolVer.
+     * supported from Protocol 2.0
+     *
+     * @return the Pen ProtocolVer
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getReceiveProtocolVer (String address) throws ProtocolNotSupportedException;
+
+    /**
+     * Gets FirmwareVer.
+     * supported from Protocol 2.0
+     *
+     * @return the FirmwareVer
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public String getFirmwareVer (String address) throws ProtocolNotSupportedException;
+
+    /**
      * Create profile.
      *
      * @param address     the address
@@ -641,5 +694,18 @@ public interface IMultiPenCtrl
      * @return the pen company code
      */
     public short getCompanyCode(String address)throws ProtocolNotSupportedException;
+
+    /*
+    if do not receive 'Disconnect Msg' when bluetooth turn off, you have to use this method when bluetooth turn off.
+    (Device bug)
+    */
+    public void clear();
+
+    /**
+     * Is support hover command boolean.
+     *
+     * @return the boolean
+     */
+    public boolean isSupportHoverCommand(String address)throws ProtocolNotSupportedException;
 
 }

@@ -3,10 +3,17 @@ package kr.neolab.samplecode;
 import android.os.Environment;
 
 import java.io.File;
+import java.util.UUID;
 
 public class Const
 {
 	public static String SAMPLE_FOLDER_PATH = Environment.getExternalStoragePublicDirectory( Environment.DIRECTORY_DOWNLOADS ).getPath()+ File.separator+"neolab_data";
+
+	public static String REQ_PROTOCOL_VER = "2.18";
+	public static short APP_TYPE_FOR_PEN = 0x1201;
+
+	public static final UUID ServiceUuidV2 = UUID.fromString("000019F1-0000-1000-8000-00805F9B34FB");
+	public static final UUID ServiceUuidV5 = UUID.fromString("4f99f138-9d53-5bfa-9e50-b147491afe68");
 
 
 	public class Setting 

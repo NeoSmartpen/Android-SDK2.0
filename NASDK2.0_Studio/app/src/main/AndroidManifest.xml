@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="kr.neolab.sdk"
-    android:versionCode="11"
-    android:versionName="2.20" >
+    android:versionCode="12"
+    android:versionName="2.21" >
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />

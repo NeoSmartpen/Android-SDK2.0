@@ -1,4 +1,4 @@
-package kr.neolab.sdk.renderer;
+package kr.neolab.samplecode.renderer;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -6,6 +6,7 @@ import android.graphics.Path;
 
 import java.util.List;
 
+import kr.neolab.sdk.ink.structure.ControlPoint;
 import kr.neolab.sdk.ink.structure.Stroke;
 
 public class ImageProcess {
@@ -52,7 +53,7 @@ public class ImageProcess {
         linePaint.setStrokeJoin( Paint.Join.ROUND );
     }
 
-    private static void drawStrokeLine( Canvas canvas, float scale, float offset_x, float offset_y, List< ControlPoint > mid )
+    private static void drawStrokeLine( Canvas canvas, float scale, float offset_x, float offset_y, List<ControlPoint> mid )
     {
         int count = mid.size();
 

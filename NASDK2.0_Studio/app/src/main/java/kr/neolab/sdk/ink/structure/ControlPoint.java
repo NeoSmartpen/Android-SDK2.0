@@ -1,6 +1,4 @@
-package kr.neolab.sdk.renderer;
-
-import kr.neolab.sdk.ink.structure.Dot;
+package kr.neolab.sdk.ink.structure;
 
 public class ControlPoint {
 

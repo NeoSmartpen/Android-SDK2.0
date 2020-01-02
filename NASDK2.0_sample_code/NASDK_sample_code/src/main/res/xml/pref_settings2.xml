@@ -63,5 +63,12 @@
 	    android:singleLine="true"
 	    android:title="Password" />
 
+	<CheckBoxPreference
+		android:defaultValue=" false"
+		android:key="hover_onoff"
+		android:summaryOff="Do not use hover mode"
+		android:summaryOn="use hover mode"
+		android:title="hover On/Off" />
+
 
 </PreferenceScreen>

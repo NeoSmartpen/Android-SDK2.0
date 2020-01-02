@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.View;
@@ -24,7 +25,7 @@ import kr.neolab.sdk.ink.structure.DotType;
 import kr.neolab.sdk.ink.structure.Stroke;
 import kr.neolab.sdk.metadata.MetadataCtrl;
 import kr.neolab.sdk.metadata.structure.Symbol;
-import kr.neolab.sdk.renderer.Renderer2;
+import kr.neolab.samplecode.renderer.Renderer2;
 import kr.neolab.sdk.util.StrokeUtil;
 
 public class SampleView extends View
@@ -36,6 +37,7 @@ public class SampleView extends View
 
 	// paper background
 	boolean isPenDownOrMove = false;
+	boolean isHoverDot = false;
 	private Bitmap background = null;
 	private Canvas mCanvas = new Canvas();
 
@@ -43,6 +45,8 @@ public class SampleView extends View
 	public ArrayList<Stroke> strokes = new ArrayList<Stroke>();
 	private Path prePath = new Path();
 	private Paint prePaint = new Paint();
+	private PointF hoverPoint = new PointF(-1, -1);
+	private Paint hoverPaint = new Paint();
 
 	private HashMap<String, Stroke> mapStroke = new HashMap<String, Stroke>();
 
@@ -53,7 +57,7 @@ public class SampleView extends View
 
 	private MetadataCtrl metadataCtrl = MetadataCtrl.getInstance();
 
-	private float strokeWidth = 1;
+	private float strokeWidth = 3;
 
 	private ZoomFitType mZoomFitType = ZoomFitType.FIT_WIDTH;
 
@@ -64,6 +68,11 @@ public class SampleView extends View
         prePaint.setStyle(Paint.Style.STROKE);
 		prePaint.setStrokeCap(Paint.Cap.ROUND);
 		prePaint.setStrokeWidth(strokeWidth);
+
+		hoverPaint.setAntiAlias(true);
+		hoverPaint.setStyle(Paint.Style.STROKE);
+		hoverPaint.setColor(Color.RED);
+        hoverPaint.setStrokeWidth(1);
 	}
 
 	private void initView()
@@ -122,9 +131,7 @@ public class SampleView extends View
 		{
 			offsetX = 0;
 			offsetY = 0;
-
 		}
-
 
 		Bitmap temp_pdf3 = BitmapFactory.decodeFile( backImagePath );
 		if( temp_pdf3 == null )
@@ -165,6 +172,8 @@ public class SampleView extends View
 				canvas.drawPath(prePath, prePaint);
 		}
 
+        if( isHoverDot )
+            canvas.drawCircle( hoverPoint.x, hoverPoint.y, strokeWidth, hoverPaint);
 	}
 
 	public void addDot( String penAddress, Dot dot ) {
@@ -183,13 +192,21 @@ public class SampleView extends View
 		float x = (dot.x * paper_scale)  + screen_offset_x + offsetX;
 		float y = (dot.y * paper_scale) + screen_offset_y + offsetY;
 
-		if (DotType.isPenActionDown(dot.dotType) || mapStroke.get(penAddress) == null || mapStroke.get(penAddress).isReadOnly()) {
+        isHoverDot = false;
+
+		if (DotType.isPenActionDown(dot.dotType) || mapStroke.get(penAddress) == null || mapStroke.get(penAddress).isReadOnly() && !DotType.isPenActionHover(dot.dotType)) {
 			mapStroke.put(penAddress, new Stroke(sectionId, ownerId, noteId, pageId, dot.color));
 			strokes.add(mapStroke.get(penAddress));
 			prePath.reset();
 			prePath.moveTo(x, y);
 			isPenDownOrMove = true;
 		}
+		else if( DotType.isPenActionHover(dot.dotType))
+        {
+            isHoverDot = true;
+            hoverPoint.x = x;
+            hoverPoint.y = y;
+        }
 		else
 			prePath.lineTo(x, y);
 
@@ -257,7 +274,7 @@ public class SampleView extends View
 
 					// stroke 으로 이미지 만들기
 					// paper scale 은 본 샘플에서는 기기 화면 크기에 따라 변동
-					Bitmap bitmap = StrokeUtil.StrokeToImage( inStr, paper_scale );
+					Bitmap bitmap = Util.StrokeToImage( inStr, paper_scale );
 
 					// 이미지가 지정된 위치에 "symbol 이름.jpg" 로 저장됨
 					String filename = symbol.name + ".jpg";

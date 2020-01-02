@@ -1,4 +1,4 @@
-package kr.neolab.sdk.renderer;
+package kr.neolab.samplecode.renderer;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -6,9 +6,11 @@ import android.graphics.Path;
 
 import java.util.List;
 
+import kr.neolab.sdk.ink.structure.ControlPoint;
+
 public class PathControl {
     
-    protected static double getAngle( ControlPoint p1, ControlPoint p2, ControlPoint p3 ) {
+    protected static double getAngle(ControlPoint p1, ControlPoint p2, ControlPoint p3 ) {
         double a,b,c;
         double angle, temp;
 

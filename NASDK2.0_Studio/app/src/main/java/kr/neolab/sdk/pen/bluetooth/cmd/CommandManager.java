@@ -6,6 +6,7 @@ import java.util.Queue;
 
 import kr.neolab.sdk.pen.bluetooth.IConnectedThread;
 import kr.neolab.sdk.pen.bluetooth.lib.Chunk;
+import kr.neolab.sdk.pen.bluetooth.lib.IChunk;
 import kr.neolab.sdk.util.NLog;
 
 /**
@@ -84,7 +85,7 @@ abstract public class CommandManager
      *
      * @param chunk the chunk
      */
-    abstract public void setChunk ( Chunk chunk );
+    abstract public void setChunk ( IChunk chunk );
 
     /**
      * Finish upgrade.

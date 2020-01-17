@@ -21,6 +21,7 @@ import kr.neolab.sdk.pen.bluetooth.cmd.SetTimeCommand;
 import kr.neolab.sdk.pen.bluetooth.lib.ByteConverter;
 import kr.neolab.sdk.pen.bluetooth.lib.CMD;
 import kr.neolab.sdk.pen.bluetooth.lib.Chunk;
+import kr.neolab.sdk.pen.bluetooth.lib.IChunk;
 import kr.neolab.sdk.pen.bluetooth.lib.Packet;
 import kr.neolab.sdk.pen.bluetooth.lib.PenProfile;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolParser;
@@ -76,7 +77,7 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	private boolean isDoneInitHandshake = false;
 	
 
-	private Chunk chunk = null;
+	private IChunk chunk = null;
 
 	/**
 	 * The Is upgrading.
@@ -1890,12 +1891,12 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	 *
 	 * @return the chunk
 	 */
-	public Chunk getChunk()
+	public IChunk getChunk()
 	{
 		return this.chunk;
 	}
 
-	public void setChunk( Chunk chunk )
+	public void setChunk( IChunk chunk )
 	{
 		this.chunk = chunk;
 	}

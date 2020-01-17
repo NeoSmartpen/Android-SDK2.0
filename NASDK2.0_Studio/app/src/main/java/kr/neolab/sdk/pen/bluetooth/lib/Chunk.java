@@ -13,7 +13,7 @@ import kr.neolab.sdk.util.NLog;
  *
  * @author CHY
  */
-public class Chunk
+public class Chunk implements IChunk
 {
     private InputStream istream = null;
 
@@ -27,6 +27,8 @@ public class Chunk
     private byte[][] tBuffer;
     private boolean[] status;
 
+    private long filesize = 0;
+
     /**
      * Instantiates a new Chunk.
      *
@@ -38,6 +40,7 @@ public class Chunk
     {
         size = packetSize;
         istream = is;
+        this.filesize = filesize;
         rows = (int) (Math.ceil((double) filesize / (double)size));
         NLog.d("Chunk packetSize="+packetSize+",rows="+rows);
         rBuffer = new byte[size];

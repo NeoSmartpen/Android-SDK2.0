@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.util.Queue;
 
 import kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20;
-import kr.neolab.sdk.pen.bluetooth.lib.Chunk;
+import kr.neolab.sdk.pen.bluetooth.lib.Chunk20;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolParser20;
 import kr.neolab.sdk.pen.penmsg.PenMsg;
 import kr.neolab.sdk.pen.penmsg.PenMsgType;
@@ -98,7 +98,7 @@ public class FwUpgradeCommand20 extends Command
 
 	private void doUpgrade()
 	{
-		Chunk chunk = null;
+		Chunk20 chunk = null;
 
 		try
 		{
@@ -107,7 +107,7 @@ public class FwUpgradeCommand20 extends Command
 			int filesize = (int) source.length();
 
 			NLog.d("doUpgrade filesize="+filesize+",packetSize="+packetSize);
-			chunk = new Chunk( is, filesize,packetSize );
+			chunk = new Chunk20( is, filesize,packetSize );
 
 			chunk.load();
 
@@ -149,17 +149,20 @@ public class FwUpgradeCommand20 extends Command
 				count = 0;
 				try
 				{
-					int index = chunk.offsetToIndex( info.offset );
+//					int index = chunk.offsetToIndex( info.offset );
 					if(info.status == CommProcessor20.FwPacketInfo.STATUS_END)
 					{
-						comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( index ), info.status , isCompress) );
+
+						byte[] lastData = chunk.getChunk(info.offset);
+						if(lastData != null)
+							comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk(info.offset), info.status , isCompress) );
 						comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_SUCCESS ) );
 						comp.finishUpgrade();
 						repeat = false;
 						return;
 					}
 					else {
-						comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( index ), info.status , isCompress) );
+						comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( info.offset ), info.status , isCompress) );
 					}
 
 					if(info.status == CommProcessor20.FwPacketInfo.STATUS_ERROR)
@@ -173,7 +176,12 @@ public class FwUpgradeCommand20 extends Command
 
 
 
-					int maximum = chunk.getChunkLength();
+					int maximum = chunk.getFilesize();
+					if(maximum % packetSize == 0)
+						maximum = maximum / packetSize;
+					else
+						maximum = (maximum / packetSize)+1;
+					int index = info.offset/packetSize;
 					NLog.d( "[FwUpgradeCommand20] send progress => maximum : " + maximum + ", current : " + index );
 					JSONObject job;
 					try
@@ -202,10 +210,15 @@ public class FwUpgradeCommand20 extends Command
 							repeat = false;
 							continue;
 						}
-						int index = chunk.offsetToIndex( info.offset );
-						comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( index ), info.status , isCompress) );
+//						int index = chunk.offsetToIndex( info.offset );
+						comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( info.offset ), info.status , isCompress) );
 
-						int maximum = chunk.getChunkLength();
+						int maximum = chunk.getFilesize();
+						if(maximum % packetSize == 0)
+							maximum = maximum / packetSize;
+						else
+							maximum = (maximum / packetSize)+1;
+						int index = info.offset/packetSize;
 						NLog.d( "[FwUpgradeCommand20] send progress No Compress=> maximum : " + maximum + ", current : " + index );
 						JSONObject job;
 						try

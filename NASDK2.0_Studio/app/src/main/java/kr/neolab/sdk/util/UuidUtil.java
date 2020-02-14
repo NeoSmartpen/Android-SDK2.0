@@ -40,76 +40,160 @@ public class UuidUtil
         return null;
     }
 
-    public static int getCompanyCodeFromUUIDVer5(byte[] data)
+    public static int getCompanyCodeFromUUID(byte[] data)
     {
-
         int index = 0;
-        int size = data[index];
-        index++;
-        index += size;
-        if(data.length < index)
-            return -1;
-        size = data[index];
-        if(data.length < (index + 1 + size))
-            return -1;
-        index += 9;
+        while (data.length > index)
+        {
+            if(data.length < index + 2)
+                return -1;
+            int size = data[index];
+            index++;
+            byte type = data[index];
+            int length = index + size;
+            if(data.length < length)
+                return -1;
+            if((type & 0xFF) == 0xFF && size == 12)
+            {
+                index += 8;
+                byte[] dev = new byte[2];
+                System.arraycopy(data, index, dev, 0, 2);
 
-        if(data.length < 13)
-            return -1;
-
-        byte[] dev = new byte[2];
-        System.arraycopy(data, index, dev, 0, 2);
-
-        int companyCode = ByteConverter.byteArrayToInt(dev);
-        return companyCode;
+                int companyCode = ByteConverter.byteArrayToInt(dev);
+                return companyCode;
+            }
+            else
+            {
+                index += size;
+            }
+        }
+        return -1;
+//        int index = 0;
+//        int size = data[index];
+//        index++;
+//        index += size;
+//        if(data.length < index)
+//            return -1;
+//        size = data[index];
+//        if(data.length < (index + 1 + size))
+//            return -1;
+//        index += 9;
+//
+//        if(data.length < 13)
+//            return -1;
+//
+//        byte[] dev = new byte[2];
+//        System.arraycopy(data, index, dev, 0, 2);
+//
+//        int companyCode = ByteConverter.byteArrayToInt(dev);
+//        return companyCode;
     }
 
-    public static int getProductCodeFromUUIDVer5(byte[] data)
+    public static int getProductCodeFromUUID(byte[] data)
     {
-
         int index = 0;
-        int size = data[index];
-        index++;
-        index += size;
-        if(data.length < index)
-            return -1;
-        size = data[index];
-        if(data.length < (index + 1 + size))
-            return -1;
-        index += 9;
-        index += 2;
-        if(data.length < 13)
-            return -1;
+        while (data.length > index)
+        {
+            if(data.length < index + 2)
+                return -1;
+            int size = data[index];
+            index++;
+            byte type = data[index];
+            int length = index + size;
+            if(data.length < length)
+                return -1;
+            if((type & 0xFF) == 0xFF && size == 12)
+            {
+                index += 8;
+                index += 2;
+                byte[] dev = new byte[1];
+                System.arraycopy(data, index, dev, 0, 1);
 
-        byte[] dev = new byte[1];
-        System.arraycopy(data, index, dev, 0, 1);
-
-        int productCode = ByteConverter.byteArrayToInt(dev);
-        return productCode;
+                int productCode = ByteConverter.byteArrayToInt(dev);
+                return productCode;
+            }
+            else
+            {
+                index += size;
+            }
+        }
+        return -1;
+//        int index = 0;
+//        int size = data[index];
+//        index++;
+//        index += size;
+//        if(data.length < index)
+//            return -1;
+//        size = data[index];
+//        if(data.length < (index + 1 + size))
+//            return -1;
+//        index += 9;
+//        index += 2;
+//        if(data.length < 13)
+//            return -1;
+//
+//        byte[] dev = new byte[1];
+//        System.arraycopy(data, index, dev, 0, 1);
+//
+//        int productCode = ByteConverter.byteArrayToInt(dev);
+//        return productCode;
     }
 
-    public static int getColorCodeFromUUIDVer5(byte[] data)
+//    public static int getColorCodeFromUUIDVer5(byte[] data)
+//    {
+//
+//        int index = 0;
+//        int size = data[index];
+//        index++;
+//        index += size;
+//        if(data.length < index)
+//            return -1;
+//        size = data[index];
+//        if(data.length < (index + 1 + size))
+//            return -1;
+//        index += 9;
+//        index += 2;
+//        index += 1;
+//        if(data.length < 13)
+//            return -1;
+//
+//        byte[] dev = new byte[1];
+//        System.arraycopy(data, index, dev, 0, 1);
+//
+//        int colorCode = ByteConverter.byteArrayToInt(dev);
+//        return colorCode;
+//    }
+
+    public static int getColorCodeFromUUID(byte[] data)
     {
-
         int index = 0;
-        int size = data[index];
-        index++;
-        index += size;
-        if(data.length < index)
-            return -1;
-        size = data[index];
-        if(data.length < (index + 1 + size))
-            return -1;
-        index += 9;
-        index += 2;
-        index += 1;
-        if(data.length < 13)
-            return -1;
+        while (data.length > index)
+        {
+            if(data.length < index + 2)
+                return -1;
+            int size = data[index];
+            index++;
+            byte type = data[index];
+            int length = index + size;
+            if(data.length < length)
+                return -1;
+            if((type & 0xFF) == 0xFF && size == 12)
+            {
+                index += 8;
+                index += 2;
+                index += 1;
+                byte[] dev = new byte[1];
+                System.arraycopy(data, index, dev, 0, 1);
 
-        byte[] dev = new byte[1];
-        System.arraycopy(data, index, dev, 0, 1);
-
-        int colorCode = ByteConverter.byteArrayToInt(dev);
-        return colorCode;
+                int colorCode = ByteConverter.byteArrayToInt(dev);
+                return colorCode;
+            }
+            else
+            {
+                index += size;
+            }
+        }
+        return -1;
     }
+
 }

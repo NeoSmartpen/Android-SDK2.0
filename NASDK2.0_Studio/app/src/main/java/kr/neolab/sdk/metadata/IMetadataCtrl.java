@@ -274,4 +274,6 @@ public interface IMetadataCtrl
      * Print.
      */
     public void print ();
+
+    public void clear();
 }

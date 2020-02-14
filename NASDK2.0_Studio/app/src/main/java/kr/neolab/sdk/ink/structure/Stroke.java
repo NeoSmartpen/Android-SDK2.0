@@ -64,26 +64,31 @@ public class Stroke implements Parcelable
 	/**
 	 * The Section id.
 	 */
-	public int sectionId = 0, /**
- * The Owner id.
- */
-ownerId = 0, /**
- * The Note id.
- */
-noteId, /**
- * The Page id.
- */
-pageId, /**
- * The Color.
- */
-color = Color.BLACK, /**
- * The Pen tip type.
- */
-penTipType = PEN_TIP_TYPE_NORMAL, /**
- * The Thickness.
- */
-thickness = 1;
-
+	public int sectionId = 0,
+	/**
+	 * The Owner id.
+	 */
+	ownerId = 0,
+	/**
+	 * The Note id.
+	 */
+	noteId,
+	/**
+	 * The Page id.
+	 */
+	pageId,
+	/**
+	 * The Color.
+	 */
+	color = Color.BLACK,
+	/**
+	 * The Pen tip type.
+	 */
+	penTipType = PEN_TIP_TYPE_NORMAL,
+	/**
+	 * The Thickness.
+	 */
+	thickness = 1;
 	/**
 	 * The Type.
 	 */

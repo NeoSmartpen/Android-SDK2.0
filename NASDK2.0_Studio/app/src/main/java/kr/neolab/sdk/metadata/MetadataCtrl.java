@@ -951,6 +951,15 @@ public class MetadataCtrl implements IMetadataCtrl
         }
         else
         {
+
+            for(Symbol s : result)
+            {
+                if(s.id.equals(event.id))
+                {
+                    result.remove(s);
+                    break;
+                }
+            }
             result.add( event );
         }
     }
@@ -1642,6 +1651,9 @@ public class MetadataCtrl implements IMetadataCtrl
 
         Iterator<String> it = ids.iterator();
 
+
+
+
         while ( it.hasNext() )
         {
             Symbol sym = lnkTbl.get( it.next() );
@@ -1656,6 +1668,7 @@ public class MetadataCtrl implements IMetadataCtrl
                 sym.next = lnkTbl.get( sym.nextId );
             }
         }
+
     }
 
     @Override
@@ -1675,6 +1688,17 @@ public class MetadataCtrl implements IMetadataCtrl
         {
             NLog.d( "[MetadataCtrl] " + sym.param + "/" + sym.next + "/" + sym.previous );
         }
+    }
+
+    @Override
+    public void clear() {
+        segmentTable.clear();
+        symbolTable.clear();
+        cropAreaTable.clear();
+        pageTable.clear();
+        offsetTable.clear();
+        bookTable.clear();
+        content = "";
     }
 
     private String charsToString( char[] ch, int start, int length )

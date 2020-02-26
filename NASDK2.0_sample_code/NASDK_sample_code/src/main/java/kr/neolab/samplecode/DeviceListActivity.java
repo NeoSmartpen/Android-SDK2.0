@@ -97,7 +97,7 @@ public class DeviceListActivity extends Activity
                         info.deviceName = device.getName();
                         info.isLe = is_le_scan;
                         info.uuidVer = BTLEAdt.UUID_VER.VER_2.toString();
-                        info.colorCode = 0;
+                        info.colorCode = -1;
 
                         List<ParcelUuid> parcelUuids = result.getScanRecord().getServiceUuids();
                         for(ParcelUuid uuid:parcelUuids)
@@ -105,10 +105,23 @@ public class DeviceListActivity extends Activity
                             if( uuid.toString().equals(Const.ServiceUuidV5.toString()))
                             {
                                 info.uuidVer = BTLEAdt.UUID_VER.VER_5.toString();
-                                info.colorCode = UuidUtil.getColorCodeFromUUIDVer5(result.getScanRecord().getBytes());
+                                info.colorCode = UuidUtil.getColorCodeFromUUID(result.getScanRecord().getBytes());
+                                info.companyCode = UuidUtil.getCompanyCodeFromUUID(result.getScanRecord().getBytes());
+                                info.productCode = UuidUtil.getProductCodeFromUUID(result.getScanRecord().getBytes());
                                 break;
                             }
+                            else if(uuid.toString().equals(Const.ServiceUuidV2.toString()))
+                            {
+                                info.uuidVer = BTLEAdt.UUID_VER.VER_2.toString();
+                                info.colorCode = UuidUtil.getColorCodeFromUUID(result.getScanRecord().getBytes());
+                                info.companyCode = UuidUtil.getCompanyCodeFromUUID(result.getScanRecord().getBytes());
+                                info.productCode = UuidUtil.getProductCodeFromUUID(result.getScanRecord().getBytes());
+                                break;
+
+                            }
+
                         }
+                        NLog.d( "ACTION_FOUND onLeScan : " + device.getName() + " sppAddress : " + sppAddress + ", COD:" + device.getBluetoothClass()+", colorCode="+info.colorCode+", productCode="+info.productCode+", companyCode="+info.companyCode  );
 
                         deviceMap.put( sppAddress, info );
                         mNewDevicesArrayAdapter.add( msg );
@@ -409,6 +422,9 @@ public class DeviceListActivity extends Activity
         boolean isLe = false;
         String uuidVer = "";
         int colorCode = 0;
+        int productCode = 0;
+        int companyCode = 0;
+
     }
 
 }

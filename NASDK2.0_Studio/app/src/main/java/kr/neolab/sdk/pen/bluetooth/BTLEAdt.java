@@ -891,10 +891,10 @@ public class BTLEAdt implements IPenAdt
     {
         if ( !isConnected() ) return;
 
-        if( mConnectionThread.getPacketProcessor().isSupportCountLimit() && noteIds.length > 64 )
+        if( mConnectionThread.getPacketProcessor().isSupportCountLimit() && noteIds.length > 128 )
         {
-            NLog.e( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 64 from protocol 2.15 !!!" );
-            throw new OutOfRangeException( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 64 from protocol 2.15 !!!" );
+            NLog.e( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 128 from protocol 2.15 !!!" );
+            throw new OutOfRangeException( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 128 from protocol 2.15 !!!" );
         }
 
         mConnectionThread.getPacketProcessor().reqAddUsingNote( sectionId, ownerId, noteIds );
@@ -926,10 +926,10 @@ public class BTLEAdt implements IPenAdt
     {
         if ( !isConnected() ) return;
 
-        if( mConnectionThread.getPacketProcessor().isSupportCountLimit() && noteList.size() > 64 )
+        if( mConnectionThread.getPacketProcessor().isSupportCountLimit() && noteList.size() > 128 )
         {
-            NLog.e( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 64 from protocol 2.15 !!!" );
-            throw new OutOfRangeException( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 64 from protocol 2.15 !!!" );
+            NLog.e( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 128 from protocol 2.15 !!!" );
+            throw new OutOfRangeException( "reqAddUsingNote ( int sectionId, int ownerId, int[] noteIds ) note must less then 128 from protocol 2.15 !!!" );
         }
 
         if ( mConnectionThread.getPacketProcessor() instanceof CommProcessor20 )

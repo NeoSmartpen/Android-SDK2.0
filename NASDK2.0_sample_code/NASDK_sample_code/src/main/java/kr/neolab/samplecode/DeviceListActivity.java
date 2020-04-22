@@ -239,6 +239,15 @@ public class DeviceListActivity extends Activity
 
             for (BluetoothDevice device : pairedDevices)
             {
+                DeviceInfo info = new DeviceInfo();
+                info.sppAddress = device.getAddress();
+                info.leAddress = "";
+                info.deviceName = device.getName();
+                info.isLe = is_le_scan;
+                info.uuidVer = BTLEAdt.UUID_VER.VER_2.toString();
+                info.colorCode = -1;
+
+                deviceMap.put( device.getAddress(), info );
                 mPairedDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
 //                mPairedDevicesArrayAdapter.add(device.getName() +"\n M:"+device.getBluetoothClass().getMajorDeviceClass()+"D:"+device.getBluetoothClass().getDeviceClass());
             }
@@ -359,7 +368,7 @@ public class DeviceListActivity extends Activity
             // Create the result Intent and include the MAC address
             Intent intent = new Intent();
             intent.putExtra(EXTRA_DEVICE_SPP_ADDRESS, sppAddress);
-            intent.putExtra(EXTRA_DEVICE_LE_ADDRESS, deviceInfo.leAddress );
+            intent.putExtra(EXTRA_DEVICE_LE_ADDRESS, deviceInfo.leAddress);
             intent.putExtra(EXTRA_IS_BLUETOOTH_LE, deviceInfo.isLe);
             intent.putExtra( EXTRA_DEVICE_NAME, deviceInfo.deviceName );
             intent.putExtra( EXTRA_UUID_VER, deviceInfo.uuidVer);
@@ -392,8 +401,18 @@ public class DeviceListActivity extends Activity
                 // If it's already paired, skip it, because it's been listed already
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED)
                 {
+                    DeviceInfo info = new DeviceInfo();
+                    info.sppAddress = device.getAddress();
+                    info.leAddress = "";
+                    info.deviceName = device.getName();
+                    info.isLe = is_le_scan;
+                    info.uuidVer = BTLEAdt.UUID_VER.VER_2.toString();
+                    info.colorCode = -1;
+
+
                     NLog.d( "ACTION_FOUND SPP : " +device.getName() + " address : "+ device.getAddress()+", COD:" + device.getBluetoothClass());
 
+                    deviceMap.put( device.getAddress(), info );
                     mNewDevicesArrayAdapter.add(device.getName() + "\n" + "[RSSI : "+rssi +"dBm] " + device.getAddress());
 //                    mNewDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress()+"\n Major"+device.getBluetoothClass().toString()+"\nDeviceClass()"+device.getBluetoothClass().getDeviceClass()+"device="+device.getType());
 

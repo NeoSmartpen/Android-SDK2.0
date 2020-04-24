@@ -1553,6 +1553,7 @@ public class BTAdt implements IPenAdt
 		 */
 		public void write( byte[] buffer )
 		{
+			NLog.d("write buffer="+buffer.length);
 			try
 			{
 				mmOutStream.write( buffer );

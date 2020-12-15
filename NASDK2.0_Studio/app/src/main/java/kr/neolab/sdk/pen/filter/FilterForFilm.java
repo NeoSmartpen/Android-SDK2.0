@@ -115,7 +115,8 @@ public class FilterForFilm
 			// (Even though only one dot is entered through A_DotData in CommProcessor, Move 1, End 1 data is passed to actual processDot through A_DotUpDownData.)
 			if(fsecondCheck)
 			{
-				fdot2 = fdot1;
+//				fdot2 = fdot1;
+				fdot2 = new Fdot(fdot1.x, fdot1.y, fdot1.pressure, DotType.PEN_ACTION_MOVE.getValue(), fdot1.timestamp, fdot1.sectionId, fdot1.ownerId, fdot1.noteId, fdot1.pageId, fdot1.color, fdot1.penTipType , fdot1.tiltX, fdot1.tiltY, fdot1.twist) ;
 			}
 			if(fthirdCheck && DotType.isPenActionDown( fdot1.dotType ) )
 			{

@@ -92,10 +92,6 @@ public class PenMsgType
      */
     public final static int PEN_SETUP_SENSITIVITY_RESULT_FSC   = 0x19;
 
-    /**
-     * The constant PEN_SETUP_DISK_RESET_RESULT.
-     */
-    public final static int PEN_SETUP_DISK_RESET_RESULT   = 0x28;
 
 
 
@@ -170,6 +166,13 @@ public class PenMsgType
      * The constant PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE.
      */
     public final static int PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE = 0x27;
+
+    /**
+     * The constant PEN_SETUP_DISK_RESET_RESULT.
+     */
+    public final static int PEN_SETUP_DISK_RESET_RESULT   = 0x28;
+
+    public final static int PEN_READ_RSSI   = 0x29;
 
     /**
      * Pen gesture detection events that occur when

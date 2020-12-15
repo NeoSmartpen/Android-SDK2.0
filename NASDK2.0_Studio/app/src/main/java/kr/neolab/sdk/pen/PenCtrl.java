@@ -20,6 +20,7 @@ import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IOfflineDataListener;
 import kr.neolab.sdk.pen.penmsg.IPenDotListener;
 import kr.neolab.sdk.pen.penmsg.IPenMsgListener;
+import kr.neolab.sdk.pen.usb.UsbAdt;
 import kr.neolab.sdk.util.NLog;
 import kr.neolab.sdk.util.SDKVersion;
 import kr.neolab.sdk.util.UseNoteData;
@@ -36,17 +37,30 @@ public class PenCtrl implements IPenCtrl {
     private static PenCtrl myInstance = null;
     private static BTDuplicateRemoveBroadcasterReceiver mReceiver;
 
+    private AdtMode adtMode = AdtMode.SPP_MODE;
+	public enum AdtMode
+	{
+		SPP_MODE, LE_MODE, USB_MODE, OFFLINE_TO_ONLINE_MODE
+	}
+
     private PenCtrl()
     {
         currentAdt = BTAdt.getInstance();
     }
 
+    /**
+	 * @deprecated use {@link #setAdtMode(AdtMode)} instead.
+     */
+    @Deprecated
     public boolean setOfflineToOnlineMode(boolean isOfflineToOnlineMode) {
-        if(isOfflineToOnlineMode)
-            currentAdt = BTOfflineAdt.getInstance();
-        else
-            currentAdt = BTAdt.getInstance();
-
+        if(isOfflineToOnlineMode) {
+			currentAdt = BTOfflineAdt.getInstance();
+			adtMode = AdtMode.OFFLINE_TO_ONLINE_MODE;
+		}
+        else {
+			currentAdt = BTAdt.getInstance();
+			adtMode = AdtMode.SPP_MODE;
+		}
         return isOfflineToOnlineMode;
     }
 
@@ -54,6 +68,10 @@ public class PenCtrl implements IPenCtrl {
         currentAdt.setPipedInputStream(pipedInputStream);
     }
 
+	/**
+	 * @deprecated use {@link #setAdtMode(AdtMode)} instead.
+	 */
+	@Deprecated
     public boolean setLeMode(boolean isLeMode)
     {
         if (currentAdt != null && currentAdt.getPenStatus() != IPenAdt.CONN_STATUS_IDLE)
@@ -73,6 +91,35 @@ public class PenCtrl implements IPenCtrl {
 
         return true;
     }
+
+	public boolean setAdtMode(AdtMode adtMode)
+	{
+		if (currentAdt != null && currentAdt.getPenStatus() != IPenAdt.CONN_STATUS_IDLE)
+		{
+			return false;
+		}
+		this.adtMode = adtMode;
+
+		if (adtMode == AdtMode.SPP_MODE)
+		{
+			currentAdt = BTAdt.getInstance();
+		}
+		else if(adtMode == AdtMode.LE_MODE)
+		{
+			currentAdt = BTLEAdt.getInstance();
+		}
+		else if(adtMode == AdtMode.USB_MODE)
+		{
+			currentAdt = UsbAdt.getInstance();
+		}
+		else
+		{
+			currentAdt = BTOfflineAdt.getInstance();
+		}
+
+		return true;
+	}
+
 
 	@Override
 	public String getConnectDeviceName() throws ProtocolNotSupportedException {
@@ -183,6 +230,7 @@ public class PenCtrl implements IPenCtrl {
             BTLEAdt.getInstance().setContext( context );
         BTAdt.getInstance().setContext(context);
         BTOfflineAdt.getInstance().setContext(context);
+        UsbAdt.getInstance().setContext(context);
     }
 
     @Override
@@ -255,7 +303,7 @@ public class PenCtrl implements IPenCtrl {
 		if(currentAdt instanceof BTAdt)
 			((BTAdt)currentAdt).connect(sppAddress);
 		else
-			((BTLEAdt)currentAdt).connect(sppAddress, leAddress, uuidVer, appType, reqProtocolVer);
+			((BTLEAdt)currentAdt).connect(sppAddress, leAddress, uuidVer, appType, reqProtocolVer,true);
 	}
 
     @Override

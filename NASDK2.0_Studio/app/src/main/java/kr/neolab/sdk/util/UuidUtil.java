@@ -1,5 +1,7 @@
 package kr.neolab.sdk.util;
 
+import java.io.UnsupportedEncodingException;
+
 import kr.neolab.sdk.pen.bluetooth.lib.ByteConverter;
 
 /**
@@ -7,22 +9,27 @@ import kr.neolab.sdk.pen.bluetooth.lib.ByteConverter;
  */
 public class UuidUtil
 {
-    public static  String changeAddressFromLeToSpp(byte[] data)
+    /**
+     * getAddressFromUUid
+     * @param scanRecordBytes
+     * @return
+     */
+    public static  String changeAddressFromLeToSpp(byte[] scanRecordBytes)
     {
         int index = 0;
         int size = 0;
         byte flag = 0;
-        while(data.length > index)
+        while(scanRecordBytes.length > index)
         {
-            size = data[index++];
-            if ( data.length <= index )
+            size = scanRecordBytes[index++];
+            if ( scanRecordBytes.length <= index )
                 return null;
-            flag = data[index];
+            flag = scanRecordBytes[index];
             if ( (flag & 0xFF) == 0xFF )
             {
                 ++index;
                 byte[] mac = new byte[6];
-                System.arraycopy(data, index, mac, 0, 6);
+                System.arraycopy(scanRecordBytes, index, mac, 0, 6);
                 StringBuilder sb = new StringBuilder(18);
                 for (byte b : mac) {
                     if (sb.length() > 0)
@@ -40,6 +47,42 @@ public class UuidUtil
         return null;
     }
 
+    /**
+     * getBtNameFromUUid
+     * @param scanRecordBytes
+     * @return
+     */
+    public static  String getBtNameFromUUid(byte[] scanRecordBytes)
+    {
+        int index = 0;
+        int size = 0;
+        byte flag = 0;
+        while(scanRecordBytes.length > index)
+        {
+            size = scanRecordBytes[index++];
+            if ( scanRecordBytes.length <= index )
+                return null;
+            flag = scanRecordBytes[index];
+            if ( (flag & 0xFF) == 0x9 )
+            {
+                ++index;
+                byte[] name = new byte[size-1];
+                System.arraycopy(scanRecordBytes, index, name, 0, size-1);
+                String strName = null;
+                try {
+                    strName = new String(name,"utf-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                return strName;
+            }
+            else
+            {
+                index += size;
+            }
+        }
+        return null;
+    }
     public static int getCompanyCodeFromUUID(byte[] data)
     {
         int index = 0;

@@ -315,6 +315,28 @@ public class ProtocolParser20
     }
 
     /**
+     * Build req wired pen info byte [ ].
+     * 0x01 CMD20.REQ_PenInfo
+     *
+     * @param appVer    the app ver
+     * @return the byte [ ]
+     */
+    public static byte[] buildReqWiredPenInfo ( String appVer )
+    {
+
+        PacketBuilder builder = new PacketBuilder( 16 + 2 + 16 + 8);    //[2018.03.05] Stroke Test
+
+        builder.setCommand( CMD20.REQ_PenInfo );
+        builder.write( ByteConverter.stringTobyte( "" ), 16 );
+        // type Android
+        builder.write( ByteConverter.shortTobyte( (short) 0x1101 ), 2 );
+        // It may be empty depending on the situation (depending on whether Context is set).
+        builder.write( ByteConverter.stringTobyte( appVer ), 16 );
+        builder.write( ByteConverter.stringTobyte(PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION), 8);   //[2018.03.05] Stroke Test
+        NLog.d( "[ProtocolParser20] REQ  buildReqPenInfo. appVer=" + appVer + "Packet:" + builder.showPacket());
+        return builder.getPacket();
+    }
+    /**
      * Build password input byte [ ].
      * 0x02 CMD20.REQ_Password
      *

@@ -706,4 +706,11 @@ public interface IPenAdt
      */
     public boolean isSupportHoverCommand()throws ProtocolNotSupportedException;
 
+
+    /**
+     * Gets connect pen type
+     * 1 pen 2 eraser 3 player 4 wired pen 5 sound pen
+     * @return the connect pen type
+     */
+    public int getConnectPenType () throws ProtocolNotSupportedException;
 }

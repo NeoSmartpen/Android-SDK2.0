@@ -29,6 +29,9 @@ public class FwUpgradeCommand20 extends Command
 	private String deviceName;
 	private boolean isCompress;
 
+	private boolean isRepeatHandling = false;
+	private long prevOffset = -1;
+
 	/**
 	 * The Packet size.
 	 */
@@ -41,7 +44,8 @@ public class FwUpgradeCommand20 extends Command
 
 	private boolean repeat = true;
 
-	private int wait_timeout = 5000;
+	
+	private int wait_timeout = 60000;//
 
 	private int wait = 10;
 
@@ -88,6 +92,8 @@ public class FwUpgradeCommand20 extends Command
 		else
 			packetSize = PEN_PACKET_SIZE;
 
+		if((deviceName.equals( "NEP-E100" ) || deviceName.equals( "NEP-E101" )) && fwVersion.equals("2.02"))
+			isRepeatHandling = true;
 	}
 
 
@@ -99,7 +105,7 @@ public class FwUpgradeCommand20 extends Command
 	private void doUpgrade()
 	{
 		Chunk20 chunk = null;
-
+		prevOffset = -1;
 		try
 		{
 			InputStream is = new FileInputStream( source );
@@ -162,6 +168,20 @@ public class FwUpgradeCommand20 extends Command
 						return;
 					}
 					else {
+						if(isRepeatHandling)
+						{
+							if(prevOffset >= info.offset)
+							{
+								NLog.w( "[FwUpgradeCommand20] RepeatHandling prevOffset="+prevOffset+",info.offset="+info.offset+" Pass!!");
+								continue;
+							}
+//							else if(prevOffset == info.offset)
+//							{
+//								info.offset = info.offset+chunk.getChunksize();
+//								NLog.w( "[FwUpgradeCommand20] RepeatHandling change info.offset="+info.offset);
+//							}
+						}
+						prevOffset = info.offset;
 						comp.write( ProtocolParser20.buildPenSwUploadChunk( info.offset, chunk.getChunk( info.offset ), info.status , isCompress) );
 					}
 

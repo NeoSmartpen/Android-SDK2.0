@@ -123,7 +123,8 @@ public class FilterForPaper
 			// (Even though only one dot is entered through A_DotData in CommProcessor, Move 1, End 1 data is passed to actual processDot through A_DotUpDownData.)
 			if(secondCheck)
 			{
-				dot2 = dot1;
+//				dot2 = dot1;
+				dot2 = new Fdot(dot1.x, dot1.y, dot1.pressure, DotType.PEN_ACTION_MOVE.getValue(), dot1.timestamp, dot1.sectionId, dot1.ownerId, dot1.noteId, dot1.pageId, dot1.color, dot1.penTipType , dot1.tiltX, dot1.tiltY, dot1.twist) ;
 			}
 			if(thirdCheck && DotType.isPenActionDown( dot1.dotType ) )
 			{
@@ -146,7 +147,6 @@ public class FilterForPaper
 					makeDownDot = new Fdot(dot2.x, dot2.y, dot2.pressure, DotType.PEN_ACTION_DOWN.getValue(), dot2.timestamp, dot2.sectionId, dot2.ownerId, dot2.noteId, dot2.pageId, dot2.color, dot2.penTipType , dot2.tiltX, dot2.tiltY, dot2.twist) ;
 					listener.onFilteredDot( makeDownDot );
 				}
-
 				listener.onFilteredDot( dot2 );
 			}
 			else

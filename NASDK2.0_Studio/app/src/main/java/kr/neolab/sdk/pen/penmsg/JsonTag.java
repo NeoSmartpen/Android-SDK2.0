@@ -47,7 +47,12 @@ public class JsonTag
      */
     public final static String BOOL_REGULAR_DISCONNECT = "regular";
 
-	/**
+    /**
+     * The constant INT_WIREDPEN_DISCONNECT_REASON.
+     */
+    public final static String INT_WIREDPEN_DISCONNECT_REASON = "wiredpen_disconnect_reason";
+
+    /**
 	 * The constant BOOL_WRITE_FAILED_DISCONNECT.
 	 */
 	public final static String BOOL_SEND_DATA_FAILED_DISCONNECT = "send_data_failed";
@@ -412,4 +417,11 @@ public class JsonTag
     public final static int ERROR_TYPE_MISSING_PEN_MOVE	= 8;
 
     //[2018.03.05] Stroke Test - END
+
+    /**
+     * The constant INT_RSSI.
+     */
+    public final static String INT_RSSI = "rssi";
+
+
 }

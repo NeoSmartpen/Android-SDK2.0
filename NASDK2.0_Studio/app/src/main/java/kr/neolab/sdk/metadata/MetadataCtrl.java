@@ -1200,11 +1200,20 @@ public class MetadataCtrl implements IMetadataCtrl
         }
     }
 
+    public ArrayList<Symbol> getSymbols(int noteId, int pageId)
+    {
+        ArrayList<Symbol> candidates = this.symbolTable.get(getQueryString(noteId, pageId) );
+        return candidates;
+    }
+
+
     @Override
     public Segment[] getSegments ( int sectionId, int ownerId, int noteId )
     {
         HashMap<String, Segment> map = segmentTable.get( ""+sectionId+"_"+ownerId+"_"+noteId );
 
+        if(map == null)
+            return null;
         Iterator<String> it = map.keySet().iterator();
 
         ArrayList<Segment> list = new ArrayList<Segment>();
@@ -1388,6 +1397,7 @@ public class MetadataCtrl implements IMetadataCtrl
                         p.y = Float.parseFloat( atts.getValue( "top" ) );
                     }catch ( Exception e )
                     {
+                        e.printStackTrace();
                     }
                     offsetTable.put( ""+noteId, p );
 

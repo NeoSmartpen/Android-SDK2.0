@@ -665,6 +665,10 @@ public class Stroke implements Parcelable
 		return this.rectArea.intersect( area );
 	}
 
+	public RectF getRectArea()
+	{
+		return this.rectArea;
+	}
 	/**
 	 * Gets path.
 	 *

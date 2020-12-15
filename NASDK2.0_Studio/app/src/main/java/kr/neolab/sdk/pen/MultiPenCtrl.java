@@ -200,7 +200,7 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			if(mConnectedCollection.get(sppAddress) instanceof BTAdt)
 				((BTAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress);
 			else
-				((BTLEAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress, leAddress, uuidVer,appType, reqProtocolVer);
+				((BTLEAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress, leAddress, uuidVer,appType, reqProtocolVer,true);
 
 		}
 		else
@@ -220,9 +220,31 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			if(mBTAdt instanceof BTAdt )
 				((BTAdt)mBTAdt).connect(sppAddress);
 			else
-				((BTLEAdt)mBTAdt).connect(sppAddress, leAddress, uuidVer,appType, reqProtocolVer);
+				((BTLEAdt)mBTAdt).connect(sppAddress, leAddress, uuidVer,appType, reqProtocolVer, true);
 		}
     }
+
+
+	public void connect(String sppAddress, String leAddress, BTLEAdt.UUID_VER uuidVer, short appType, String reqProtocolVer) {
+		if(mConnectedCollection.containsKey(sppAddress) && (mConnectedCollection.get(sppAddress) instanceof BTLEAdt) )
+		{
+				((BTLEAdt)mConnectedCollection.get(sppAddress)).connect(sppAddress, leAddress, uuidVer,appType, reqProtocolVer,false);
+		}
+		else
+		{
+			IPenAdt mBTAdt;
+				mBTAdt = new BTLEAdt();
+			mBTAdt.setContext(mContext);
+			mBTAdt.setListener(this.listener);
+			mBTAdt.setDotListener( this.dotListener );
+			if(offlineDataListener != null)
+				mBTAdt.setOffLineDataListener( this.offlineDataListener );
+			if(metadataListener != null)
+				mBTAdt.setMetadataListener( this.metadataListener );
+			mConnectedCollection.put(sppAddress, mBTAdt);
+			((BTLEAdt)mBTAdt).connect(sppAddress, leAddress, uuidVer,appType, reqProtocolVer,false);
+		}
+	}
 
 //	public boolean setLeMode(boolean isLeMode)
 //	{

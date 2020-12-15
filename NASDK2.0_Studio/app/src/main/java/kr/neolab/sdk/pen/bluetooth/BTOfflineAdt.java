@@ -2156,4 +2156,21 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
 
 
 
+    @Override
+    public int getConnectPenType () throws ProtocolNotSupportedException
+    {
+        if ( !isConnected() )
+        {
+            return 0;
+        }
+
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+            return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getConnectPenType( );
+        else
+        {
+            NLog.e( "getConnectPenType( ) is supported from protocol 2.0 !!!" );
+            throw new ProtocolNotSupportedException( "getConnectPenType( ) is supported from protocol 2.0 !!!");
+        }
+    }
+
 }

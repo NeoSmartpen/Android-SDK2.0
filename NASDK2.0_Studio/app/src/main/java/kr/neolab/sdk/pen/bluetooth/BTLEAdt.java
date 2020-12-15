@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.PipedInputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -101,7 +102,7 @@ public class BTLEAdt implements IPenAdt
      */
     private String penAddress = null;
 
-    private String penSppAddress = null;
+//    private String penSppAddress = null;
 
     /**
      * The Pen bt name.
@@ -158,6 +159,8 @@ public class BTLEAdt implements IPenAdt
 
     private String curr_req_protocol_ver = PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION;
 
+    private Boolean useProfile = true;
+
     /**
      *Descriptor uuid for setting Notify or Indicate
      */
@@ -185,15 +188,15 @@ public class BTLEAdt implements IPenAdt
         initialize();
     }
 
-    /**
-     * Sets spp mac address.
-     *
-     * @param sppMacAddress the spp mac address
-     */
-    public void setSppMacAddress ( String sppMacAddress )
-    {
-        this.penSppAddress = sppMacAddress;
-    }
+//    /**
+//     * Sets spp mac address.
+//     *
+//     * @param sppMacAddress the spp mac address
+//     */
+//    public void setSppMacAddress ( String sppMacAddress )
+//    {
+//        this.penSppAddress = sppMacAddress;
+//    }
 
     private boolean initialize ()
     {
@@ -213,7 +216,7 @@ public class BTLEAdt implements IPenAdt
      */
     public String getPenSppAddress ()
     {
-        return this.penSppAddress;
+        return this.penAddress;
     }
 
     @Override
@@ -280,8 +283,9 @@ public class BTLEAdt implements IPenAdt
      * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      * callback.
      */
-    public synchronized void connect ( final String sppAddress, final String leAddress, UUID_VER uuid_ver, short appType, String reqProtocolVer )
+    public synchronized void connect ( final String sppAddress, final String leAddress, UUID_VER uuid_ver, short appType, String reqProtocolVer , boolean useProfile)
     {
+        this.useProfile = useProfile;
         curr_req_protocol_ver = reqProtocolVer;
         curr_app_type = appType;
         curr_uuid_ver = uuid_ver;
@@ -321,7 +325,7 @@ public class BTLEAdt implements IPenAdt
         }
 
         if ( device.getType() != BluetoothDevice.DEVICE_TYPE_LE
-		        && device.getType() != BluetoothDevice.DEVICE_TYPE_UNKNOWN  && device.getType() != BluetoothDevice.DEVICE_TYPE_DUAL)
+		        && device.getType() != BluetoothDevice.DEVICE_TYPE_UNKNOWN && device.getType() != BluetoothDevice.DEVICE_TYPE_DUAL)
         {
             NLog.w( "MacAddress is not Bluetooth LE Type" );
             PenMsg msg = new PenMsg( PenMsgType.PEN_CONNECTION_FAILURE);
@@ -1248,6 +1252,18 @@ public class BTLEAdt implements IPenAdt
         return penStatus;
     }
 
+    public void readRemoteRssi()
+    {
+        if ( !isConnected() )
+        {
+            return;
+        }
+
+        if ( mBluetoothGatt != null )
+            mBluetoothGatt.readRemoteRssi();
+
+    }
+
     private void onLostConnection ()
     {
         NLog.d( "[BTLEAdt/ConnectThread] onLostConnection mIsRegularDisconnect=" + mIsRegularDisconnect );
@@ -1342,7 +1358,7 @@ public class BTLEAdt implements IPenAdt
 	    private WriteCharacteristicThread mWriteCharacteristicThread;
 
         private String macAddress;
-        private String sppMacAddress;
+//        private String sppMacAddress;
         private boolean isRunning = false;
 
         /**
@@ -1360,7 +1376,7 @@ public class BTLEAdt implements IPenAdt
             readQueue.clear();
 
             macAddress = BTLEAdt.this.penAddress;
-            sppMacAddress = BTLEAdt.this.penSppAddress;
+//            sppMacAddress = BTLEAdt.this.penSppAddress;
 
             String version = "";
             if ( context != null )
@@ -1374,7 +1390,10 @@ public class BTLEAdt implements IPenAdt
                 }
             }
 
-            if ( protocolVer == 2 ) processor = new CommProcessor20( this, version , curr_app_type, curr_req_protocol_ver);
+            if ( protocolVer == 2 ){
+                processor = new CommProcessor20( this, version , curr_app_type, curr_req_protocol_ver);
+                ((CommProcessor20)processor).setUseProfile(useProfile);
+            }
 
             allowOffline = true;
             this.isRunning = true;
@@ -1394,6 +1413,7 @@ public class BTLEAdt implements IPenAdt
         }
 
         private ArrayBlockingQueue<byte[]> readQueue = null;
+//        private Queue<byte[]> readQueue = null;
 
         private void read ()
         {
@@ -1534,7 +1554,7 @@ public class BTLEAdt implements IPenAdt
          */
         public String getSPPMacAddress ()
         {
-            return sppMacAddress;
+            return macAddress;
         }
 
         /**
@@ -1856,8 +1876,8 @@ public class BTLEAdt implements IPenAdt
                     mtu = mtuLIst[mtuIndex];
                     boolean ret = gatt.requestMtu( mtu );
                     NLog.d( "mtu test result : " + ret );
-                    boolean canReadRssi = mBluetoothGatt.readRemoteRssi();
-                    NLog.d( "canReadRemoteRssi : " + canReadRssi );
+//                    boolean canReadRssi = mBluetoothGatt.readRemoteRssi();
+//                    NLog.d( "canReadRemoteRssi : " + canReadRssi );
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED:
                     NLog.d( "Disconnected" );
@@ -1905,7 +1925,7 @@ public class BTLEAdt implements IPenAdt
                 if ( service != null )
                 {
                     mProtocolVer = 2;
-                    mConnectionThread = new ConnectedThread( mProtocolVer );
+                    mConnectionThread = new ConnectedThread( mProtocolVer);
                     mConnectionThread.start();
 
                     initCharacteristic( mProtocolVer );
@@ -1967,7 +1987,7 @@ public class BTLEAdt implements IPenAdt
         public void onReliableWriteCompleted ( BluetoothGatt gatt, int status )
         {
             super.onReliableWriteCompleted( gatt, status );
-            NLog.d( "call onREliableWriteCompleted" );
+            NLog.d( "call onReliableWriteCompleted" );
         }
 
         @Override
@@ -1975,6 +1995,16 @@ public class BTLEAdt implements IPenAdt
         {
             super.onReadRemoteRssi( gatt, rssi, status );
             NLog.d( "call onReadRemoteRssi="+rssi+",status" );
+            try {
+                JSONObject job = new JSONObject().put( JsonTag.INT_RSSI, rssi );
+                PenMsg msg = new PenMsg( PenMsgType.PEN_READ_RSSI,job);
+                msg.sppAddress = penAddress;
+                responseMsg( msg );
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+
         }
 
         @TargetApi( Build.VERSION_CODES.LOLLIPOP )
@@ -2231,5 +2261,24 @@ public class BTLEAdt implements IPenAdt
             throw new ProtocolNotSupportedException( "isSupportHoverCommand () is supported from protocol 2.0 !!!" );
         }
     }
+
+
+    @Override
+    public int getConnectPenType () throws ProtocolNotSupportedException
+    {
+        if ( !isConnected() )
+        {
+            return 0;
+        }
+
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+            return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getConnectPenType( );
+        else
+        {
+            NLog.e( "getConnectPenType( ) is supported from protocol 2.0 !!!" );
+            throw new ProtocolNotSupportedException( "getConnectPenType( ) is supported from protocol 2.0 !!!");
+        }
+    }
+
 
 }

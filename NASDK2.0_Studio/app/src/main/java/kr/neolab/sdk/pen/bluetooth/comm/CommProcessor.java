@@ -140,6 +140,8 @@ public class CommProcessor extends CommandManager implements IParsedPacketListen
 	private Object extraData = null;
 	private int stat_battery = 0;
 
+	private boolean useProfile = true;
+
 	private class ChkOfflineFailRunnable implements Runnable{
 
 		@Override

@@ -9,7 +9,7 @@ public class Symbol extends RectF
 {
 	public static final String TYPE_RECTANGLE = "Rectangle";
 	public static final String TYPE_TRIANGLE = "Triangle";
-	public static final String TYPE_ELLIPSE = "ELLIPSE";
+	public static final String TYPE_ELLIPSE = "Ellipse";
 	public static final String TYPE_POLYGON = "Polygon";
 
 	/**

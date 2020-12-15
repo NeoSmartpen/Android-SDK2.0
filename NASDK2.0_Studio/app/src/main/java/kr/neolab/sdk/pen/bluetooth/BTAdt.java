@@ -48,6 +48,8 @@ import kr.neolab.sdk.pen.penmsg.PenMsgType;
 import kr.neolab.sdk.util.NLog;
 import kr.neolab.sdk.util.UseNoteData;
 
+import static kr.neolab.sdk.pen.bluetooth.comm.CommProcessor20.PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION;
+
 /**
  * The type Bt adt.
  *
@@ -93,6 +95,10 @@ public class BTAdt implements IPenAdt
 	private IOfflineDataListener offlineDataListener = null;
 	private IMetadataListener metadataListener = null;
 
+
+	private short curr_app_type = 0x1101;
+
+	private String curr_req_protocol_ver = PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION;
 
 	private int status = CONN_STATUS_IDLE;
 
@@ -1327,7 +1333,7 @@ public class BTAdt implements IPenAdt
 
 			}
 			if(protocolVer == 2)
-				processor = new CommProcessor20( this, version );
+				processor = new CommProcessor20( this, version , curr_app_type, curr_req_protocol_ver);
 			else
 				processor = new CommProcessor( this );
 
@@ -2160,5 +2166,24 @@ public class BTAdt implements IPenAdt
 			throw new ProtocolNotSupportedException( "isSupportHoverCommand () is supported from protocol 2.0 !!!" );
 		}
 	}
+
+	@Override
+	public int getConnectPenType () throws ProtocolNotSupportedException
+	{
+		if ( !isConnected() )
+		{
+			return 0;
+		}
+
+		if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
+			return ((CommProcessor20)mConnectionThread.getPacketProcessor()).getConnectPenType( );
+		else
+		{
+			NLog.e( "getConnectPenType( ) is supported from protocol 2.0 !!!" );
+			throw new ProtocolNotSupportedException( "getConnectPenType( ) is supported from protocol 2.0 !!!");
+		}
+	}
+
+
 
 }

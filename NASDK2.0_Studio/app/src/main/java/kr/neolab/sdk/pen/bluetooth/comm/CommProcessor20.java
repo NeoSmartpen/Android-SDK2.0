@@ -27,8 +27,6 @@ import kr.neolab.sdk.pen.bluetooth.cmd.FwUpgradeCommand20;
 import kr.neolab.sdk.pen.bluetooth.cmd.SetTimeCommand;
 import kr.neolab.sdk.pen.bluetooth.lib.ByteConverter;
 import kr.neolab.sdk.pen.bluetooth.lib.CMD20;
-import kr.neolab.sdk.pen.bluetooth.lib.Chunk;
-import kr.neolab.sdk.pen.bluetooth.lib.Chunk20;
 import kr.neolab.sdk.pen.bluetooth.lib.IChunk;
 import kr.neolab.sdk.pen.bluetooth.lib.Packet;
 import kr.neolab.sdk.pen.bluetooth.lib.PenProfile;
@@ -54,6 +52,7 @@ import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_INFO;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_READ_VALUE;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_STATUS_SUCCESS;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_WRITE_VALUE;
+import static kr.neolab.sdk.pen.usb.lib.NDACLib.ndac;
 
 /**
  * BT Connection in/out packet process
@@ -132,6 +131,20 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 	private String connectedDeviceName = "";
 	private String connectedSubName = "";
+	//1 pen 2 eraser 3 player 4 wired pen 5 sound pen
+	private int connectedPenType = 1;
+
+	private static final int PEN_TYPE_NORMAL = 1;
+	private static final int PEN_TYPE_ERASER = 2;
+	private static final int PEN_TYPE_PLAYER = 3;
+	private static final int PEN_TYPE_WIRED = 4;
+
+	public static final int WIRED_PEN_STATUS_NORMAL = 0;
+	public static final int WIRED_PEN_STATUS_DEFECT_CAMERA = 1;
+	public static final int WIRED_PEN_STATUS_DEFECT_ETC = 2;
+
+	private byte[] NDAC_Version;
+	private int wired_pen_status = WIRED_PEN_STATUS_NORMAL;
 
 	private ArrayList<Stroke> offlineStrokes = new ArrayList<Stroke>();
 
@@ -232,6 +245,9 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	private short productCode = 0;
 
 	private int stat_battery = 0;
+
+	private boolean useProfile = true;
+
 
 	private class ChkOfflineFailRunnable implements Runnable{
 
@@ -399,6 +415,12 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 //		this.checkEstablish();
 	}
 
+
+	public void setUseProfile(boolean useProfile)
+	{
+		this.useProfile = useProfile;
+		this.factor = null;
+	}
 	/**
 	 * Finish.
 	 */
@@ -600,6 +622,9 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					FW_VER = pack.getDataRangeString( 16, 16 ).trim();
 					receiveProtocolVer = pack.getDataRangeString( 32, 8 ).trim();
 					connectedSubName = pack.getDataRangeString( 40, 16 ).trim();
+					connectedPenType = pack.getDataRangeInt( 56, 2 );
+					if(connectedPenType == 2)
+						currPenTipType = Stroke.PEN_TIP_TYPE_ERASER;
 
 					isSupportSeparateUpDown = isSupportSeparateUpDown();
 
@@ -619,6 +644,20 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					{
 						e.printStackTrace();
 					}
+
+					if(connectedPenType == PEN_TYPE_WIRED) {
+						NDAC_Version = pack.getDataRange(65, 16);
+						wired_pen_status = pack.getDataRangeInt(81, 1);
+
+						NLog.d( "[CommProcessor20] NDAC_Version is "+NDAC_Version+";wired_pen_status is "+wired_pen_status);
+
+						if(wired_pen_status != WIRED_PEN_STATUS_NORMAL) {
+							btConnection.unbind(false);
+							return;
+						}
+					}
+
+
 					try
 					{
 						byte[] code = pack.getDataRange( 65, 4 );
@@ -723,38 +762,48 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					}
 					if(!isPenAuthenticated)
 					{
-						if(isLock)
-						{
-							JSONObject job = null;
-
-							try
-							{
-								job = new JSONObject();
-								job.put( JsonTag.INT_PASSWORD_RETRY_COUNT, countRetry );
-								job.put( JsonTag.INT_PASSWORD_RESET_COUNT, countReset );
-
-								btConnection.onCreateMsg( new PenMsg( PenMsgType.PASSWORD_REQUEST, job ) );
-							}
-							catch ( JSONException e )
-							{
-								e.printStackTrace();
-							}
+						if(connectedPenType == PEN_TYPE_WIRED) {
+							isPenAuthenticated = true;
+							btConnection.onAuthorized();
+							byte[] response = ndac.RequestVpen( ProtocolParser20.buildSetCurrentTimeData() );
+							fill(response, response.length);
 						}
 						else
 						{
-							if ( !isPenAuthenticated )
+							if(isLock)
 							{
-								isPenAuthenticated = true;
-								btConnection.onAuthorized();
-								if(isSupportPenProfile())
-								{
-									requestOnDefaultCalibration = true;
-									requestDefaultCalibration();
-								}
-								else
-								{
-									this.reqSetCurrentTime();
+								JSONObject job = null;
 
+								try
+								{
+									job = new JSONObject();
+									job.put( JsonTag.INT_PASSWORD_RETRY_COUNT, countRetry );
+									job.put( JsonTag.INT_PASSWORD_RESET_COUNT, countReset );
+
+									btConnection.onCreateMsg( new PenMsg( PenMsgType.PASSWORD_REQUEST, job ) );
+								}
+								catch ( JSONException e )
+								{
+									e.printStackTrace();
+								}
+							}
+							else
+							{
+								if ( !isPenAuthenticated )
+								{
+									isPenAuthenticated = true;
+									btConnection.onAuthorized();
+									if(isSupportPenProfile() && useProfile)
+									{
+										requestOnDefaultCalibration = true;
+										requestDefaultCalibration();
+									}
+									else
+									{
+										reqCalibrate2(null);
+										this.reqSetCurrentTime();
+
+									}
 								}
 							}
 						}
@@ -809,7 +858,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 							isPenAuthenticated = true;
 							btConnection.onAuthorized();
 
-							if(isSupportPenProfile())
+							if(isSupportPenProfile() && useProfile)
 							{
 								requestOnDefaultCalibration = true;
 								requestDefaultCalibration();
@@ -2041,7 +2090,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				resultCode = pack.getResultCode();
 				int type = pack.getDataRangeInt( 0, 1 );
 				int status = pack.getDataRangeInt( 1, 1 );
-				NLog.d( "[CommProcessor20] received RES_PenStatusChange(0x04) command. resultCode=" + resultCode + " type=" + type );
+				NLog.d( "[CommProcessor20] received RES_PenStatusChange(0x85) command. resultCode=" + resultCode + " type=" + type );
 				boolean isSuccess = resultCode == 0x00 ? true : false;
 				isSuccess = isSuccess && ( status == 0x00 );
 				JSONObject job = null;
@@ -2861,6 +2910,11 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
         }
 	}
 
+	public void reqPenInfoForWiredPen() {
+		write(ProtocolParser20.buildReqWiredPenInfo(appVer));
+	}
+
+
 	public SetTimeCommand setTimeCommand = null;
 	/**
 	 * Pen RTC Setting
@@ -3265,6 +3319,14 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		return connectedSubName;
 	}
 
+	/**
+	 * Gets connect pen type
+	 * @return the connect pen type
+	 */
+	public int getConnectPenType()
+	{
+		return connectedPenType;
+	}
 
 	/**
 	 * Gets Pen ProtocolVer.
@@ -3679,4 +3741,17 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	{
 		return isHoverMode;
 	}
+
+
+	/**
+	 * Get status of wired pen.
+	 * WIRED_PEN_STATUS_NORMAL(0) : Noramal
+	 * WIRED_PEN_STATUS_DEFECT_CAMERA(1) : Defective Camera
+	 * WIRED_PEN_STATUS_DEFECT_ETC(2) : Defective etc.
+	 * @return status of wired pen.
+	 */
+	public int getWiredPenStatus() {
+		return connectedPenType == PEN_TYPE_WIRED ? wired_pen_status : WIRED_PEN_STATUS_NORMAL;
+	}
+
 }

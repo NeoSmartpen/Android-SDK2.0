@@ -533,6 +533,7 @@ public interface IPenCtrl
      * Set "Offline To Online Mode".
      * @param isOfflineToOnlineMode
      * @return True if offlineToOnlineMode changing is success, false otherwise.
+     * @deprecated use {@link #setAdtMode(PenCtrl.AdtMode)} instead.
      */
     public boolean setOfflineToOnlineMode(boolean isOfflineToOnlineMode);
 
@@ -548,8 +549,19 @@ public interface IPenCtrl
      *
      * @param isLeMode true is BLE mode, false is BT mode
      * @return true is success change mode otherwise is fail
+     * @deprecated use {@link #setAdtMode(PenCtrl.AdtMode)} instead.
      */
     public boolean setLeMode(boolean isLeMode);
+
+    /**
+     * Sets AdtMode .
+     *
+     * @param adtMode PenCtrl.AdtMode
+     * @return true is success change mode otherwise is fail
+     */
+    public boolean setAdtMode(PenCtrl.AdtMode adtMode);
+
+
 
     /**
      * Gets connect device name.

@@ -245,6 +245,16 @@ public class CMD20
      */
     public static final int RES_PenProfile = 0xC1;
 
+
+    //Check if pen is support setting performance
+    public static final int REQ_SystemInfo = 0x07;
+
+    public static final int RES_SystemInfo = 0x87;
+
+    //For setting performance
+    public static final int REQ_SetPerformance = 0x06;
+
+    public static final int RES_SetPerformance = 0x86;
     /**
      * Is event cmd boolean.
      *

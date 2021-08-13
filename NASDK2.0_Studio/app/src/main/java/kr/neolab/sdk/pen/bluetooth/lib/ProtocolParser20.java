@@ -1218,6 +1218,29 @@ public class ProtocolParser20
         return sendbyte.getPacket();
     }
 
+	public static byte[] buildReqSystemInfo()
+    {
+        PacketBuilder sendbyte = new PacketBuilder( 0 );
+        sendbyte.setCommand( CMD20.REQ_SystemInfo);
+        NLog.d( "[ProtocolParser20] REQ buildReqSystemInfo" + "Packet:" + sendbyte.showPacket() );
+        return sendbyte.getPacket();
+    }
+
+    public static byte[] buildReqSetPerformance(int step)
+    {
+        PacketBuilder sendbyte = new PacketBuilder( 1+4+4 );
+        sendbyte.setCommand( CMD20.REQ_SetPerformance);
+        sendbyte.write( (byte) 1 ); //type = set performance(=eco mode) = 1
+
+        sendbyte.write( ByteConverter.intTobyte(0) );   //Reserved 4byte
+
+        // 0 :  104 MHz, 43 frame
+        // 1 :  208 MHz, 86 frame
+        sendbyte.write( ByteConverter.intTobyte(step) );
+
+        NLog.d( "[ProtocolParser20] REQ buildReqSetPerformance" + "Packet:" + sendbyte.showPacket() );
+        return sendbyte.getPacket();
+    }
 
     static private byte[] compress(byte[] source) throws IOException
     {

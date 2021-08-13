@@ -44,9 +44,7 @@ import kr.neolab.sdk.pen.penmsg.PenMsgType;
 import kr.neolab.sdk.util.NLog;
 import kr.neolab.sdk.util.UseNoteData;
 
-import static kr.neolab.sdk.pen.bluetooth.lib.CMD20.RES_ReadPenFirmSetting;
 import static kr.neolab.sdk.pen.bluetooth.lib.CMD20.RES_SystemInfo;
-import static kr.neolab.sdk.pen.bluetooth.lib.CMD20.RES_WritePenFirmSetting;
 import static kr.neolab.sdk.pen.bluetooth.lib.CMD20.RES_SetPerformance;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.KEY_DEFAULT_CALIBRATION;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_CREATE;

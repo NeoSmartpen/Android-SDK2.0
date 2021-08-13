@@ -376,6 +376,41 @@ public class JsonTag
      */
     public final static String INT_LOG_EXTRA_DATA = "log_extra_data";
 
+
+    /**
+     * The constant BOOL_SUPPORT_SYSTEM_SETTING
+     */
+    public final static String BOOL_SUPPORT_SYSTEM_SETTING = "set_system_setting";
+
+    /**
+     * The constant INT_PERFORMANCE_STEP
+     *
+     */
+    public final static String INT_PERFORMANCE_STEP = "pen_performance_step";
+
+    /**
+     * The constant PERFORMANCE_STEP_INVALID
+     */
+    public final static String INT_SET_PERFORMANCE_STATUS = "set_performance_status";
+
+    /**
+     * The constant PERFORMANCE_STEP_NOT_SUPPORT
+     */
+    public final static int PERFORMANCE_STEP_NOT_SUPPORT = -1;
+
+    /**
+     * The constant PERFORMANCE_STEP_0
+     * In case of MT2523, Max 104 MHz, 43 frame
+     */
+    public final static int PERFORMANCE_STEP_0 = 0;
+
+    /**
+     * The constant PERFORMANCE_STEP_0
+     * In case of MT2523, Max 208 MHz, 86 frame
+     */
+    public final static int PERFORMANCE_STEP_1 = 1;
+
+
     /**
      * The constant ERROR_TYPE_MISSING_PEN_UP.
      */

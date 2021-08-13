@@ -713,4 +713,19 @@ public interface IPenAdt
      * @return the connect pen type
      */
     public int getConnectPenType () throws ProtocolNotSupportedException;
+
+
+    /**
+     * Request System Information.
+     * @throws ProtocolNotSupportedException
+     */
+    void reqSystemInfo() throws ProtocolNotSupportedException;
+
+    /**
+     * Request setting performance step.
+     *
+     * @param step
+     * @throws ProtocolNotSupportedException
+     */
+    void reqSetPerformance(int step) throws ProtocolNotSupportedException;
 }

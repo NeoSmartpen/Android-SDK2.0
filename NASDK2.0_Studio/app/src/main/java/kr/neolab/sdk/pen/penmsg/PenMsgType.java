@@ -326,5 +326,19 @@ public class PenMsgType
      */
     public final static int PROFILE_DELETE_VALUE			= 0x47;
 
+	/**
+     * The constant SYSTEM_INFO_FAILURE.
+     */
+    public final static int SYSTEM_INFO_FAILURE = 0x81;
+
+    /**
+     * The constant SYSTEM_INFO_VALUE.
+     */
+    public final static int SYSTEM_INFO_VALUE = 0x82;
+
+    /**
+     * The constant SYSTEM_INFO_PERFORMANCE_STEP.
+     */
+    public final static int SYSTEM_INFO_PERFORMANCE_STEP = 0x83;
 }
 

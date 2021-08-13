@@ -649,6 +649,16 @@ public class PenCtrl implements IPenCtrl {
 		return currentAdt.isSupportHoverCommand();
 	}
 
+	@Override
+	public void reqSystemInfo() throws ProtocolNotSupportedException {
+		currentAdt.reqSystemInfo();
+	}
+
+	@Override
+	public void reqSetPerformance(int step) throws ProtocolNotSupportedException {
+		currentAdt.reqSetPerformance(step);
+	}
+
 }
 
 

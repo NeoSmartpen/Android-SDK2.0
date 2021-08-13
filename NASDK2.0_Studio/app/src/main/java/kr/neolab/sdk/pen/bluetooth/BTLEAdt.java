@@ -2280,5 +2280,32 @@ public class BTLEAdt implements IPenAdt
         }
     }
 
+	@Override
+    public void reqSystemInfo() throws ProtocolNotSupportedException {
+        if ( !isConnected() ) {
+            return;
+        }
+
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20) {
+            ((CommProcessor20)mConnectionThread.getPacketProcessor()).reqSystemInfo();
+        }
+        else {
+            throw new ProtocolNotSupportedException( "reqSystemInfo() is supported from protocol 2.0 !!!" );
+        }
+    }
+
+    @Override
+    public void reqSetPerformance(int step) throws ProtocolNotSupportedException {
+        if ( !isConnected() ) {
+            return;
+        }
+
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20) {
+            ((CommProcessor20)mConnectionThread.getPacketProcessor()).reqSetPerformance(step);
+        }
+        else {
+            throw new ProtocolNotSupportedException( "reqSetPerformance() is supported from protocol 2.0 !!!" );
+        }
+    }
 
 }

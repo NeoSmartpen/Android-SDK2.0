@@ -1157,6 +1157,16 @@ public class UsbAdt implements IPenAdt {
     }
 
     @Override
+    public void reqSystemInfo() throws ProtocolNotSupportedException {
+        throw new ProtocolNotSupportedException( "reqSetPerformance() is supported from protocol 2.0 !!!" );
+    }
+
+    @Override
+    public void reqSetPerformance(int step) throws ProtocolNotSupportedException {
+        throw new ProtocolNotSupportedException( "reqSetPerformance() is supported from protocol 2.0 !!!" );
+    }
+
+    @Override
     public boolean unpairDevice(String address) { return false; }
 
 //    public void reqSetPenTipOffset(int x, int y) throws ProtocolNotSupportedException {

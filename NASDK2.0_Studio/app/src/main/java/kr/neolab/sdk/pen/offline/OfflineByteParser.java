@@ -248,8 +248,22 @@ public class OfflineByteParser implements IFilterListener
                         pressure = (pressure * 255) / maxPress;
                     if (factor != null)
                         pressure = (int) factor[pressure];
-                    Fdot dot = new Fdot((x + (float) (fx * 0.01)), (y + (float) (fy * 0.01)), pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color, lhPenTipType, tiltX, tiltY, twist);
-                    tempDots.add(dot);
+
+                    //If there is only a dot in stroke, make down dot, move dot and up dot.
+                    if( dotCount == 1 ) {
+                        Fdot downDot = new Fdot((x + (float) (fx * 0.01)), (y + (float) (fy * 0.01)), pressure, DotType.PEN_ACTION_DOWN.getValue(), timestamp, sectionId, ownerId, noteId, pageId, color, lhPenTipType, tiltX, tiltY, twist);
+                        Fdot moveDot = new Fdot((x + (float) (fx * 0.01)), (y + (float) (fy * 0.01)), pressure, DotType.PEN_ACTION_MOVE.getValue(), timestamp, sectionId, ownerId, noteId, pageId, color, lhPenTipType, tiltX, tiltY, twist);
+                        Fdot upDot = new Fdot((x + (float) (fx * 0.01)), (y + (float) (fy * 0.01)), pressure, DotType.PEN_ACTION_UP.getValue(), timestamp, sectionId, ownerId, noteId, pageId, color, lhPenTipType, tiltX, tiltY, twist);
+                        tempDots.add(downDot);
+                        tempDots.add(moveDot);
+                        tempDots.add(upDot);
+
+                        isPenUp = true;
+                    }
+                    else {
+                        Fdot dot = new Fdot((x + (float) (fx * 0.01)), (y + (float) (fy * 0.01)), pressure, dotType, timestamp, sectionId, ownerId, noteId, pageId, color, lhPenTipType, tiltX, tiltY, twist);
+                        tempDots.add(dot);
+                    }
                 }
                 else {
                     NLog.e( "[OfflineByteParser] Dot pressure is greater than 852.This dot will be discarded.  pressure: " + pressure + ", max pressure : " + maxPress );

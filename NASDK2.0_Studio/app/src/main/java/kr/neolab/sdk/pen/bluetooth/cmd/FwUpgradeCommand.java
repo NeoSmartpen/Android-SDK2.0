@@ -116,65 +116,57 @@ public class FwUpgradeCommand extends Command
 		
 		while ( repeat )
 		{
-			if ( !queue.isEmpty() )
-			{
-				int index = (Integer) queue.poll();
+		    synchronized (queue) {
+                if (!queue.isEmpty()) {
+                    int index = (Integer) queue.poll();
 
-				if ( isFirst && index > 0 )
-				{
-					for ( int i = 0; i <= index; i++ )
-					{
-						chunk.setStatus( i, true );
-					}
-				}
+                    if (isFirst && index > 0) {
+                        for (int i = 0; i <= index; i++) {
+                            chunk.setStatus(i, true);
+                        }
+                    }
 
-				isFirst = false;
+                    isFirst = false;
 
-				count = 0;
+                    count = 0;
 
-				try
-				{
-					comp.write( ProtocolParser.buildPenSwUpgradeResponse( index, chunk.getChecksum( index ), chunk.getChunk( index ) ) );
+                    try {
+                        comp.write(ProtocolParser.buildPenSwUpgradeResponse(index, chunk.getChecksum(index), chunk.getChunk(index)));
 
-					chunk.setStatus( index, true );
+                        chunk.setStatus(index, true);
 
-					int maximum = chunk.getChunkLength();
-					int current = chunk.getStatus() > maximum ? maximum : chunk.getStatus();
+                        int maximum = chunk.getChunkLength();
+                        int current = chunk.getStatus() > maximum ? maximum : chunk.getStatus();
 
-					NLog.d( "[FwUpgradeCommand] send progress => maximum : " + maximum + ", current : " + current );
+                        NLog.d("[FwUpgradeCommand] send progress => maximum : " + maximum + ", current : " + current);
 
-					JSONObject job;
-					try
-					{
-						job = new JSONObject();
-						job.put( "total_size", maximum );
-						job.put( "sent_size", current );
-						
-						comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_STATUS, job ) );
-					}
-					catch ( JSONException e )
-					{
-						e.printStackTrace();
-					}
-				}
-				catch ( Exception e )
-				{
-					NLog.e( "[FwUpgradeCommand] can't write chunk packet.", e );
+                        JSONObject job;
+                        try {
+                            job = new JSONObject();
+                            job.put("total_size", maximum);
+                            job.put("sent_size", current);
 
-					chunk.setStatus( index, false );
-				}
-			}
+                            comp.getConn().onCreateMsg(new PenMsg(PenMsgType.PEN_FW_UPGRADE_STATUS, job));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    } catch (Exception e) {
+                        NLog.e("[FwUpgradeCommand] can't write chunk packet.", e);
 
-			if ( count >= timeout )
-			{
-				NLog.e( "[FwUpgradeCommand] tracing : wait timeout." );
-				comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_FAILURE ) );
-				comp.finishUpgrade();
-				repeat = false;
+                        chunk.setStatus(index, false);
+                    }
+                }
 
-				continue;
-			}
-			
+                if (count >= timeout) {
+                    NLog.e("[FwUpgradeCommand] tracing : wait timeout.");
+                    comp.getConn().onCreateMsg(new PenMsg(PenMsgType.PEN_FW_UPGRADE_FAILURE));
+                    comp.finishUpgrade();
+                    repeat = false;
+
+                    continue;
+                }
+            }
+
 			try
 			{
 				Thread.sleep( wait );

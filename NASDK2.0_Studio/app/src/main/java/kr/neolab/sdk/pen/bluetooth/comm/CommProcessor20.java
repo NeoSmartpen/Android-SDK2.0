@@ -44,6 +44,10 @@ import kr.neolab.sdk.pen.penmsg.PenMsgType;
 import kr.neolab.sdk.util.NLog;
 import kr.neolab.sdk.util.UseNoteData;
 
+import static kr.neolab.sdk.pen.bluetooth.lib.CMD20.RES_ReadPenFirmSetting;
+import static kr.neolab.sdk.pen.bluetooth.lib.CMD20.RES_SystemInfo;
+import static kr.neolab.sdk.pen.bluetooth.lib.CMD20.RES_WritePenFirmSetting;
+import static kr.neolab.sdk.pen.bluetooth.lib.CMD20.RES_SetPerformance;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.KEY_DEFAULT_CALIBRATION;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_CREATE;
 import static kr.neolab.sdk.pen.bluetooth.lib.PenProfile.PROFILE_DELETE;
@@ -737,6 +741,13 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					boolean stat_offlinedata_save = pack.getDataRangeInt( 21, 1 ) == 0 ? false : true;
 					NLog.d( "[CommProcessor20] received RES_PenStatus(0x84) command. stat_battery="+stat_battery +",isLock="+isLock+",stat_offlinedata_save="+stat_offlinedata_save+",maxPress="+maxPress);
 					int stat_sensitivity = pack.getDataRangeInt( 22, 1 );
+					//usb 23,1,
+					//down sampling 24,1,
+					//bt local name, 25, 16
+					//transfer, 41, 1
+					// ndac error, 42, 1
+
+					boolean stat_system_setting = pack.getDataRangeInt(43, 1) == 1;
 
 					isHoverMode = stat_hovermode;
 
@@ -753,7 +764,8 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 								.put( JsonTag.BOOL_HOVER, stat_hovermode ).put( JsonTag.BOOL_BEEP, stat_beep )
 								.put( JsonTag.INT_AUTO_POWER_OFF_TIME, stat_autopower_off_time )
 								.put( JsonTag.BOOL_OFFLINEDATA_SAVE, stat_offlinedata_save )
-								.put( JsonTag.INT_PEN_SENSITIVITY, stat_sensitivity );
+								.put( JsonTag.INT_PEN_SENSITIVITY, stat_sensitivity )
+								.put( JsonTag.BOOL_SUPPORT_SYSTEM_SETTING, stat_system_setting);
 						btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_STATUS, job ) );
 					}
 					catch ( JSONException e )
@@ -2409,18 +2421,15 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				NLog.d( "[CommProcessor20] received RES_OfflineNoteRemove(0xA5) command. resultCode=" + resultCode );
 				if ( resultCode == 0x00 )
 				{
-					byte[] rxb = pack.getDataRange( 0 , 4 );
-					int oSectionId = (int) (rxb[3] & 0xFF);
-					int oOwnerId = ByteConverter.byteArrayToInt( new byte[]{ rxb[0], rxb[1], rxb[2], (byte) 0x00 } );
-					int noteCount = pack.getDataRangeInt( 4, 1 );
+					int noteCount = pack.getDataRangeInt( 0, 1 );
 					int[] noteIds = new int[noteCount];
 					String delete_msg = " delete noteid :";
 					for(int i = 0; i < noteCount; i++)
 					{
-						noteIds[i] = pack.getDataRangeInt( 5 + 4 * i, 4 );
+						noteIds[i] = pack.getDataRangeInt( 1 + 4 * i, 4 );
 						delete_msg += noteIds[i]+",";
 					}
-					NLog.d( "[CommProcessor20] received RES_OfflineNoteRemove(0xA5) command. oSectionId=" + oSectionId + " oOwnerId="+oOwnerId+" noteCount="+noteCount+ delete_msg);
+					NLog.d( "[CommProcessor20] received RES_OfflineNoteRemove(0xA5) command. noteCount="+noteCount+ delete_msg);
 					btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_FILE_DELETED ) );
 				}
 				break;
@@ -2821,6 +2830,60 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				}
 			}
 			break;
+
+			case RES_SystemInfo:
+				resultCode = pack.getResultCode();
+				NLog.d("[CommProcessor20] received RES_SystemInfo(0x87) command. resultCode=" + resultCode);
+				if (resultCode == 0x00) {
+					int performanceStepStatus = pack.getDataRangeInt(0, 1);
+//					int reserved = pack.getDataRangeInt(1, 4);
+					int step = pack.getDataRangeInt(5, 4);
+					NLog.d("[CommProcessor20] received RES_SystemInfo(0x87) command. performanceStepStatus =" + performanceStepStatus + ", step = "+step);
+					if (performanceStepStatus != 1) {    //if it support to set performance
+						step = JsonTag.PERFORMANCE_STEP_NOT_SUPPORT;
+					}
+
+					try
+					{
+						JSONObject jsonObject = new JSONObject();
+						jsonObject.put( JsonTag.INT_PERFORMANCE_STEP, step );
+
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.SYSTEM_INFO_VALUE,jsonObject) );
+					}
+					catch ( Exception e )
+					{
+						e.printStackTrace();
+					}
+				}
+				else {
+					btConnection.onCreateMsg( new PenMsg( PenMsgType.SYSTEM_INFO_FAILURE ) );
+				}
+				break;
+
+			case RES_SetPerformance:
+				resultCode = pack.getResultCode();
+				NLog.d( "[CommProcessor20] received RES_SetPerformance(0x86) command. resultCode="+resultCode );
+				if(resultCode == 0x00) {
+					int type = pack.getDataRangeInt(0, 1);
+					int settingStatus = pack.getDataRangeInt(1, 1);
+
+					try
+					{
+						JSONObject jsonObject = new JSONObject();
+						jsonObject.put( JsonTag.INT_SET_PERFORMANCE_STATUS, settingStatus );
+
+						btConnection.onCreateMsg( new PenMsg( PenMsgType.SYSTEM_INFO_PERFORMANCE_STEP,jsonObject) );
+					}
+					catch ( Exception e )
+					{
+						e.printStackTrace();
+					}
+
+				}
+				else {
+					btConnection.onCreateMsg( new PenMsg( PenMsgType.SYSTEM_INFO_FAILURE ) );
+				}
+				break;
 
 		}
 	}
@@ -3754,4 +3817,12 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		return connectedPenType == PEN_TYPE_WIRED ? wired_pen_status : WIRED_PEN_STATUS_NORMAL;
 	}
 
+
+	public void reqSystemInfo() {
+		write( ProtocolParser20.buildReqSystemInfo() );
+	}
+
+	public void reqSetPerformance(int step) {
+		write( ProtocolParser20.buildReqSetPerformance(step) );
+	}
 }

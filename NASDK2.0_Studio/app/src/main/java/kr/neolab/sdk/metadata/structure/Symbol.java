@@ -2,6 +2,10 @@ package kr.neolab.sdk.metadata.structure;
 
 import android.graphics.RectF;
 
+import java.util.HashMap;
+
+import static kr.neolab.sdk.metadata.MetadataCtrl.PIXEL_TO_DOT_SCALE;
+
 /**
  * The type Symbol.
  */
@@ -9,8 +13,22 @@ public class Symbol extends RectF
 {
 	public static final String TYPE_RECTANGLE = "Rectangle";
 	public static final String TYPE_TRIANGLE = "Triangle";
-	public static final String TYPE_ELLIPSE = "Ellipse";
+	public static final String TYPE_ELLIPSE = "ELLIPSE";
 	public static final String TYPE_POLYGON = "Polygon";
+
+	public static final String ACTION_SCHEDULE = "schedule";
+    public static final String ACTION_COLOR = "color";
+    public static final String ACTION_THICKNESS = "thickness";
+    public static final String ACTION_WEBVIEW = "webview";
+    public static final String ACTION_BROWSER = "browser";
+    public static final String ACTION_PAGE = "page";
+    public static final String ACTION_SHARE = "share";
+    public static final String ACTION_POST = "post";
+	public static final String ACTION_IN_APP = "inapp";
+	public static final String ACTION_IN_APP_POST = "inapppost";
+	public static final String ACTION_AUDIO = "audio";
+
+    public HashMap<String, Extra> extraMap = new HashMap<>();
 
 	/**
 	 * The Note id.
@@ -264,15 +282,15 @@ param;
 
 		if( x < centerX )
 		{
-			isInside =  x < centerX - xWidth ? false : true;
+			isInside = x >= centerX - xWidth;
 		}
 		else
 		{
-			isInside = x > centerX + xWidth ? false : true;
+			isInside = x <= centerX + xWidth;
 		}
 
 		if( isInside )
-			isInside = ( top <= y && y <= bottom)? true:false;
+			isInside = top <= y && y <= bottom;
 
 		return isInside;
 
@@ -293,4 +311,178 @@ param;
 
 		return result <= 1.0f;
 	}
+
+	public boolean isAllDaySchedule() {
+	    return ACTION_SCHEDULE.equals(action) && extraMap.get("area") != null && extraMap.get("hh") == null && extraMap.get("mm") == null;
+    }
+
+    public boolean isTimedSchedule() {
+	    return ACTION_SCHEDULE.equals(action) && extraMap.get("area") != null && extraMap.get("hh") != null && extraMap.get("mm") != null;
+    }
+
+    public boolean isCropWithoutFrame() {
+	    return ACTION_SHARE.equals(action) && "crop".equals(param) && extraMap.get("area") != null && extraMap.get("date") == null;
+    }
+
+    public boolean isCropWithFrame() {
+        return ACTION_SHARE.equals(action) && "crop".equals(param) && extraMap.get("area") != null && extraMap.get("date") != null;
+    }
+
+    public boolean isPenColor() {
+	    return ACTION_COLOR.equals(action);
+    }
+
+    public boolean isPenThickness() {
+        return ACTION_THICKNESS.equals(action);
+    }
+
+    public boolean isWebview() {
+	    return ACTION_WEBVIEW.equals(action);
+    }
+
+    public boolean isBrowser() {
+        return ACTION_BROWSER.equals(action);
+    }
+
+    public boolean isGoToTag() {
+        return ACTION_PAGE.equals(action) && "tag".equals(param);
+    }
+
+    public boolean isSetFavorite() {
+        return ACTION_PAGE.equals(action) && "bookmark".equals(param);
+    }
+
+    public boolean isPostAction() {
+	    return ACTION_POST.equals(action);
+    }
+
+    public int[] getPageNumbers() {
+	    if( (isPostAction() || isInApp() || isInAppPost())
+				&& extraMap.get("pages") != null) {
+	        String[] pagesStrArr = extraMap.get("pages").param.split(",");
+            int[] pages = new int[pagesStrArr.length];
+            try {
+                for(int i=0;i<pagesStrArr.length;i++) {
+                    pages[i] = Integer.parseInt(pagesStrArr[i].trim());
+                }
+                return pages;
+            }catch (NumberFormatException e) {
+                e.printStackTrace();
+                return new int[]{};
+            }
+        }
+	    else
+            return new int[]{};
+    }
+
+    public boolean isButton() {
+		if (!isInApp() && !isInAppPost()) {
+			return false;
+		}
+
+		Extra value = extraMap.get("button");
+		return value == null || value.param.equals("true");
+    }
+
+    public RectF getArea() {
+        Extra extra = extraMap.get("area");
+
+	    if( extra != null && extra.param.matches("^([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))$") ) {
+	        try {
+                String[] array = extra.param.split(",");
+                float left = Float.parseFloat(array[0].trim())*PIXEL_TO_DOT_SCALE;
+                float top = Float.parseFloat(array[1].trim())*PIXEL_TO_DOT_SCALE;
+                float right = left + ( Float.parseFloat(array[2].trim()) * PIXEL_TO_DOT_SCALE );
+                float bottom = top + ( Float.parseFloat(array[3].trim()) * PIXEL_TO_DOT_SCALE );
+                return new RectF(left, top, right, bottom);
+            }catch (Exception e) {
+	            e.printStackTrace();
+	            return null;
+            }
+
+        }
+	    else return null;
+    }
+
+    public RectF getHourArea() {
+        Extra extra = extraMap.get("hh");
+
+        if( extra != null && extra.param.matches("^([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))$") ) {
+            try {
+                String[] array = extra.param.split(",");
+                float left = Float.parseFloat(array[0].trim())*PIXEL_TO_DOT_SCALE;
+                float top = Float.parseFloat(array[1].trim())*PIXEL_TO_DOT_SCALE;
+                float right = left + ( Float.parseFloat(array[2].trim()) * PIXEL_TO_DOT_SCALE );
+                float bottom = top + ( Float.parseFloat(array[3].trim()) * PIXEL_TO_DOT_SCALE );
+                return new RectF(left, top, right, bottom);
+            }catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+
+        }
+        else return null;
+    }
+
+    public RectF getMinuteArea() {
+        Extra extra = extraMap.get("mm");
+
+        if( extra != null && extra.param.matches("^([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))$") ) {
+            try {
+                String[] array = extra.param.split(",");
+                float left = Float.parseFloat(array[0].trim())*PIXEL_TO_DOT_SCALE;
+                float top = Float.parseFloat(array[1].trim())*PIXEL_TO_DOT_SCALE;
+                float right = left + ( Float.parseFloat(array[2].trim()) * PIXEL_TO_DOT_SCALE );
+                float bottom = top + ( Float.parseFloat(array[3].trim()) * PIXEL_TO_DOT_SCALE );
+                return new RectF(left, top, right, bottom);
+            }catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+
+        }
+        else return null;
+    }
+
+    public String getDateParam() {
+	    if(isDateParam()) {
+	        return param;
+        }
+	    else
+	        return "";
+    }
+
+    public String getDateExtra() {
+        if(isDateExtra()) {
+            return extraMap.get("date").param;
+        }
+        else
+            return "";
+    }
+
+    private boolean isDateParam() {
+	    return param.matches("^((\\d\\d)?\\d\\d)?([-\\s/.])?(0[1-9]|1[012])([-\\s/.])?(0[1-9]|[12][0-9]|3[01])$");
+    }
+
+    private boolean isDateExtra() {
+        Extra extra = extraMap.get("date");
+        return extra != null && extra.param.matches("^((\\d\\d)?\\d\\d)?([-\\s/.])?(0[1-9]|1[012])([-\\s/.])?(0[1-9]|[12][0-9]|3[01])$");
+    }
+
+    public boolean isInApp() {
+		return ACTION_IN_APP.equals(action);
+	}
+
+	public boolean isInAppPost() {
+		return ACTION_IN_APP_POST.equals(action);
+	}
+
+	public boolean isAudio() {
+		return ACTION_AUDIO.equals(action);
+	}
+
+//    private boolean isArea() {
+//	    Extra extra = extraMap.get("area");
+//	    return extra != null && extra.param.matches("^([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))(\\s*,\\s*)([+-]?\\d*(\\.?\\d*))$");
+//    }
 }

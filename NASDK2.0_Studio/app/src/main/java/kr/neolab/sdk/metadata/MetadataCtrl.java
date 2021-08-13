@@ -31,6 +31,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import kr.neolab.sdk.ink.structure.Dot;
 import kr.neolab.sdk.ink.structure.Stroke;
+import kr.neolab.sdk.metadata.structure.Extra;
 import kr.neolab.sdk.metadata.structure.Page;
 import kr.neolab.sdk.metadata.structure.Segment;
 import kr.neolab.sdk.metadata.structure.Symbol;
@@ -1524,6 +1525,10 @@ public class MetadataCtrl implements IMetadataCtrl
 							symbol.previousId = atts.getValue( "previous" );
 							symbol.nextId = atts.getValue( "next" );
 						}
+						else if( isSymbol && tag.equals( "extra" ) )
+                        {
+                            symbol.extraMap.put(atts.getValue("action"), new Extra(atts.getValue("action"), atts.getValue("param")));
+                        }
 
                     }
 

@@ -708,4 +708,19 @@ public interface IMultiPenCtrl
      */
     public boolean isSupportHoverCommand(String address)throws ProtocolNotSupportedException;
 
+
+    /**
+     * Request System Information.
+     * @throws ProtocolNotSupportedException
+     */
+    void reqSystemInfo(String address) throws ProtocolNotSupportedException;
+
+    /**
+     * Request setting performance step.
+     *
+     * @param step
+     * @throws ProtocolNotSupportedException
+     */
+    void reqSetPerformance(String address, int step) throws ProtocolNotSupportedException;
+
 }

@@ -856,6 +856,20 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 			return false;
 	}
 
+	@Override
+	public void reqSystemInfo(String address) throws ProtocolNotSupportedException {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			mPenAdt.reqSystemInfo();
+	}
+
+	@Override
+	public void reqSetPerformance(String address, int step) throws ProtocolNotSupportedException {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			mPenAdt.reqSetPerformance(step);
+	}
+
 }
 
 

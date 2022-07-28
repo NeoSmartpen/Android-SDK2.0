@@ -26,6 +26,8 @@ Click the link below to view a beginners guide to Ncode technology.
 - Neo smartpen N2(F110, F120)
 - Neo smartpen M1(F50)
 - Neo smartpen M1+(F51)
+- Neo smartpen DIMO(F30)
+
 ## Getting started
 
 javadoc link :https://neosmartpen.github.io/Android-SDK2.0/

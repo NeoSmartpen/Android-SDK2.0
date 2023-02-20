@@ -27,6 +27,8 @@ Click the link below to view a beginners guide to Ncode technology.
 - Neo smartpen M1(F50)
 - Neo smartpen M1+(F51)
 - Neo smartpen DIMO(F30)
+- Neo smartpen A1(F151)
+- Neo smartpen R1(F40)
 
 ## Getting started
 

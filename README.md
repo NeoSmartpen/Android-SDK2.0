@@ -64,7 +64,7 @@ You should have received a copy of the GNU General Public License along with the
 For commercial use, it is not necessary or required to open up your source code. Technical support from NeoLAB Convergence, inc is available upon your request. 
 
 Please contact our support team via email for the terms and conditions of this license. 
- - Global: _global1@neolab.net
- - Korea: _biz1@neolab.net
+- Global: global@neolab.net
+- Korea: _dombiz@neolab.net
 ---
 **Feel free to leave any comment or feedback [here](https://github.com/NeoSmartpen/Android-SDK2.0/issues)**

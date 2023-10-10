@@ -172,7 +172,7 @@ public class BTLEAdt implements IPenAdt
     private BluetoothGattCharacteristic mWriteGattChacteristic = null;
 
     // The firmware team says 160 is the best, but when set to 256, if the MTU is successfully set, it will be faster than setting it to 160
-    private final static int[] mtuLIst = { 160, 64, 23 };
+    private final static int[] mtuLIst = { 512, 256, 160, 64, 23 };
     private int mtuIndex = 0;
     private int mtu;
     private int mProtocolVer = 0;

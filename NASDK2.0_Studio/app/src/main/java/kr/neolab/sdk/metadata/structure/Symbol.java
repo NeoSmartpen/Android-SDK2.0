@@ -272,18 +272,23 @@ param;
 	{
 		boolean isInside = false;
 
+		//좌우 대칭이므로, 삼각형을 반으로 쪼개서 빗변의 기울기를 구한다.
 		float halfWidth = this.width() / 2;
 		float centerX = left + halfWidth;
 		float degree = this.height() / halfWidth;
 
+		//상단 y 값을 기준으로, y 좌표의 offset 좌표 값을 구한다.
 		float yOffset = y - top;
 
+		//Y offset 좌표에 기울기를 적용하여, 비율에 따라 Y 좌표 시점일 때의 폭을 구한다.
 		float xWidth = yOffset / degree;
 
+		//x가 삼각형 중앙을 기준으로 왼쪽에 위치하면
 		if( x < centerX )
 		{
 			isInside = x >= centerX - xWidth;
 		}
+		//x가 삼각형 중앙을 기준으로 오른쪽에 위치하면
 		else
 		{
 			isInside = x <= centerX + xWidth;

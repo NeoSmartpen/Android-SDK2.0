@@ -44,7 +44,7 @@ public class FwUpgradeCommand20 extends Command
 
 	private boolean repeat = true;
 
-	
+	// 원래 5초 였으나 지우개 펜이 평균 25초 이상 걸리고 메모리 상태에 따라 1분까지 걸릴수 있어서 일단 1분으로 증가 시킴
 	private int wait_timeout = 60000;//
 
 	private int wait = 10;

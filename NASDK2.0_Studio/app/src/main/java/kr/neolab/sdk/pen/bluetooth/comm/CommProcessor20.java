@@ -129,6 +129,10 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	private short appType = 0x1101;
 	private String reqProtocolVer = PEN_UP_DOWN_SEPARATE_SUPPORT_PROTOCOL_VERSION;
 	private String receiveProtocolVer = "";
+	private float nProtocolVer = 0f;
+
+	// PEN_IS_COMPRESS_SUPPORT_PROTOCOL_VERSION 이상 버전에서 사용가능
+	private boolean isSupportCompress = false;
 	private String FW_VER = "";
 
 	private String connectedDeviceName = "";
@@ -629,6 +633,11 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 						currPenTipType = Stroke.PEN_TIP_TYPE_ERASER;
 
 					isSupportSeparateUpDown = isSupportSeparateUpDown();
+					try {
+						nProtocolVer = Float.parseFloat(receiveProtocolVer);
+					}catch (Exception e){
+
+					}
 
 					boolean isMG = false;
 					if(getConn() instanceof BTLEAdt)
@@ -667,6 +676,18 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					}catch ( Exception e )
 					{
 						e.printStackTrace();
+					}
+
+					if(nProtocolVer >= PEN_IS_COMPRESS_SUPPORT_PROTOCOL_VERSION)
+					{
+						try
+						{
+							isSupportCompress = pack.getDataRangeInt( 69, 1 ) == 0 ? false : true;
+						}catch ( Exception e )
+						{
+							e.printStackTrace();
+						}
+
 					}
 
 					NLog.d( "[CommProcessor20] version of connected pen is " + FW_VER +";deviceName is"+connectedDeviceName+";subName is "+connectedSubName+";receiveProtocolVer is "+receiveProtocolVer+",sensorType="+sensorType);
@@ -3332,6 +3353,13 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		FwUpgradeCommand20 command = new FwUpgradeCommand20( CMD20.REQ_PenFWUpgrade, this );
 
 		boolean isMG = isF121MG(getConn().getMacAddress());
+
+		if(nProtocolVer >= PEN_IS_COMPRESS_SUPPORT_PROTOCOL_VERSION)
+		{
+			if(!isSupportCompress)
+				isCompress = isSupportCompress;
+		}
+
 		if(connectedSubName.equals( "Mbest_smartpenS") && isMG && connectedDeviceName.equals( "NWP-F121MG" ))
 		{
 			command.setInfo( source, fwVersion, "NWP-F121" , isCompress);

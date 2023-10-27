@@ -1152,7 +1152,6 @@ public class MetadataCtrl implements IMetadataCtrl
                     break;
                 }
                 else if ( symbol.type.compareToIgnoreCase( Symbol.TYPE_RECTANGLE ) == 0)
-
                 {
                     if(i != 0)
                     {

@@ -131,7 +131,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	private String receiveProtocolVer = "";
 	private float nProtocolVer = 0f;
 
-	// PEN_IS_COMPRESS_SUPPORT_PROTOCOL_VERSION ÀÌ»ó ¹öÀü¿¡¼­ »ç¿ë°¡´É
+	// PEN_IS_COMPRESS_SUPPORT_PROTOCOL_VERSION Ã€ÃŒÂ»Ã³ Â¹Ã¶Ã€Ã¼Â¿Â¡Â¼Â­ Â»Ã§Â¿Ã«Â°Â¡Â´Ã‰
 	private boolean isSupportCompress = false;
 	private String FW_VER = "";
 
@@ -205,7 +205,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 * The constant PEN_HOVER_COMMAND_SUPPORT_PROTOCOL_VERSION.
 	 */
 	public static final float PEN_HOVER_COMMAND_SUPPORT_PROTOCOL_VERSION = 2.18f;
-
+        public static final float PEN_IS_COMPRESS_SUPPORT_PROTOCOL_VERSION = 2.22f;
 	/**
 	 * True if the Event of "page change id" was received, false otherwise.
 	 */

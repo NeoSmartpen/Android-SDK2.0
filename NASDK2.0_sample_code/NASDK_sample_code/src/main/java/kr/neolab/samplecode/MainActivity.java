@@ -16,14 +16,20 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.Parcelable;
-import android.support.v4.content.ContextCompat;
+//import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewConfiguration;
+import android.widget.Button;
 import android.widget.FrameLayout;
+
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentTransaction;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -84,33 +90,49 @@ public class MainActivity extends Activity
 
 		setContentView( R.layout.activity_main );
 
-		try
-		{
-			ViewConfiguration config = ViewConfiguration.get( this );
-			Field menuKeyField = ViewConfiguration.class.getDeclaredField( "sHasPermanentMenuKey" );
-
-			if ( menuKeyField != null )
-			{
-				menuKeyField.setAccessible( true );
-				menuKeyField.setBoolean( config, false );
-			}
-		}
-		catch ( Exception ex )
-		{
-			// Ignore
-		}
+//		try
+//		{
+//			ViewConfiguration config = ViewConfiguration.get( this );
+//			Field menuKeyField = ViewConfiguration.class.getDeclaredField( "sHasPermanentMenuKey" );
+//
+//			if ( menuKeyField != null )
+//			{
+//				menuKeyField.setAccessible( true );
+//				menuKeyField.setBoolean( config, false );
+//			}
+//		}
+//		catch ( Exception ex )
+//		{
+//			// Ignore
+//		}
 
 		mSampleView = new kr.neolab.samplecode.SampleView( this );
 		FrameLayout.LayoutParams para = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
 		( (FrameLayout) findViewById( R.id.sampleview_frame ) ).addView( mSampleView, 0, para );
-		
-		PendingIntent pendingIntent = PendingIntent.getBroadcast( this, 0, new Intent( "firmware_update" ), PendingIntent.FLAG_UPDATE_CURRENT );
-		 
+
+//		Button recogButton = (Button) findViewById(R.id.button);
+//		recogButton.setOnClickListener(new View.OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				mSampleView.recognize();
+//			}
+//		});
+//
+//		Button recogWithPreprocessButton = (Button) findViewById(R.id.button1);
+//		recogWithPreprocessButton.setOnClickListener(new View.OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				mSampleView.recognizeWithStrokeAnalyzer();
+//			}
+//		});
+
+		PendingIntent pendingIntent = PendingIntent.getBroadcast( this, 0, new Intent( "firmware_update" ), PendingIntent.FLAG_IMMUTABLE );
+
 		mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mBuilder = new Notification.Builder(getApplicationContext());
 		mBuilder.setContentTitle( "Update Pen" );
 		mBuilder.setSmallIcon( R.drawable.ic_launcher_n );
-		mBuilder.setContentIntent( pendingIntent );   
+		mBuilder.setContentIntent( pendingIntent );
 
 
 		chkPermissions ();
@@ -150,19 +172,60 @@ public class MainActivity extends Activity
 	{
 		if( Build.VERSION.SDK_INT >= 23)
 		{
-			int gpsPermissionCheck = ContextCompat.checkSelfPermission( this, Manifest.permission.ACCESS_FINE_LOCATION );
-			final int writeExternalPermissionCheck = ContextCompat.checkSelfPermission( this, Manifest.permission.WRITE_EXTERNAL_STORAGE );
+//			int gpsPermissionCheck = ContextCompat.checkSelfPermission( this, Manifest.permission.ACCESS_FINE_LOCATION );
+//			final int writeExternalPermissionCheck = ContextCompat.checkSelfPermission( this, Manifest.permission.WRITE_EXTERNAL_STORAGE );
+//
+//			if(gpsPermissionCheck == PackageManager.PERMISSION_DENIED || writeExternalPermissionCheck == PackageManager.PERMISSION_DENIED)
+//			{
+//				ArrayList<String> permissions = new ArrayList<String>();
+//				if(gpsPermissionCheck == PackageManager.PERMISSION_DENIED)
+//					permissions.add( Manifest.permission.ACCESS_FINE_LOCATION );
+//				if(writeExternalPermissionCheck == PackageManager.PERMISSION_DENIED)
+//					permissions.add( Manifest.permission.WRITE_EXTERNAL_STORAGE );
+//				requestPermissions( permissions.toArray( new String[permissions.size()] ), REQ_GPS_EXTERNAL_PERMISSION );
+//			}
 
-			if(gpsPermissionCheck == PackageManager.PERMISSION_DENIED || writeExternalPermissionCheck == PackageManager.PERMISSION_DENIED)
+////////////////////////////////////////////////////////////////////////////////////
+
+			int gpsPermissionCheck = PackageManager.PERMISSION_GRANTED;
+			if (Build.VERSION.SDK_INT < 33)
+				gpsPermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+
+			int writeExternalPermissionCheck = PackageManager.PERMISSION_GRANTED;
+			if (Build.VERSION.SDK_INT < 30)
+				writeExternalPermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+			int bluetoothScanPermissionCheck = PackageManager.PERMISSION_GRANTED;
+			if (Build.VERSION.SDK_INT >= 31)
+				bluetoothScanPermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN);
+
+			int bluetoothConnectPermissionCheck = PackageManager.PERMISSION_GRANTED;
+			if (Build.VERSION.SDK_INT >= 31)
+				bluetoothConnectPermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT);
+
+
+//            int notiCheck = ContextCompat.checkSelfPermission( this, ACCESS_NOTIFICATION_POLICY );
+
+//            NLog.d( "chkPermissions gps="+gps+";storage="+storage );
+			if(gpsPermissionCheck == PackageManager.PERMISSION_DENIED || writeExternalPermissionCheck == PackageManager.PERMISSION_DENIED || bluetoothScanPermissionCheck == PackageManager.PERMISSION_DENIED || bluetoothConnectPermissionCheck == PackageManager.PERMISSION_DENIED)
 			{
 				ArrayList<String> permissions = new ArrayList<String>();
-				if(gpsPermissionCheck == PackageManager.PERMISSION_DENIED)
+				if(Build.VERSION.SDK_INT < 33 && gpsPermissionCheck == PackageManager.PERMISSION_DENIED)
 					permissions.add( Manifest.permission.ACCESS_FINE_LOCATION );
 				if(writeExternalPermissionCheck == PackageManager.PERMISSION_DENIED)
 					permissions.add( Manifest.permission.WRITE_EXTERNAL_STORAGE );
+
+				if (Build.VERSION.SDK_INT >= 31 && bluetoothScanPermissionCheck == PackageManager.PERMISSION_DENIED)
+					permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+				if (Build.VERSION.SDK_INT >= 31 && bluetoothConnectPermissionCheck == PackageManager.PERMISSION_DENIED)
+					permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+
+//                if(notiCheck == PackageManager.PERMISSION_DENIED)
+//                    permissions.add( ACCESS_NOTIFICATION_POLICY );
+
 				requestPermissions( permissions.toArray( new String[permissions.size()] ), REQ_GPS_EXTERNAL_PERMISSION );
 			}
 		}
+
 	}
 
 	@Override
@@ -170,27 +233,90 @@ public class MainActivity extends Activity
 	{
 		if (requestCode == REQ_GPS_EXTERNAL_PERMISSION )
 		{
-			boolean bGrantedExternal = false;
-			boolean bGrantedGPS = false;
-			for ( int i = 0; i < permissions.length; i++ )
-			{
-				if ( permissions[i].equals( Manifest.permission.WRITE_EXTERNAL_STORAGE ) && grantResults[i] == PackageManager.PERMISSION_GRANTED )
-				{
-					bGrantedExternal = true;
-				}
-				else if ( permissions[i].equals( Manifest.permission.ACCESS_FINE_LOCATION ) && grantResults[i] == PackageManager.PERMISSION_GRANTED )
-				{
-					bGrantedGPS = true;
-				}
-			}
+//			boolean bGrantedExternal = false;
+//			boolean bGrantedGPS = false;
+//			for ( int i = 0; i < permissions.length; i++ )
+//			{
+//				if ( permissions[i].equals( Manifest.permission.WRITE_EXTERNAL_STORAGE ) && grantResults[i] == PackageManager.PERMISSION_GRANTED )
+//				{
+//					bGrantedExternal = true;
+//				}
+//				else if ( permissions[i].equals( Manifest.permission.ACCESS_FINE_LOCATION ) && grantResults[i] == PackageManager.PERMISSION_GRANTED )
+//				{
+//					bGrantedGPS = true;
+//				}
+//			}
+//
+//			if ( ( permissions.length == 1 ) && ( bGrantedExternal || bGrantedGPS ) )
+//			{
+//				bGrantedExternal = true;
+//				bGrantedGPS = true;
+//			}
 
-			if ( ( permissions.length == 1 ) && ( bGrantedExternal || bGrantedGPS ) )
+//			if ( !bGrantedExternal || !bGrantedGPS )
+//			{
+//				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//				builder.setTitle( "Permission Check" );
+//				builder.setMessage( "PERMISSION_DENIED" );
+//				builder.setPositiveButton( "OK", new DialogInterface.OnClickListener()
+//				{
+//					@Override
+//					public void onClick ( DialogInterface dialog, int which )
+//					{
+//						finish();
+//					}
+//				} );
+//				builder.setCancelable( false );
+//				builder.create().show();
+//			}
+			/////////////////////////////////////////////////
+			boolean bGrantedExternal = true;
+			boolean bGrantedGPS = true;
+			boolean bGrantedScan = true;
+			boolean bGrantedConnect = true;
+
+
+
+			for(int i = 0; i < permissions.length; i++)
 			{
+				if ( permissions[i].equals( Manifest.permission.WRITE_EXTERNAL_STORAGE ) )
+				{
+					if(grantResults[i] == PackageManager.PERMISSION_GRANTED)
+						bGrantedExternal = true;
+					else
+						bGrantedExternal = false;
+				}
+				else if ( permissions[i].equals( Manifest.permission.ACCESS_FINE_LOCATION ) )
+				{
+					if(grantResults[i] == PackageManager.PERMISSION_GRANTED)
+						bGrantedGPS = true;
+					else
+						bGrantedGPS = false;
+				} else if (Build.VERSION.SDK_INT >= 31 && permissions[i].equals(Manifest.permission.BLUETOOTH_SCAN)) {
+					if(grantResults[i] == PackageManager.PERMISSION_GRANTED)
+						bGrantedScan = true;
+					else
+						bGrantedScan = false;
+
+				} else if (Build.VERSION.SDK_INT >= 31 && permissions[i].equals(Manifest.permission.BLUETOOTH_CONNECT)) {
+					if(grantResults[i] == PackageManager.PERMISSION_GRANTED)
+						bGrantedConnect = true;
+					else
+						bGrantedConnect = false;
+				}
+//                else if(permissions[i].equals(Manifest.permission.ACCESS_NOTIFICATION_POLICY) )
+//                {
+//                    if(grantResults[i] == PackageManager.PERMISSION_GRANTED)
+//                        bGrantedNoti = 1;
+//                    else
+//                        bGrantedNoti = 0;
+//                }
+			}
+			if(Build.VERSION.SDK_INT >= 30){
 				bGrantedExternal = true;
-				bGrantedGPS = true;
 			}
 
-			if ( !bGrantedExternal || !bGrantedGPS )
+			if ( !bGrantedExternal || !bGrantedGPS || !bGrantedScan || !bGrantedConnect  )
 			{
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 				builder.setTitle( "Permission Check" );
@@ -257,6 +383,9 @@ public class MainActivity extends Activity
 						boolean isLe = data.getBooleanExtra( DeviceListActivity.EXTRA_IS_BLUETOOTH_LE, false);
 						String leAddress = data.getStringExtra( DeviceListActivity.EXTRA_DEVICE_LE_ADDRESS );
 
+
+						NLog.d("deviceName="+deviceName);
+//						if(deviceName.equals("SMART_KUMON_E"))
 						if(connectionMode == 0)
 						{
 							boolean leResult = penClientCtrl.setLeMode( isLe );
@@ -281,7 +410,10 @@ public class MainActivity extends Activity
 						}
 						else
 						{
-							multiPenClientCtrl.connect(sppAddress, leAddress, isLe );
+							if(deviceName.equals("SMART_KUMON_E"))
+								multiPenClientCtrl.connect(sppAddress, leAddress, false );
+							else
+								multiPenClientCtrl.connect(sppAddress, leAddress, isLe );
 						}
 					}
 				}

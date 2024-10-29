@@ -125,7 +125,7 @@ public class Util
 		bitmap.eraseColor( Color.WHITE );
 		Canvas canvas = new Canvas(bitmap);
 
-		Renderer2.draw( canvas, strokes, scale, -offsetX, -offsetY );
+		Renderer2.draw( canvas,  strokes, scale, -offsetX, -offsetY );
 
 		return bitmap;
 	}

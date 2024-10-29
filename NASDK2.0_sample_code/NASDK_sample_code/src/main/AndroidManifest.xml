@@ -1,37 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="kr.neolab.samplecode"
     android:versionCode="3"
-    android:versionName="1.33.0003" >
+    android:versionName="1.33.0003">
 
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" tools:targetApi="s"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
 	<uses-permission android:name="android.permission.INTERNET" />
-	
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false"/>
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false"/>
+
     <application
         android:name="kr.neolab.samplecode.SampleApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher_n"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
         <activity
             android:name="kr.neolab.samplecode.MainActivity"
             android:screenOrientation="portrait"
             android:hardwareAccelerated="true"
-            android:label="@string/app_name" android:launchMode="singleTask">
+            android:label="@string/app_name" android:launchMode="singleTask"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
         <activity android:name="kr.neolab.samplecode.DeviceListActivity"></activity>
         <activity android:name="kr.neolab.samplecode.SettingActivity"></activity>
         <activity android:name="kr.neolab.samplecode.ProfileTestActivity"></activity>
+
         <service android:name="kr.neolab.samplecode.NeoSampleService"></service>
+
+
     </application>
 
 </manifest>

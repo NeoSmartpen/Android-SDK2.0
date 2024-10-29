@@ -1,45 +1,45 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    
+
   <item android:id="@+id/action_connect"
-        android:title="@string/connection"
-        android:showAsAction="never" />
+      android:title="@string/connection"
+      android:showAsAction="never" />
 
   <item android:id="@+id/action_disconnect"
-        android:title="@string/disconnection"
-        android:showAsAction="never" />
+      android:title="@string/disconnection"
+      android:showAsAction="never" />
 
   <item android:id="@+id/action_setting"
-        android:title="@string/setting"
-        android:showAsAction="never" />
-  
+      android:title="@string/setting"
+      android:showAsAction="never" />
+
   <item android:id="@+id/action_offline_list"
-        android:title="@string/offline"
-        android:showAsAction="never" />
+      android:title="@string/offline"
+      android:showAsAction="never" />
 
   <item android:id="@+id/action_offline_list_page"
-        android:title="@string/offline_page"
-        android:showAsAction="never" />
+      android:title="@string/offline_page"
+      android:showAsAction="never" />
 
   <item
       android:id="@+id/action_offline_note_info"
       android:showAsAction="never"
       android:title="@string/offline_note_info"/>
- 
+
   <item android:id="@+id/action_upgrade"
-        android:title="@string/upgrade"
-        android:showAsAction="never" />
-  
+      android:title="@string/upgrade"
+      android:showAsAction="never" />
+
   <item android:id="@+id/action_pen_status"
-        android:title="@string/pen_status"
-        android:showAsAction="never" />
+      android:title="@string/pen_status"
+      android:showAsAction="never" />
 
   <item android:id="@+id/action_pen_unpairing"
-        android:title="@string/pen_unpairing"
-        android:showAsAction="never" />
+      android:title="@string/pen_unpairing"
+      android:showAsAction="never" />
 
   <item android:id="@+id/action_profile_test"
-        android:title="@string/pen_profile"
-        android:showAsAction="never" />
+      android:title="@string/pen_profile"
+      android:showAsAction="never" />
 
   <item
       android:id="@+id/action_symbol_stroke"

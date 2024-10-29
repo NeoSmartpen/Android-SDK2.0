@@ -21,6 +21,7 @@ import kr.neolab.sdk.metadata.IMetadataCtrl;
 import kr.neolab.sdk.metadata.IMetadataListener;
 import kr.neolab.sdk.metadata.MetadataCtrl;
 import kr.neolab.sdk.metadata.structure.Symbol;
+import kr.neolab.sdk.pen.IMultiPenCtrl;
 import kr.neolab.sdk.pen.IPenCtrl;
 import kr.neolab.sdk.pen.MultiPenCtrl;
 import kr.neolab.sdk.pen.PenCtrl;
@@ -30,7 +31,7 @@ import kr.neolab.sdk.util.NLog;
 
 public class NeoSampleService extends Service{
 
-	private IPenCtrl mPenCtrl;
+	private IMultiPenCtrl mPenCtrl;
 	private Queue<Dot> mDotQueueForDB = null;
 	private Queue<DotWithAddress> mDotQueueForBroadcast = null;
 	private DotConsumerForDBThread mDBThread = null;
@@ -50,20 +51,20 @@ public class NeoSampleService extends Service{
 		super.onCreate();
 
 		// Set Listener at pen Ctrl
-		mPenCtrl = PenCtrl.getInstance();
+		mPenCtrl = MultiPenCtrl.getInstance();
 		mPenCtrl.setDotListener( mPenReceiveDotListener );
-		if(mPenCtrl.getOffLineDataListener() != null)
-			mPenCtrl.setOffLineDataListener( null );
+//		if(mPenCtrl.getOffLineDataListener() != null)
+//			mPenCtrl.setOffLineDataListener( null );
 		mPenCtrl.setOffLineDataListener( mOfflineDataListener );
 		mPenCtrl.setMetadataListener( mMetadataListener );
 
 		// Set Listener at Multi pen Ctrl
-		MultiPenCtrl.getInstance().setDotListener( mPenReceiveDotListener );
-		MultiPenCtrl.getInstance().setOffLineDataListener( mOfflineDataListener );
+//		MultiPenCtrl.getInstance().setDotListener( mPenReceiveDotListener );
+//		MultiPenCtrl.getInstance().setOffLineDataListener( mOfflineDataListener );
 
 		// metadata load
-		metadataCtrl = MetadataCtrl.getInstance();
-		metadataCtrl.loadFiles( Const.SAMPLE_FOLDER_PATH);
+//		metadataCtrl = MetadataCtrl.getInstance();
+//		metadataCtrl.loadFiles( Const.SAMPLE_FOLDER_PATH);
 
 		// create Queue
 		mDotQueueForDB = new ConcurrentLinkedQueue<Dot>();

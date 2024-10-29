@@ -1,5 +1,6 @@
 package kr.neolab.samplecode;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
@@ -16,6 +17,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,10 +31,13 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import androidx.core.app.ActivityCompat;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
 import kr.neolab.sdk.util.NLog;
@@ -46,8 +51,7 @@ import kr.neolab.sdk.util.UuidUtil;
  * Activity in the result Intent.
  */
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-public class DeviceListActivity extends Activity
-{
+public class DeviceListActivity extends Activity {
     // Return Intent extra
     public static String EXTRA_DEVICE_SPP_ADDRESS = "device_spp_address";
     public static String EXTRA_DEVICE_LE_ADDRESS = "device_le_address";
@@ -76,64 +80,73 @@ public class DeviceListActivity extends Activity
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
             BluetoothDevice device = result.getDevice();
-            if ( device != null )
-            {
+            if (device != null) {
                 String sppAddress = UuidUtil.changeAddressFromLeToSpp(result.getScanRecord().getBytes());
-                String msg = device.getName() + "\n" +"[RSSI : " + result.getRssi() + "dBm]" + sppAddress;
-                NLog.d( "onLeScan " + msg );
+                if (Build.VERSION.SDK_INT >= 31 && ActivityCompat.checkSelfPermission(DeviceListActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+
+                final String msg = result.getScanRecord().getDeviceName() + "\n" + "[RSSI : " + result.getRssi() + "dBm]" + sppAddress;
+                NLog.d("onLeScan " + msg);
                 /**
                  * have to change adapter to BLE
                  */
-                if( !deviceMap.containsKey( sppAddress ) )
-                {
-                    NLog.d( "ACTION_FOUND onLeScan : " + device.getName() + " sppAddress : " + sppAddress + ", COD:" + device.getBluetoothClass() );
+//                if( !deviceMap.containsKey( sppAddress ) )
+//                {
+                NLog.d("ACTION_FOUND onLeScan : " + result.getScanRecord().getDeviceName() + " sppAddress : " + sppAddress + ", COD:" + device.getBluetoothClass());
 
-                    PenClientCtrl.getInstance( DeviceListActivity.this ).setLeMode( true );
-                    if( PenClientCtrl.getInstance( DeviceListActivity.this ).isAvailableDevice( result.getScanRecord().getBytes() ) )
-                    {
-                        DeviceInfo info = new DeviceInfo();
-                        info.sppAddress = sppAddress;
-                        info.leAddress = device.getAddress();
-                        info.deviceName = device.getName();
-                        info.isLe = is_le_scan;
-                        info.uuidVer = BTLEAdt.UUID_VER.VER_2.toString();
-                        info.colorCode = -1;
+                PenClientCtrl.getInstance(DeviceListActivity.this).setLeMode(true);
+                if (PenClientCtrl.getInstance(DeviceListActivity.this).isAvailableDevice(result.getScanRecord().getBytes())) {
+                    DeviceInfo info = new DeviceInfo();
+                    info.sppAddress = sppAddress;
+                    info.leAddress = device.getAddress();
+                    info.deviceName = result.getScanRecord().getDeviceName();
+                    info.isLe = is_le_scan;
+                    info.uuidVer = BTLEAdt.UUID_VER.VER_2.toString();
+                    info.colorCode = -1;
 
-                        List<ParcelUuid> parcelUuids = result.getScanRecord().getServiceUuids();
-                        for(ParcelUuid uuid:parcelUuids)
-                        {
-                            if( uuid.toString().equals(Const.ServiceUuidV5.toString()))
-                            {
-                                info.uuidVer = BTLEAdt.UUID_VER.VER_5.toString();
-                                info.colorCode = UuidUtil.getColorCodeFromUUID(result.getScanRecord().getBytes());
-                                info.companyCode = UuidUtil.getCompanyCodeFromUUID(result.getScanRecord().getBytes());
-                                info.productCode = UuidUtil.getProductCodeFromUUID(result.getScanRecord().getBytes());
-                                break;
-                            }
-                            else if(uuid.toString().equals(Const.ServiceUuidV2.toString()))
-                            {
-                                info.uuidVer = BTLEAdt.UUID_VER.VER_2.toString();
-                                info.colorCode = UuidUtil.getColorCodeFromUUID(result.getScanRecord().getBytes());
-                                info.companyCode = UuidUtil.getCompanyCodeFromUUID(result.getScanRecord().getBytes());
-                                info.productCode = UuidUtil.getProductCodeFromUUID(result.getScanRecord().getBytes());
-                                break;
+                    List<ParcelUuid> parcelUuids = result.getScanRecord().getServiceUuids();
+                    for (ParcelUuid uuid : parcelUuids) {
+                        if (uuid.toString().equals(Const.ServiceUuidV5.toString())) {
+                            info.uuidVer = BTLEAdt.UUID_VER.VER_5.toString();
+                            info.colorCode = UuidUtil.getColorCodeFromUUID(result.getScanRecord().getBytes());
+                            info.companyCode = UuidUtil.getCompanyCodeFromUUID(result.getScanRecord().getBytes());
+                            info.productCode = UuidUtil.getProductCodeFromUUID(result.getScanRecord().getBytes());
+//                                info.wifitest = UuidUtil.getPenStateFromUUid(result.getScanRecord().getBytes());
 
-                            }
+                            break;
+                        } else if (uuid.toString().equals(Const.ServiceUuidV2.toString())) {
+                            info.uuidVer = BTLEAdt.UUID_VER.VER_2.toString();
+                            info.colorCode = UuidUtil.getColorCodeFromUUID(result.getScanRecord().getBytes());
+                            info.companyCode = UuidUtil.getCompanyCodeFromUUID(result.getScanRecord().getBytes());
+                            info.productCode = UuidUtil.getProductCodeFromUUID(result.getScanRecord().getBytes());
+                            break;
 
                         }
-                        NLog.d( "ACTION_FOUND onLeScan : " + device.getName() + " sppAddress : " + sppAddress + ", COD:" + device.getBluetoothClass()+", colorCode="+info.colorCode+", productCode="+info.productCode+", companyCode="+info.companyCode  );
 
-                        deviceMap.put( sppAddress, info );
-                        mNewDevicesArrayAdapter.add( msg );
+                    }
+                    NLog.d("ACTION_FOUND onLeScan : " + result.getScanRecord().getDeviceName() + " sppAddress : " + sppAddress + ", COD:" + device.getBluetoothClass() + ", colorCode=" + info.colorCode + ", productCode=" + info.productCode + ", companyCode=" + info.companyCode);
+
+                    if (!deviceMap.containsKey(sppAddress)) {
+                        deviceMap.put(sppAddress, info);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mNewDevicesArrayAdapter.add(msg);
+
+                            }
+                        });
+
                     }
                 }
             }
+//            }
         }
 
         @Override
         public void onBatchScanResults(List<ScanResult> results) {
             super.onBatchScanResults(results);
-            for ( ScanResult scanResult : results ) {
+            for (ScanResult scanResult : results) {
                 NLog.d("ScanResult - Results", scanResult.toString());
             }
         }
@@ -146,62 +159,56 @@ public class DeviceListActivity extends Activity
     };
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Setup the window
 
-        setContentView( R.layout.device_list );
+        setContentView(R.layout.device_list);
 
         // Set result CANCELED in case the user backs out
-        setResult( Activity.RESULT_CANCELED );
+        setResult(Activity.RESULT_CANCELED);
 
         mHandler = new Handler();
 
         //Actionbar Home
         ActionBar actionBar = getActionBar();
-		actionBar.setHomeButtonEnabled( true );
+        actionBar.setHomeButtonEnabled(true);
 
         // Initialize the button to perform device discovery
         scanButton = (Button) findViewById(R.id.button_scan);
-        scanButton.setOnClickListener( new OnClickListener()
-        {
-            public void onClick ( View v )
-            {
+        scanButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
                 is_le_scan = false;
                 doDiscovery(false);
-                scanButton.setEnabled( false );
-                scanLEButton.setEnabled( false );
+                scanButton.setEnabled(false);
+                scanLEButton.setEnabled(false);
             }
-        } );
+        });
 
         scanLEButton = (Button) findViewById(R.id.button_le_scan);
-        scanLEButton.setOnClickListener(new OnClickListener()
-        {
-            public void onClick(View v)
-            {
+        scanLEButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
                 is_le_scan = true;
                 isScanning = !isScanning;
-                if(isScanning)
-                {
+                if (isScanning) {
                     deviceMap.clear();
-                    doDiscovery( true );
-                    scanLEButton.setText( "STOP" );
-                    scanButton.setEnabled( false );
-                }
-                else
-                {
-                    scanLEButton.setText( R.string.button_le_scan );
-                    scanButton.setEnabled( true );
+                    doDiscovery(true);
+                    scanLEButton.setText("STOP");
+                    scanButton.setEnabled(false);
+                } else {
+                    scanLEButton.setText(R.string.button_le_scan);
+                    scanButton.setEnabled(true);
 //                    scanButton.setVisibility( View.VISIBLE );
                     if (Build.VERSION.SDK_INT >= 21) {
+                        if (Build.VERSION.SDK_INT >= 31 && ActivityCompat.checkSelfPermission(DeviceListActivity.this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                            return;
+                        }
                         mLeScanner.stopScan(mScanCallback);
                     }
                 }
             }
         });
-
 
 
         // Initialize array adapters. One for already paired devices and
@@ -233,12 +240,10 @@ public class DeviceListActivity extends Activity
         Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
 
         // If there are paired devices, add each one to the ArrayAdapter
-        if (pairedDevices.size() > 0)
-        {
+        if (pairedDevices.size() > 0) {
             findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
 
-            for (BluetoothDevice device : pairedDevices)
-            {
+            for (BluetoothDevice device : pairedDevices) {
                 DeviceInfo info = new DeviceInfo();
                 info.sppAddress = device.getAddress();
                 info.leAddress = "";
@@ -247,13 +252,11 @@ public class DeviceListActivity extends Activity
                 info.uuidVer = BTLEAdt.UUID_VER.VER_2.toString();
                 info.colorCode = -1;
 
-                deviceMap.put( device.getAddress(), info );
+                deviceMap.put(device.getAddress(), info);
                 mPairedDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
 //                mPairedDevicesArrayAdapter.add(device.getName() +"\n M:"+device.getBluetoothClass().getMajorDeviceClass()+"D:"+device.getBluetoothClass().getDeviceClass());
             }
-        }
-        else
-        {
+        } else {
             String noDevices = getResources().getText(R.string.none_paired).toString();
             mPairedDevicesArrayAdapter.add(noDevices);
         }
@@ -268,17 +271,35 @@ public class DeviceListActivity extends Activity
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                     .build();
             mScanFilters = new ArrayList<>();
+            UUID ServiceUuidV2 = UUID.fromString("000019F1-0000-1000-8000-00805F9B34FB");
+
+            final UUID ServiceUuidV5 = UUID.fromString("4f99f138-9d53-5bfa-9e50-b147491afe68");
+
+            ScanFilter scanFilter = new ScanFilter.Builder().setServiceUuid(new ParcelUuid(ServiceUuidV2)).build();
+            ScanFilter scanFilter2 = new ScanFilter.Builder().setServiceUuid(new ParcelUuid(ServiceUuidV5)).build();
+
+            mScanFilters.add(scanFilter);
+            mScanFilters.add(scanFilter2);
+
         }
     }
 
     @Override
-    protected void onDestroy()
-    {
+    protected void onDestroy() {
         super.onDestroy();
 
         // Make sure we're not doing discovery anymore
-        if (mBtAdapter != null)
-        {
+        if (mBtAdapter != null) {
+            if (Build.VERSION.SDK_INT >= 31 && ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
             mBtAdapter.cancelDiscovery();
         }
 
@@ -289,8 +310,7 @@ public class DeviceListActivity extends Activity
     /**
      * Start device discover with the BluetoothAdapter
      */
-    private void doDiscovery(boolean le)
-    {
+    private void doDiscovery(boolean le) {
         NLog.d("doDiscovery()");
 
         // Indicate scanning in the title
@@ -306,28 +326,27 @@ public class DeviceListActivity extends Activity
         {
             if (Build.VERSION.SDK_INT < 21) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle( "Not Supported BLE under 21" );
-                builder.setMessage( "Android SDK [" + Build.VERSION.SDK_INT + "] does not support BLE in SDK" );
-                builder.setPositiveButton( "OK", new DialogInterface.OnClickListener()
-                {
+                builder.setTitle("Not Supported BLE under 21");
+                builder.setMessage("Android SDK [" + Build.VERSION.SDK_INT + "] does not support BLE in SDK");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick ( DialogInterface dialog, int which )
-                    {
+                    public void onClick(DialogInterface dialog, int which) {
                         finish();
                     }
-                } );
-                builder.setCancelable( false );
+                });
+                builder.setCancelable(false);
                 builder.create().show();
                 return;
             } else {
+                if (Build.VERSION.SDK_INT >= 31 && ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
                 mLeScanner.startScan(mScanFilters, mScanSetting, mScanCallback);
             }
-        }
-        else    // scan bt
+        } else    // scan bt
         {
             // If we're already discovering, stop it
-            if (mBtAdapter.isDiscovering())
-            {
+            if (mBtAdapter.isDiscovering()) {
                 mBtAdapter.cancelDiscovery();
             }
 
@@ -337,24 +356,22 @@ public class DeviceListActivity extends Activity
     }
 
     // The on-click listener for all devices in the ListViews
-    private OnItemClickListener mDeviceClickListener = new OnItemClickListener()
-    {
-        public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3)
-        {
+    private OnItemClickListener mDeviceClickListener = new OnItemClickListener() {
+        public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
             // Cancel discovery because it's costly and we're about to connect
-            if ( isScanning)
-            {
+            if (isScanning) {
                 if (Build.VERSION.SDK_INT < 21) {
                 } else {
+                    if (Build.VERSION.SDK_INT >= 31 && ActivityCompat.checkSelfPermission(DeviceListActivity.this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                        return;
+                    }
                     mLeScanner.stopScan(mScanCallback);
                 }
                 mBtAdapter = null;
                 mLeScanner = null;
                 isScanning = !isScanning;
-            }
-            else
-            {
-                if(mBtAdapter.isDiscovering())
+            } else {
+                if (mBtAdapter.isDiscovering())
                     mBtAdapter.cancelDiscovery();
             }
 
@@ -370,9 +387,9 @@ public class DeviceListActivity extends Activity
             intent.putExtra(EXTRA_DEVICE_SPP_ADDRESS, sppAddress);
             intent.putExtra(EXTRA_DEVICE_LE_ADDRESS, deviceInfo.leAddress);
             intent.putExtra(EXTRA_IS_BLUETOOTH_LE, deviceInfo.isLe);
-            intent.putExtra( EXTRA_DEVICE_NAME, deviceInfo.deviceName );
-            intent.putExtra( EXTRA_UUID_VER, deviceInfo.uuidVer);
-            intent.putExtra( EXTRA_COLOR_CODE, deviceInfo.colorCode);
+            intent.putExtra(EXTRA_DEVICE_NAME, deviceInfo.deviceName);
+            intent.putExtra(EXTRA_UUID_VER, deviceInfo.uuidVer);
+            intent.putExtra(EXTRA_COLOR_CODE, deviceInfo.colorCode);
 
             // Set result and finish this Activity
             setResult(Activity.RESULT_OK, intent);
@@ -382,25 +399,24 @@ public class DeviceListActivity extends Activity
 
     // The BroadcastReceiver that listens for discovered devices and
     // changes the title when discovery is finished
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver()
-    {
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
-        public void onReceive(Context context, Intent intent)
-        {
+        public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
 
             // When discovery finds a device
-            if (BluetoothDevice.ACTION_FOUND.equals(action))
-            {
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 // Get the BluetoothDevice object from the Intent
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
                 // Get rssi value
-                short rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI,  Short.MIN_VALUE);
+                short rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
 
                 // If it's already paired, skip it, because it's been listed already
-                if (device.getBondState() != BluetoothDevice.BOND_BONDED)
-                {
+                if (Build.VERSION.SDK_INT >= 31 && ActivityCompat.checkSelfPermission(DeviceListActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
                     DeviceInfo info = new DeviceInfo();
                     info.sppAddress = device.getAddress();
                     info.leAddress = "";
@@ -410,10 +426,10 @@ public class DeviceListActivity extends Activity
                     info.colorCode = -1;
 
 
-                    NLog.d( "ACTION_FOUND SPP : " +device.getName() + " address : "+ device.getAddress()+", COD:" + device.getBluetoothClass());
+                    NLog.d("ACTION_FOUND SPP : " + device.getName() + " address : " + device.getAddress() + ", COD:" + device.getBluetoothClass());
 
-                    deviceMap.put( device.getAddress(), info );
-                    mNewDevicesArrayAdapter.add(device.getName() + "\n" + "[RSSI : "+rssi +"dBm] " + device.getAddress());
+                    deviceMap.put(device.getAddress(), info);
+                    mNewDevicesArrayAdapter.add(device.getName() + "\n" + "[RSSI : " + rssi + "dBm] " + device.getAddress());
 //                    mNewDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress()+"\n Major"+device.getBluetoothClass().toString()+"\nDeviceClass()"+device.getBluetoothClass().getDeviceClass()+"device="+device.getType());
 
                 }
@@ -443,7 +459,7 @@ public class DeviceListActivity extends Activity
         int colorCode = 0;
         int productCode = 0;
         int companyCode = 0;
-
+//        String wifitest = "";
     }
 
 }

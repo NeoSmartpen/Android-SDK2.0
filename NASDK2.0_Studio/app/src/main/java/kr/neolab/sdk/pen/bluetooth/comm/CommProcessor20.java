@@ -3354,19 +3354,27 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 
 		boolean isMG = isF121MG(getConn().getMacAddress());
 
+		String deviceName = connectedDeviceName;
+		if(connectedSubName.equals( "Mbest_smartpenS") && isMG && connectedDeviceName.equals( "NWP-F121MG" ))
+			deviceName = "NWP-F121";
+
 		if(nProtocolVer >= PEN_IS_COMPRESS_SUPPORT_PROTOCOL_VERSION)
 		{
 			if(!isSupportCompress)
 				isCompress = isSupportCompress;
+		}else{
+
+			if(isCompress)
+			{
+				// E100,E101,D100,C200,P201 uncompressed
+				if(deviceName.equals( "NWP-F151" ) || deviceName.equals( "NWP-F45" ) || deviceName.equals( "NWP-F63" ) || deviceName.equals( "NWP-F53MG" ) || deviceName.equals( "NEP-E100" ) || deviceName.equals( "NEP-E101" ) || deviceName.equals( "NSP-D100" ) || deviceName.equals( "NSP-D101" ) || deviceName.equals( "NSP-C200") || deviceName.equals( "NPP-P201" ))
+					isCompress = false;
+				else
+					isCompress = true;
+			}
 		}
 
-		if(connectedSubName.equals( "Mbest_smartpenS") && isMG && connectedDeviceName.equals( "NWP-F121MG" ))
-		{
-			command.setInfo( source, fwVersion, "NWP-F121" , isCompress);
-
-		}
-		else
-			command.setInfo( source, fwVersion, connectedDeviceName , isCompress);
+		command.setInfo( source, fwVersion, connectedDeviceName , isCompress);
 		execute( command );
 	}
 

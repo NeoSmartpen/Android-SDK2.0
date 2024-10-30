@@ -75,14 +75,14 @@ public class FwUpgradeCommand20 extends Command
 		this.deviceName = deviceName;
 		this.isCompress = isCompress;
 
-		if(this.isCompress)
-		{
-			// E100,E101,D100,C200,P201 uncompressed
-			if(deviceName.equals( "NWP-F151" ) || deviceName.equals( "NWP-F63" ) || deviceName.equals( "NWP-F53" ) || deviceName.equals( "NEP-E100" ) || deviceName.equals( "NEP-E101" ) || deviceName.equals( "NSP-D100" ) || deviceName.equals( "NSP-D101" ) || deviceName.equals( "NSP-C200") || deviceName.equals( "NPP-P201" ))
-				this.isCompress = false;
-			else
-				this.isCompress = true;
-		}
+//		if(this.isCompress)
+//		{
+//			// E100,E101,D100,C200,P201 uncompressed
+//			if(deviceName.equals( "NWP-F151" ) || deviceName.equals( "NWP-F45" ) || deviceName.equals( "NWP-F63" ) || deviceName.equals( "NWP-F53MG" ) || deviceName.equals( "NEP-E100" ) || deviceName.equals( "NEP-E101" ) || deviceName.equals( "NSP-D100" ) || deviceName.equals( "NSP-D101" ) || deviceName.equals( "NSP-C200") || deviceName.equals( "NPP-P201" ))
+//				this.isCompress = false;
+//			else
+//				this.isCompress = true;
+//		}
 
 		if(deviceName.equals( "NSP-D100" ) || deviceName.equals( "NSP-D101" ) || deviceName.equals( "NSP-C200") )
 		{
@@ -208,7 +208,7 @@ public class FwUpgradeCommand20 extends Command
 						job = new JSONObject();
 						job.put( "total_size", maximum );
 						job.put( "sent_size", index );
-						
+
 						comp.getConn().onCreateMsg( new PenMsg( PenMsgType.PEN_FW_UPGRADE_STATUS, job ) );
 					}
 					catch ( JSONException e )
@@ -298,7 +298,4 @@ public class FwUpgradeCommand20 extends Command
 	{
 		this.repeat = false;
 	}
-
-
-
 }

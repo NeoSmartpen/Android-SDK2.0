@@ -72,7 +72,7 @@ public class SampleView extends View
 		hoverPaint.setAntiAlias(true);
 		hoverPaint.setStyle(Paint.Style.STROKE);
 		hoverPaint.setColor(Color.RED);
-        hoverPaint.setStrokeWidth(1);
+        hoverPaint.setStrokeWidth(5);
 	}
 
 	private void initView()
@@ -173,7 +173,7 @@ public class SampleView extends View
 		}
 
         if( isHoverDot )
-            canvas.drawCircle( hoverPoint.x, hoverPoint.y, strokeWidth, hoverPaint);
+            canvas.drawCircle( hoverPoint.x, hoverPoint.y, strokeWidth*5, hoverPaint);
 	}
 
 	public void addDot( String penAddress, Dot dot ) {

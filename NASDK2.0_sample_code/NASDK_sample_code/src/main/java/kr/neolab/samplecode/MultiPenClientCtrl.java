@@ -16,6 +16,7 @@ import java.util.HashMap;
 import kr.neolab.sdk.pen.IMultiPenCtrl;
 import kr.neolab.sdk.pen.MultiPenCtrl;
 import kr.neolab.sdk.pen.bluetooth.BLENotSupportedException;
+import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
 import kr.neolab.sdk.pen.bluetooth.lib.OutOfRangeException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.penmsg.IPenMsgListener;
@@ -169,6 +170,7 @@ public class MultiPenClientCtrl implements IPenMsgListener
 		iPenCtrl.connect( address );
 	}
 
+
 	/**
 	 * Connect.
 	 *
@@ -176,9 +178,10 @@ public class MultiPenClientCtrl implements IPenMsgListener
 	 * @param leAddress the leAddress
 	 * @param isLeMode LeMode
 	 */
-	public void connect( String address, String leAddress, boolean isLeMode)
+	public void connect(String address, String leAddress, boolean isLeMode, BTLEAdt.UUID_VER uuidVer)
 	{
-		iPenCtrl.connect( address, leAddress, isLeMode );
+//		iPenCtrl.connect( address, leAddress, isLeMode );
+		iPenCtrl.connect( address, leAddress, isLeMode, uuidVer, Const.APP_TYPE_FOR_PEN, Const.REQ_PROTOCOL_VER );
 	}
 
 
@@ -447,6 +450,8 @@ public class MultiPenClientCtrl implements IPenMsgListener
 
 
 
+
+
 				// notify using note
 //				iPenCtrl.reqAddUsingNote( USING_SECTION_ID, USING_OWNER_ID, USING_NOTES );
 //				iPenCtrl.reqAddUsingNote( USING_SECTION_ID, USING_OWNER_ID );
@@ -468,7 +473,11 @@ public class MultiPenClientCtrl implements IPenMsgListener
 //				{
 //					e.printStackTrace();
 //				}
-
+				try {
+					iPenCtrl.reqSetupPenHover(macAddress,true);
+				} catch (ProtocolNotSupportedException e) {
+					throw new RuntimeException(e);
+				}
 				break;
 
 			case PenMsgType.PEN_DISCONNECTED:
@@ -644,8 +653,14 @@ public class MultiPenClientCtrl implements IPenMsgListener
 						int noteId = jobj.getInt( Const.JsonTag.INT_NOTE_ID );
 						NLog.d( "offline(" + ( i + 1 ) + ") note => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId );
 
-						iPenCtrl.reqOfflineData(macAddress, sectionId,  ownerId, noteId );
-					}
+//						iPenCtrl.reqOfflineData(macAddress, sectionId,  ownerId, noteId );
+                        try {
+                            iPenCtrl.reqOfflineDataPageList(macAddress, sectionId,  ownerId, noteId );
+							break;
+                        } catch (ProtocolNotSupportedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
 
 				}
 				catch ( JSONException e )

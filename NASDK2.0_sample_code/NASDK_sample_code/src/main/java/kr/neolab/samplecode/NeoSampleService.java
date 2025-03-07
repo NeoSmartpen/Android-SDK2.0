@@ -32,6 +32,7 @@ import kr.neolab.sdk.util.NLog;
 public class NeoSampleService extends Service{
 
 	private IMultiPenCtrl mPenCtrl;
+	private IPenCtrl mSinglePenCtrl;
 	private Queue<Dot> mDotQueueForDB = null;
 	private Queue<DotWithAddress> mDotQueueForBroadcast = null;
 	private DotConsumerForDBThread mDBThread = null;
@@ -57,6 +58,12 @@ public class NeoSampleService extends Service{
 //			mPenCtrl.setOffLineDataListener( null );
 		mPenCtrl.setOffLineDataListener( mOfflineDataListener );
 		mPenCtrl.setMetadataListener( mMetadataListener );
+
+		mSinglePenCtrl= PenCtrl.getInstance();
+		mSinglePenCtrl.setDotListener( mPenReceiveDotListener );
+		mSinglePenCtrl.setOffLineDataListener( mOfflineDataListener );
+		mSinglePenCtrl.setMetadataListener( mMetadataListener );
+
 
 		// Set Listener at Multi pen Ctrl
 //		MultiPenCtrl.getInstance().setDotListener( mPenReceiveDotListener );

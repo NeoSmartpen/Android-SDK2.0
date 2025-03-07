@@ -481,8 +481,13 @@ public class PenClientCtrl implements IPenMsgListener
 				// to request offline data list
 				// 오프라인 데이터 전체 요청
 				iPenCtrl.reqOfflineDataList();
+                try {
+                    iPenCtrl.reqSetupPenHover(true);
+                } catch (ProtocolNotSupportedException e) {
+                    throw new RuntimeException(e);
+                }
 
-				// 오프라인 데이터 노트단위 요청
+                // 오프라인 데이터 노트단위 요청
 //				iPenCtrl.reqOfflineData( USING_SECTION_ID,USING_OWNER_ID,301 );
 
 				// 오프라인 데이터 페이지 단위 요청
@@ -679,9 +684,16 @@ public class PenClientCtrl implements IPenMsgListener
 						int noteId = jobj.getInt( Const.JsonTag.INT_NOTE_ID );
 						NLog.d( "offline(" + ( i + 1 ) + ") note => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId );
 
+//						// 오프라인 데이터 리스트 노트북 단위로 받기
+//						iPenCtrl.reqOfflineData(sectionId,  ownerId, noteId );
 						// 오프라인 데이터 리스트 노트북 단위로 받기
-						iPenCtrl.reqOfflineData(sectionId,  ownerId, noteId );
-					}
+                        try {
+                            iPenCtrl.reqOfflineDataPageList(sectionId,  ownerId, noteId );
+							break;
+                        } catch (ProtocolNotSupportedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
 
 				}
 				catch ( JSONException e )

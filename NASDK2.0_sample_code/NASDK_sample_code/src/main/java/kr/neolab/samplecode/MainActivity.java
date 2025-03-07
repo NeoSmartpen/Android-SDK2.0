@@ -411,9 +411,9 @@ public class MainActivity extends Activity
 						else
 						{
 							if(deviceName.equals("SMART_KUMON_E"))
-								multiPenClientCtrl.connect(sppAddress, leAddress, false );
+								multiPenClientCtrl.connect(sppAddress, leAddress, false ,uuid_ver);
 							else
-								multiPenClientCtrl.connect(sppAddress, leAddress, isLe );
+								multiPenClientCtrl.connect(sppAddress, leAddress, isLe ,uuid_ver);
 						}
 					}
 				}

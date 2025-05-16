@@ -2533,6 +2533,31 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				}
 				break;
 
+			/*
+			 * ------------------------------------------------------------------
+			 *
+			 * RES_OfflinePageRemove (0xA7)
+			 *
+			 * ------------------------------------------------------------------
+			 */
+			case CMD20.RES_OfflinePageRemove:
+				resultCode = pack.getResultCode();
+				NLog.d( "[CommProcessor20] received RES_OfflinePageRemove(0xA7) command. resultCode=" + resultCode );
+				if ( resultCode == 0x00 )
+				{
+					int pageCount = pack.getDataRangeInt( 0, 1 );
+					int[] pageIds = new int[pageCount];
+					String delete_msg = " delete pageid :";
+					for(int i = 0; i < pageCount; i++)
+					{
+						pageIds[i] = pack.getDataRangeInt( 1 + 4 * i, 4 );
+						delete_msg += pageIds[i]+",";
+					}
+					NLog.d( "[CommProcessor20] received RES_OfflinePageRemove(0xA7) command. pageCount="+pageCount+ delete_msg);
+					btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_FILE_DELETED ) );
+				}
+				break;
+
 
 			/*
 			 * ------------------------------------------------------------------
@@ -3254,6 +3279,21 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		write( ProtocolParser20.buildReqOfflineDataRemove( sectionId, ownerId, noteIds ) );
 	}
 
+
+	/**
+	 * Req offline data remove.
+	 *
+	 * @param sectionId the section id
+	 * @param ownerId   the owner id
+	 * @param noteId   the note ids
+	 * @param pageIds   the note ids
+	 **/
+	public void reqOfflineDataRemoveByPage( int sectionId, int ownerId, int noteId, int[] pageIds)
+	{
+		write( ProtocolParser20.buildReqOfflineDataRemoveByPage( sectionId, ownerId, noteId ,pageIds) );
+	}
+
+
 	/**
 	 * Req offline note info.
 	 *
@@ -3337,7 +3377,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 * @param fwVersion  the fw version
 	 * @param isCompress the is compress
 	 */
-	public void reqPenSwUpgrade( File source, String fwVersion , boolean isCompress)
+	public void reqPenSwUpgrade( File source, String fwVersion )
 	{
 		NLog.d( "[CommProcessor20] request pen firmware upgrade." );
 
@@ -3358,22 +3398,23 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 		if(connectedSubName.equals( "Mbest_smartpenS") && isMG && connectedDeviceName.equals( "NWP-F121MG" ))
 			deviceName = "NWP-F121";
 
-		if(nProtocolVer >= PEN_IS_COMPRESS_SUPPORT_PROTOCOL_VERSION)
-		{
-			if(!isSupportCompress)
-				isCompress = isSupportCompress;
-		}else{
+//		if(nProtocolVer >= PEN_IS_COMPRESS_SUPPORT_PROTOCOL_VERSION)
+//		{
+//			if(!isSupportCompress)
+//				isCompress = isSupportCompress;
+//		}else{
+//
+//			if(isCompress)
+//			{
+//				// E100,E101,D100,C200,P201 uncompressed
+//				if(deviceName.equals( "NWP-F151" ) || deviceName.equals( "NWP-F45" ) || deviceName.equals( "NWP-F63" ) || deviceName.equals( "NWP-F53MG" ) || deviceName.equals( "NEP-E100" ) || deviceName.equals( "NEP-E101" ) || deviceName.equals( "NSP-D100" ) || deviceName.equals( "NSP-D101" ) || deviceName.equals( "NSP-C200") || deviceName.equals( "NPP-P201" ))
+//					isCompress = false;
+//				else
+//					isCompress = true;
+//			}
+//		}
 
-			if(isCompress)
-			{
-				// E100,E101,D100,C200,P201 uncompressed
-				if(deviceName.equals( "NWP-F151" ) || deviceName.equals( "NWP-F45" ) || deviceName.equals( "NWP-F63" ) || deviceName.equals( "NWP-F53MG" ) || deviceName.equals( "NEP-E100" ) || deviceName.equals( "NEP-E101" ) || deviceName.equals( "NSP-D100" ) || deviceName.equals( "NSP-D101" ) || deviceName.equals( "NSP-C200") || deviceName.equals( "NPP-P201" ))
-					isCompress = false;
-				else
-					isCompress = true;
-			}
-		}
-
+		isCompress = false;
 		command.setInfo( source, fwVersion, connectedDeviceName , isCompress);
 		execute( command );
 	}

@@ -308,6 +308,11 @@ public class MultiPenClientCtrl implements IPenMsgListener
 		iPenCtrl.removeOfflineData( macAddress, sectionId, ownerId, noteIds );
 	}
 
+
+	public void removeOfflineDataByPage( String macAddress, int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException
+	{
+		iPenCtrl.removeOfflineDataByPage( macAddress,sectionId, ownerId, noteId, pageIds );
+	}
 	public void reqOfflineNoteInfo( String macAddress, int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException
 	{
 		iPenCtrl.reqOfflineNoteInfo( macAddress, sectionId, ownerId, noteId );

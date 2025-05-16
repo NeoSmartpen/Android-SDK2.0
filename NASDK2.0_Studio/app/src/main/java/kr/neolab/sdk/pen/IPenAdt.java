@@ -206,6 +206,7 @@ public interface IPenAdt
      * @param fwVersion  the fw version
      * @param isCompress data compress true, uncompress false
      * @throws ProtocolNotSupportedException the protocol not supported exception
+     * @deprecated isCompress param
      */
     public void reqFwUpgrade2( File fwFile, String fwVersion ,boolean isCompress)  throws ProtocolNotSupportedException;
 
@@ -402,6 +403,21 @@ public interface IPenAdt
      * @throws ProtocolNotSupportedException the protocol not supported exception
      */
     public void removeOfflineData( int sectionId, int ownerId ,int[] noteIds) throws ProtocolNotSupportedException;
+
+
+    /**
+     * Remove offline data.
+     * supported from Protocol 2.23
+     *
+     * @param sectionId the section id
+     * @param ownerId   the owner id
+     * @param noteId   the note id
+     * @param pageIds   the page ids
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void removeOfflineDataByPage ( int sectionId, int ownerId, int noteId, int[] pageIds ) throws ProtocolNotSupportedException;
+
+
 
     /**
      * Request offline note info.

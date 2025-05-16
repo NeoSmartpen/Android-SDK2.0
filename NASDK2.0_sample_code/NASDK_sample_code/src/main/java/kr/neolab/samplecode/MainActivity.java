@@ -67,9 +67,9 @@ public class MainActivity extends Activity
 	private kr.neolab.samplecode.SampleView mSampleView;
 
 	// Notification
-	protected Notification.Builder mBuilder;
-	protected NotificationManager mNotifyManager;
-	protected Notification mNoti;
+//	protected Notification.Builder mBuilder;
+//	protected NotificationManager mNotifyManager;
+//	protected Notification mNoti;
 	
 	public InputPasswordDialog inputPassDialog;
 
@@ -126,13 +126,7 @@ public class MainActivity extends Activity
 //			}
 //		});
 
-		PendingIntent pendingIntent = PendingIntent.getBroadcast( this, 0, new Intent( "firmware_update" ), PendingIntent.FLAG_IMMUTABLE );
 
-		mNotifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mBuilder = new Notification.Builder(getApplicationContext());
-		mBuilder.setContentTitle( "Update Pen" );
-		mBuilder.setSmallIcon( R.drawable.ic_launcher_n );
-		mBuilder.setContentIntent( pendingIntent );
 
 
 		chkPermissions ();
@@ -152,12 +146,12 @@ public class MainActivity extends Activity
 				if(connectionMode == 0)
 				{
 					penClientCtrl = PenClientCtrl.getInstance( getApplicationContext() );
-					fwUpdateDialog = new FwUpdateDialog( MainActivity.this,penClientCtrl, mNotifyManager, mBuilder);
+					fwUpdateDialog = new FwUpdateDialog( MainActivity.this,penClientCtrl);
 					Log.d( TAG, "SDK Version " + penClientCtrl.getSDKVerions() );
 				}else
 				{
 					multiPenClientCtrl = MultiPenClientCtrl.getInstance( getApplicationContext() );
-					fwUpdateDialog = new FwUpdateDialog( MainActivity.this,multiPenClientCtrl, mNotifyManager, mBuilder);
+					fwUpdateDialog = new FwUpdateDialog( MainActivity.this,multiPenClientCtrl);
 					Log.d( TAG, "SDK Version " + multiPenClientCtrl.getSDKVerions() );
 				}
 				dialog.dismiss();
@@ -561,46 +555,35 @@ public class MainActivity extends Activity
 				}
 				return true;
 
-			case R.id.action_offline_list_page:
-			    // 펜에있는 오프라인 데이터 리스트를 페이지단위로 받아온다.
+			case R.id.action_offline_list_page: {
+				// 펜에있는 오프라인 데이터 리스트를 페이지단위로 받아온다.
 
-				final int sectionId = 0, ownerId = 0, noteId = 0;
+				final int sectionId = 3, ownerId = 27, noteId = 620;
 				//TODO Put section, owner , note
 
-				if(connectionMode == 0)
-				{
-					if ( penClientCtrl.isAuthorized() )
-					{
+				if (connectionMode == 0) {
+					if (penClientCtrl.isAuthorized()) {
 						// to process saved offline data
 
-						try
-						{
+						try {
 							penClientCtrl.reqOfflineDataPageList(sectionId, ownerId, noteId);
-						} catch ( ProtocolNotSupportedException e )
-						{
+						} catch (ProtocolNotSupportedException e) {
 							e.printStackTrace();
 						}
 
 					}
-				}
-				else
-				{
+				} else {
 					connectedList = multiPenClientCtrl.getConnectDevice();
-					if(connectedList.size() > 0)
-					{
+					if (connectedList.size() > 0) {
 						AlertDialog.Builder builder;
-						String[] addresses = connectedList.toArray( new String[connectedList.size()]);
-						builder = new AlertDialog.Builder( this );
-						builder.setSingleChoiceItems( addresses, 0, new DialogInterface.OnClickListener()
-						{
+						String[] addresses = connectedList.toArray(new String[connectedList.size()]);
+						builder = new AlertDialog.Builder(this);
+						builder.setSingleChoiceItems(addresses, 0, new DialogInterface.OnClickListener() {
 							@Override
-							public void onClick ( DialogInterface dialog, int which )
-							{
-								try
-								{
-									multiPenClientCtrl.reqOfflineDataPageList( connectedList.get( which ), sectionId, ownerId, noteId );
-								} catch ( ProtocolNotSupportedException e )
-								{
+							public void onClick(DialogInterface dialog, int which) {
+								try {
+									multiPenClientCtrl.reqOfflineDataPageList(connectedList.get(which), sectionId, ownerId, noteId);
+								} catch (ProtocolNotSupportedException e) {
 									e.printStackTrace();
 								}
 
@@ -610,8 +593,53 @@ public class MainActivity extends Activity
 						builder.create().show();
 					}
 				}
+			}
+			return true;
 
-				return true;
+			case R.id.action_offline_delete_page: {
+
+				// 펜에있는 오프라인 데이터 리스트를 페이지단위로 받아온다.
+
+				final int sectionId = 3, ownerId = 27, noteId = 602;
+				final int[] pageIds = {1,3};
+				//TODO Put section, owner , note, pageids
+
+				if (connectionMode == 0) {
+					if (penClientCtrl.isAuthorized()) {
+						// to process saved offline data
+
+						try {
+							penClientCtrl.removeOfflineDataByPage(sectionId, ownerId, noteId,pageIds);
+						} catch (ProtocolNotSupportedException e) {
+							e.printStackTrace();
+						}
+
+					}
+				} else {
+					connectedList = multiPenClientCtrl.getConnectDevice();
+					if (connectedList.size() > 0) {
+						AlertDialog.Builder builder;
+						String[] addresses = connectedList.toArray(new String[connectedList.size()]);
+						builder = new AlertDialog.Builder(this);
+						builder.setSingleChoiceItems(addresses, 0, new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								try {
+									multiPenClientCtrl.removeOfflineDataByPage(connectedList.get(which), sectionId, ownerId, noteId,pageIds);
+								} catch (ProtocolNotSupportedException e) {
+									e.printStackTrace();
+								}
+
+								dialog.dismiss();
+							}
+						});
+						builder.create().show();
+					}
+				}
+			}
+			return true;
+
+
 
 			case R.id.action_offline_note_info:
 				if(connectionMode == 0)

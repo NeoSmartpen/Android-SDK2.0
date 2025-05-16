@@ -19,7 +19,9 @@
   <item android:id="@+id/action_offline_list_page"
       android:title="@string/offline_page"
       android:showAsAction="never" />
-
+  <item android:id="@+id/action_offline_delete_page"
+      android:title="@string/offline_page_delete_page"
+      android:showAsAction="never" />
   <item
       android:id="@+id/action_offline_note_info"
       android:showAsAction="never"

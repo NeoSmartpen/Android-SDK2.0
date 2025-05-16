@@ -509,6 +509,11 @@ public class PenCtrl implements IPenCtrl {
 	}
 
 	@Override
+	public void removeOfflineDataByPage(int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException {
+		currentAdt.removeOfflineDataByPage(sectionId, ownerId, noteId,pageIds);
+	}
+
+	@Override
 	public void reqOfflineNoteInfo( int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException
 	{
 		currentAdt.reqOfflineNoteInfo( sectionId, ownerId, noteId );

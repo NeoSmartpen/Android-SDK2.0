@@ -89,7 +89,7 @@
 				android:layout_height="wrap_content"
 				android:textColor="#000000"
 				android:gravity="center"
-				android:text="Download"
+				android:text="Upgrade"
 				android:visibility="invisible"/>
 			<Button
 				android:id="@+id/btn_ok"

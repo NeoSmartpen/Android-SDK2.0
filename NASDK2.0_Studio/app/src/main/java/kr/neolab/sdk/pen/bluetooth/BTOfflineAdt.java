@@ -831,7 +831,7 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
     @Override
     public void reqFwUpgrade2( File fwFile, String fwVersion )  throws ProtocolNotSupportedException
     {
-        reqFwUpgrade2( fwFile, fwVersion , true);
+        reqFwUpgrade2( fwFile, fwVersion , false);
     }
 
 
@@ -850,7 +850,7 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
         }
 
         if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20)
-            ((CommProcessor20)mConnectionThread.getPacketProcessor()).reqPenSwUpgrade( fwFile, fwVersion, isCompress);
+            ((CommProcessor20)mConnectionThread.getPacketProcessor()).reqPenSwUpgrade( fwFile, fwVersion);
         else
         {
             NLog.e( "reqFwUpgrade2( File fwFile, String fwVersion ) is supported from protocol 2.0 !!!" );
@@ -1941,6 +1941,30 @@ public class BTOfflineAdt implements IPenAdt {      //[2018.03.05] Stroke Test
         }
 
 
+    }
+
+    @Override
+    public void removeOfflineDataByPage(int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException {
+        if ( !isConnected() )
+        {
+            return;
+        }
+        if(mConnectionThread.getPacketProcessor() instanceof CommProcessor20) {
+
+            String protoVer = ((CommProcessor20) mConnectionThread.getPacketProcessor()).getReceiveProtocolVer();
+            if (Double.parseDouble(protoVer) >= 2.23)
+                ((CommProcessor20) mConnectionThread.getPacketProcessor()).reqOfflineDataRemoveByPage(sectionId, ownerId, noteId, pageIds);
+            else
+            {
+                NLog.e( "removeOfflineDataByPage(int sectionId, int ownerId, int noteId, int[] pageIds) is supported from protocol 2.23 !!!" );
+                throw new ProtocolNotSupportedException( "removeOfflineDataByPage(int sectionId, int ownerId, int noteId, int[] pageIds) is supported from protocol 2.23 !!!" );
+            }
+
+        }else
+        {
+            NLog.e( "removeOfflineDataByPage(int sectionId, int ownerId, int noteId, int[] pageIds) is supported from protocol 2.23 !!!" );
+            throw new ProtocolNotSupportedException( "removeOfflineDataByPage(int sectionId, int ownerId, int noteId, int[] pageIds) is supported from protocol 2.23 !!!" );
+        }
     }
 
     @Override

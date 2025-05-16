@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 android {
     compileSdkVersion 23
-
+    namespace = "kr.neolab.sdk"
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 26

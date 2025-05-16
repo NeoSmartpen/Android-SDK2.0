@@ -8,7 +8,6 @@ android {
         minSdkVersion 19
         targetSdkVersion 33
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -17,16 +16,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    namespace 'kr.neolab.samplecode'
 }
 
 dependencies {
 //    implementation fileTree(include: ['*.aar'], dir: 'libs')
 //    implementation 'com.android.support:support-v4:26.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    androidTestImplementation 'com.android.support:support-annotations:24.0.0'
-    androidTestImplementation 'com.android.support.test:runner:0.5'
-    androidTestImplementation 'com.android.support.test:rules:0.5'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:2.2.2'
+    implementation 'androidx.core:core:1.10.0'
 //    implementation project(path: ':ink')
 
     implementation project(':NASDK')

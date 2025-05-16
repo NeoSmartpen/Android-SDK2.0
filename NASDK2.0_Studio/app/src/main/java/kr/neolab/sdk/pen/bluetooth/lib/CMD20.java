@@ -223,6 +223,15 @@ public class CMD20
     public static final int RES_OfflineNoteInfo = 0xA6;
 
     /**
+     * The constant REQ_OfflinePageRemove.
+     */
+    public static final int REQ_OfflinePageRemove = 0x27;
+    /**
+     * The constant RES_OfflinePageRemove.
+     */
+    public static final int RES_OfflinePageRemove = 0xA7;
+
+    /**
      * The constant REQ_PenFWUpgrade.
      */
     public static final int REQ_PenFWUpgrade = 0x31;

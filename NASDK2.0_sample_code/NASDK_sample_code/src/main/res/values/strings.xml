@@ -16,6 +16,7 @@
     <string name="viewDot">ViewDot</string>
     <string name="offline">OfflineData(All)</string>
     <string name="offline_page">OfflineData(Page)</string>
+    <string name="offline_page_delete_page">OfflineDataDelete(Page)</string>
     <string name="offline_list">OfflineData list</string>
     <string name="offline_note_info">Offline Note Info</string>
     <string name="pen_status">Pen Status</string>

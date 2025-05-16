@@ -766,6 +766,13 @@ public class UsbAdt implements IPenAdt {
     }
 
     @Override
+    public void removeOfflineDataByPage(int sectionId, int ownerId, int noteId, int[] pageIds) {
+        NLog.e("removeOfflineDataByPage(int sectionId, int ownerId, int noteId, int[] pageIds) is not supported in wired pen.");
+    }
+
+
+
+    @Override
     public void reqOfflineNoteInfo(int sectionId, int ownerId, int noteId) {
         NLog.e("reqOfflineNoteInfo(int sectionId, int ownerId, int noteId) is not supported in wired pen.");
 

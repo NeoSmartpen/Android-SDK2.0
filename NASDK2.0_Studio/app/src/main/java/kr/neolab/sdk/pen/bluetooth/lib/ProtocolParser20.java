@@ -936,6 +936,43 @@ public class ProtocolParser20
         return sendbyte.getPacket();
     }
 
+
+    /**
+     * Build req offline data Page remove byte [ ].
+     *
+     * @param sectionId the section id
+     * @param ownerId   the owner id
+     * @param noteId   the note ids
+     * @param pageIds   the pages ids
+     * @return the byte [ ]
+     */
+    public static byte[] buildReqOfflineDataRemoveByPage ( int sectionId, int ownerId, int noteId, int[] pageIds)
+    {
+        byte[] ownerByte = ByteConverter.intTobyte( ownerId );
+        int pageCount = 0;
+        if(pageIds != null)
+        {
+            pageCount = pageIds.length;
+        }
+
+        PacketBuilder sendbyte = new PacketBuilder( 5+4 + pageCount *4 );
+        sendbyte.setCommand( CMD20.REQ_OfflinePageRemove );
+        sendbyte.write( ownerByte[0] );
+        sendbyte.write( ownerByte[1] );
+        sendbyte.write( ownerByte[2] );
+        sendbyte.write( (byte) sectionId );
+        sendbyte.write( ByteConverter.intTobyte( noteId ) );
+        sendbyte.write( (byte) pageCount );
+        if(pageCount != 0)
+        {
+            for(int pageId: pageIds)
+                sendbyte.write( ByteConverter.intTobyte( pageId ) );
+        }
+        NLog.d( "[ProtocolParser20] REQ buildReqOfflineDataRemoveByPage :" + sendbyte.showPacket() );
+        return sendbyte.getPacket();
+    }
+
+
     /**
      * Build req offline note Info byte [ ].
      *

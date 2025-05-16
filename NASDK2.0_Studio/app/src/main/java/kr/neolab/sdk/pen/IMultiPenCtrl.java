@@ -425,6 +425,21 @@ public interface IMultiPenCtrl
      */
     public void removeOfflineData ( String address, int sectionId, int ownerId, int[] noteIds ) throws ProtocolNotSupportedException;
 
+
+    /**
+     * Remove offline data.
+     * supported from Protocol 2.23
+     *
+     * @param address   MAC address of pen
+     * @param sectionId the section id
+     * @param ownerId   the owner id
+     * @param noteId   the note id
+     * @param pageIds   the page ids
+     * @throws ProtocolNotSupportedException the protocol not supported exception
+     */
+    public void removeOfflineDataByPage ( String address, int sectionId, int ownerId, int noteId, int[] pageIds ) throws ProtocolNotSupportedException;
+
+
     /**
      * Request offline note info.
      * supported from Protocol 2.16

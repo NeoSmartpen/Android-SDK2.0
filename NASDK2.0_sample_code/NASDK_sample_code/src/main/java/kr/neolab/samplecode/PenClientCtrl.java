@@ -331,6 +331,12 @@ public class PenClientCtrl implements IPenMsgListener
 		iPenCtrl.removeOfflineData( sectionId, ownerId, noteIds );
 	}
 
+	public void removeOfflineDataByPage( int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException
+	{
+		iPenCtrl.removeOfflineDataByPage( sectionId, ownerId, noteId, pageIds );
+	}
+
+
 	public void reqOfflineNoteInfo( int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException
 	{
 		iPenCtrl.reqOfflineNoteInfo( sectionId, ownerId, noteId );
@@ -480,7 +486,7 @@ public class PenClientCtrl implements IPenMsgListener
 
 				// to request offline data list
 				// 오프라인 데이터 전체 요청
-				iPenCtrl.reqOfflineDataList();
+//				iPenCtrl.reqOfflineDataList();
                 try {
                     iPenCtrl.reqSetupPenHover(true);
                 } catch (ProtocolNotSupportedException e) {
@@ -724,13 +730,14 @@ public class PenClientCtrl implements IPenMsgListener
 						NLog.d( "offline(" + ( i + 1 ) + ") note => sectionId : " + sectionId + ", ownerId : " + ownerId + ", noteId : " + noteId + ", pageId : " + pageId );
 
 						pageIds.add( pageId );
+
 						// 오프라인 데이터 리스트 페이지 단위로 받기
+						// deleteOnFinished 를 false 로 설정하였다면, 오프라인데이터를 받은 후 직접 삭제해주어야 한다.
 						if( prvSec != sectionId || prvOwn != ownerId || prvNote != noteId )
 						{
-							iPenCtrl.reqOfflineData( sectionId, ownerId, noteId, Util.convertIntegers( pageIds ) );
+							iPenCtrl.reqOfflineData(sectionId, ownerId, noteId, false, Util.convertIntegers( pageIds ) );
 							pageIds.clear();
 						}
-
 					}
 
 				}

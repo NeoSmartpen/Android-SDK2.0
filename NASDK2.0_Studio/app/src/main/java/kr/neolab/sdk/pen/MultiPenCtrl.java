@@ -539,6 +539,13 @@ public class MultiPenCtrl implements IMultiPenCtrl {
 	}
 
 	@Override
+	public void removeOfflineDataByPage(String address, int sectionId, int ownerId, int noteId, int[] pageIds) throws ProtocolNotSupportedException {
+		IPenAdt mPenAdt = (mConnectedCollection.get(address));
+		if(mPenAdt != null)
+			mPenAdt.removeOfflineDataByPage(sectionId, ownerId, noteId,pageIds);
+	}
+
+	@Override
 	public void reqOfflineNoteInfo( String address, int sectionId, int ownerId, int noteId ) throws ProtocolNotSupportedException
 	{
 		IPenAdt mPenAdt = (mConnectedCollection.get(address));

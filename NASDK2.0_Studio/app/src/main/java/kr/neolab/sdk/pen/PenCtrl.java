@@ -239,6 +239,9 @@ public class PenCtrl implements IPenCtrl {
             BTLEAdt.getInstance().setListener( listener );
         BTAdt.getInstance().setListener(listener);
         BTOfflineAdt.getInstance().setListener(listener);
+		UsbAdt.getInstance().setListener(listener);
+
+
     }
 
     @Override
@@ -247,6 +250,7 @@ public class PenCtrl implements IPenCtrl {
             BTLEAdt.getInstance().setDotListener( listener );
         BTAdt.getInstance().setDotListener(listener);
         BTOfflineAdt.getInstance().setDotListener(listener);
+		UsbAdt.getInstance().setDotListener(listener);
     }
 
     @Override

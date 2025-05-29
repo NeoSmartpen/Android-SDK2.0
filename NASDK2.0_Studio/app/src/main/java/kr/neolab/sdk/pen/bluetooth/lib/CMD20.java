@@ -163,6 +163,12 @@ public class CMD20
     public static final int REQ_PenStatusChange_TYPE_Disk_Reset = 0x11;
 
     /**
+     * The constant REQ_PenStatusChange_TYPE_Camera_Register.
+     */
+    public static final int REQ_PenStatusChange_TYPE_Camera_Register = 0x16;
+
+
+    /**
      * The constant REQ_UsingNoteNotify.
      */
     public static final int REQ_UsingNoteNotify = 0x11;

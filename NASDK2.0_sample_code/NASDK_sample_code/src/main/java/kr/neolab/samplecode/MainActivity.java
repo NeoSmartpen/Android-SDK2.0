@@ -50,6 +50,7 @@ import kr.neolab.sdk.pen.bluetooth.BTLEAdt;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.offline.OfflineFileParser;
 import kr.neolab.sdk.pen.penmsg.PenMsgType;
+import kr.neolab.sdk.pen.usb.UsbAdt;
 import kr.neolab.sdk.util.NLog;
 
 public class MainActivity extends Activity
@@ -83,12 +84,15 @@ public class MainActivity extends Activity
 
 	private ArrayList<String> connectedList= null;
 
+	private AlertDialog choiceDialog = null;
+
 	@Override
 	protected void onCreate( Bundle savedInstanceState )
 	{
 		super.onCreate( savedInstanceState );
 
 		setContentView( R.layout.activity_main );
+
 
 //		try
 //		{
@@ -127,40 +131,65 @@ public class MainActivity extends Activity
 //		});
 
 
-
-
 		chkPermissions ();
 		Intent oIntent = new Intent();
 		oIntent.setClass( this, NeoSampleService.class );
 		startService( oIntent );
 
 
-		AlertDialog.Builder builder;
-		builder = new AlertDialog.Builder( this );
-		builder.setSingleChoiceItems( new CharSequence[]{ "Single Connection Mode", "Multi Connection Mode" }, connectionMode, new DialogInterface.OnClickListener()
-		{
-			@Override
-			public void onClick ( DialogInterface dialog, int which )
+		boolean isUsb = getIntent().getBooleanExtra("fromUsb",false);
+
+		NLog.d("onCreate fromUsb = "+isUsb);
+		if(isUsb){
+			connectionMode = 2;
+			penClientCtrl = PenClientCtrl.getInstance( getApplicationContext() );
+		}else{
+			AlertDialog.Builder builder;
+			builder = new AlertDialog.Builder( this );
+			builder.setSingleChoiceItems( new CharSequence[]{ "Single Connection Mode", "Multi Connection Mode" }, connectionMode, new DialogInterface.OnClickListener()
 			{
-				connectionMode = which;
-				if(connectionMode == 0)
+				@Override
+				public void onClick ( DialogInterface dialog, int which )
 				{
-					penClientCtrl = PenClientCtrl.getInstance( getApplicationContext() );
-					fwUpdateDialog = new FwUpdateDialog( MainActivity.this,penClientCtrl);
-					Log.d( TAG, "SDK Version " + penClientCtrl.getSDKVerions() );
-				}else
-				{
-					multiPenClientCtrl = MultiPenClientCtrl.getInstance( getApplicationContext() );
-					fwUpdateDialog = new FwUpdateDialog( MainActivity.this,multiPenClientCtrl);
-					Log.d( TAG, "SDK Version " + multiPenClientCtrl.getSDKVerions() );
+					connectionMode = which;
+					if(connectionMode == 0)
+					{
+						penClientCtrl = PenClientCtrl.getInstance( getApplicationContext() );
+						fwUpdateDialog = new FwUpdateDialog( MainActivity.this,penClientCtrl);
+						Log.d( TAG, "SDK Version " + penClientCtrl.getSDKVerions() );
+					}else if(connectionMode == 1)
+					{
+						multiPenClientCtrl = MultiPenClientCtrl.getInstance( getApplicationContext() );
+						fwUpdateDialog = new FwUpdateDialog( MainActivity.this,multiPenClientCtrl);
+						Log.d( TAG, "SDK Version " + multiPenClientCtrl.getSDKVerions() );
+					}
+					dialog.dismiss();
 				}
-				dialog.dismiss();
-			}
-		});
-		builder.setCancelable( false );
-		builder.create().show();
+			});
+			builder.setCancelable( false );
+			choiceDialog = builder.create();
+			choiceDialog.show();
+		}
+
+
+
 	}
 
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+
+		boolean isUsb = intent.getBooleanExtra("fromUsb",false);
+		NLog.d("onNewIntent fromUsb = "+isUsb);
+		if(isUsb){
+			if(choiceDialog != null && choiceDialog.isShowing())
+				choiceDialog.dismiss();
+
+			connectionMode = 2;
+			penClientCtrl = PenClientCtrl.getInstance( getApplicationContext() );
+		}
+
+	}
 
 	private void chkPermissions ()
 	{
@@ -347,7 +376,7 @@ public class MainActivity extends Activity
 		filter.addAction( Broadcast.ACTION_PEN_DOT );
 		filter.addAction( Broadcast.ACTION_OFFLINE_STROKES );
 		filter.addAction( Broadcast.ACTION_WRITE_PAGE_CHANGED );
-
+		filter.addAction(UsbAdt.ACTION_USB_ATTACHED );
 
 
 
@@ -493,7 +522,7 @@ public class MainActivity extends Activity
 				return true;
 
 			case R.id.action_disconnect:
-				if(connectionMode == 0)
+				if(connectionMode == 0 || connectionMode ==2)
 				{
 					if ( penClientCtrl.isConnected() )
 					{
@@ -692,7 +721,7 @@ public class MainActivity extends Activity
 						fwUpdateDialog.show( penClientCtrl.getConnectDevice() );
 					}
 				}
-				else
+				else if(connectionMode == 1)
 				{
 					connectedList = multiPenClientCtrl.getConnectDevice();
 					if(connectedList.size() > 0)
@@ -716,7 +745,7 @@ public class MainActivity extends Activity
 				return true;
 
 			case R.id.action_pen_status:
-				if(connectionMode == 0)
+				if(connectionMode == 0 || connectionMode == 2)
 				{
 					if ( penClientCtrl.isAuthorized() )
 					{
@@ -767,7 +796,7 @@ public class MainActivity extends Activity
 					if(penClientCtrl.isAuthorized())
 						penClientCtrl.unpairDevice( penClientCtrl.getConnectDevice() ) ;
 				}
-				else
+				else  if(connectionMode == 1)
 				{
 					connectedList = multiPenClientCtrl.getConnectDevice();
 					if(connectedList.size() > 0)
@@ -798,7 +827,7 @@ public class MainActivity extends Activity
 			case R.id.action_convert_neoink:
 				// 현재 페이지의 stroke 를 NeoInk format 으로 변환합니다.
 				// 변환된 파일은 json 형식으로 지정된 위치에 저장합니다.
-				if(connectionMode == 0)
+				if(connectionMode == 0 || connectionMode == 2 )
 				{
 					String captureDevice = penClientCtrl.getDeviceName();
 					mSampleView.makeNeoInkFile( captureDevice );
@@ -871,7 +900,7 @@ public class MainActivity extends Activity
 
 			case PenMsgType.PEN_AUTHORIZED:
 				// OffLine Data set use
-				if(connectionMode == 0)
+				if(connectionMode == 0 || connectionMode ==2)
 					penClientCtrl.setAllowOfflineData( true );
 				else
 					multiPenClientCtrl.setAllowOfflineData(penAddress, true );
@@ -951,7 +980,7 @@ public class MainActivity extends Activity
 
 			// Offline data transfer completion
 			case PenMsgType.OFFLINE_DATA_SEND_SUCCESS:
-				if(connectionMode == 0)
+				if(connectionMode == 0  || connectionMode ==2)
 				{
 					if(penClientCtrl.getProtocolVersion() ==1)
 						parseOfflineData(penAddress);
@@ -1068,7 +1097,7 @@ public class MainActivity extends Activity
 
 	public void inputPassword(String penAddress,  String password )
 	{
-		if(connectionMode == 0)
+		if(connectionMode == 0 || connectionMode ==2)
 		{
 			penClientCtrl.inputPassword(password);
 		}
@@ -1167,6 +1196,10 @@ public class MainActivity extends Activity
 				currentBookcodeId = noteId;
 				currentPagenumber =pageNum;
 				mSampleView.changePage(sectionId, ownerId,noteId,pageNum );
+			}else if(UsbAdt.ACTION_USB_ATTACHED.equals((action))){
+
+			}else if(UsbAdt.ACTION_USB_DETACHED.equals((action))){
+
 			}
 		}
 	};
@@ -1174,7 +1207,7 @@ public class MainActivity extends Activity
 	private void deleteOfflineData(String address, int section, int owner, int note)
 	{
 		int[] noteArray = {note};
-		if( connectionMode == 0)
+		if( connectionMode == 0  || connectionMode ==2)
 		{
 			try
 			{

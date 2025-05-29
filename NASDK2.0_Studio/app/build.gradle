@@ -3,8 +3,8 @@ android {
     compileSdkVersion 23
     namespace = "kr.neolab.sdk"
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 26
+        minSdkVersion 21
+        targetSdkVersion 33
     }
 
     buildTypes {
@@ -16,6 +16,18 @@ android {
     android {
         lintOptions {
             abortOnError false
+        }
+    }
+
+    repositories {
+        flatDir {
+            dirs 'libs' // app/libs 폴더를 AAR 검색 경로로 지정
+        }
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
         }
     }
 

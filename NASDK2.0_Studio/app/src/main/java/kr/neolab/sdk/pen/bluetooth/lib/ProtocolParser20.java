@@ -389,6 +389,24 @@ public class ProtocolParser20
         return builder.getPacket();
     }
 
+    public static byte[] buildSetCameraRegister( ArrayList<byte[]> values) {
+        PacketBuilder sendbyte = new PacketBuilder( 9 );
+        sendbyte.setCommand( CMD20.REQ_PenStatusChange );
+        sendbyte.write( ByteConverter.intTobyte( CMD20.REQ_PenStatusChange_TYPE_Camera_Register ), 1 );
+
+        sendbyte.write( (byte)(values.size()) );
+
+//        long ts = TimeUtil.convertLocalTimeToUTC( System.currentTimeMillis());
+        for(byte[] value : values) {
+            sendbyte.write(value[0]);
+            sendbyte.write(value[1]);
+        }
+        NLog.d( "[ProtocolParser20] REQ buildSetCameraRegister." + "Packet:" + sendbyte.showPacket() );
+        return sendbyte.getPacket();
+    }
+
+
+
     /**
      * Build set current time data byte [ ].
      * 0x04 CMD20.REQ_PenStatus  0x01 REQ_PenStatusChange_TYPE_CurrentTimeSet

@@ -47,4 +47,8 @@
     <string name="title_other_devices">Other Available Devices</string>
     <string name="button_scan">Scan for devices</string>
     <string name="button_le_scan">Scan LE for devices</string>
+
+
+
+    <string name="usb_connect">Usb connect...</string>
 </resources>

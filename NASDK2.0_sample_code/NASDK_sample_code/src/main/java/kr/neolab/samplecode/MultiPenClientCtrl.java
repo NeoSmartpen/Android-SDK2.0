@@ -334,6 +334,7 @@ public class MultiPenClientCtrl implements IPenMsgListener
     public void reqSetupAutoPowerOnOff(String macAddress,boolean setOn)
 	{
 		iPenCtrl.reqSetupAutoPowerOnOff( macAddress,setOn );
+
 	}
 
     /**

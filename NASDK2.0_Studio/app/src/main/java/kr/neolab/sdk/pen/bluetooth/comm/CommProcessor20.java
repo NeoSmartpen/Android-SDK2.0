@@ -711,7 +711,20 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					btConnection.onEstablished();
 					btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_CONNECTION_SUCCESS ) );
 
-					write( ProtocolParser20.buildPenStatusData());
+
+					if(connectedPenType == PEN_TYPE_WIRED) {
+						reqSetDefaultCameraRegister();
+
+						byte[] response = ndac.RequestVpen( ProtocolParser20.buildPenStatusData() );
+						fill(response, response.length);
+					}
+					else {
+						write(ProtocolParser20.buildPenStatusData());
+					}
+
+
+
+//					write( ProtocolParser20.buildPenStatusData());
 
 				}
 				else
@@ -1848,6 +1861,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 			 */
 			case CMD20.RES_EventIdChange2:  //[2018.03.05] Stroke Test
 			{
+
 				if(!isSupportSeparateUpDown) {
 					NLog.d( "[CommProcessor20] It is not support separate up down protocol version. But RES_EventIdChange2 was responsed. receiveProtocolVer = " + receiveProtocolVer);
 				}
@@ -3117,6 +3131,20 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	}
 
 
+	public void reqSetDefaultCameraRegister() {
+		ArrayList<byte[]> values = new ArrayList<>();
+		values.add(new byte[] { (byte)0xC7, (byte)0x09 });
+		values.add(new byte[] { (byte)0x81, (byte)0x00 });
+
+		reqSetCameraRegister( values );
+	}
+
+	public void reqSetCameraRegister(ArrayList<byte[]> values) {
+		write( ProtocolParser20.buildSetCameraRegister(values) );
+	}
+
+
+
 	private static int[][] chunkArray( int[] array, int chunkSize )
 	{
 		int numOfChunks = (int) Math.ceil( (double) array.length / chunkSize );
@@ -3375,7 +3403,6 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 *
 	 * @param source     the source
 	 * @param fwVersion  the fw version
-	 * @param isCompress the is compress
 	 */
 	public void reqPenSwUpgrade( File source, String fwVersion )
 	{
@@ -3414,8 +3441,7 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 //			}
 //		}
 
-		isCompress = false;
-		command.setInfo( source, fwVersion, connectedDeviceName , isCompress);
+		command.setInfo( source, fwVersion, connectedDeviceName , false);
 		execute( command );
 	}
 

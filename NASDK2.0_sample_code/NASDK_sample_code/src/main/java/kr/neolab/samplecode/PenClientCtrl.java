@@ -102,6 +102,10 @@ public class PenClientCtrl implements IPenMsgListener
         return iPenCtrl.setLeMode(isLeMode);
     }
 
+	public boolean setAdtMode(PenCtrl.AdtMode adtMode)
+	{
+		return iPenCtrl.setAdtMode(adtMode);
+	}
     /**
      * Gets instance.
      *
@@ -178,6 +182,7 @@ public class PenClientCtrl implements IPenMsgListener
      */
     public void connect( String address) throws BLENotSupportedException
 	{
+		iPenCtrl.setListener(this);
 		iPenCtrl.connect( address );
 	}
 
@@ -490,7 +495,8 @@ public class PenClientCtrl implements IPenMsgListener
                 try {
                     iPenCtrl.reqSetupPenHover(true);
                 } catch (ProtocolNotSupportedException e) {
-                    throw new RuntimeException(e);
+					e.printStackTrace();
+//                    throw new RuntimeException(e);
                 }
 
                 // 오프라인 데이터 노트단위 요청

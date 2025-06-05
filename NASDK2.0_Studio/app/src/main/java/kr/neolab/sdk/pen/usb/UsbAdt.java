@@ -349,8 +349,8 @@ public class UsbAdt implements IPenAdt {
 
         // N3C6xy(1), N3C7xy(2), G3C6xy(3)
         // pen_mode (0) : BULK MODE, (1) CDC MODE
-        ndac.Init(1, 1);
-//        ndac.Init();
+//        ndac.Init(1, 1);
+        ndac.Init();
         isInitNDAC = true;
         if (!serialPortConnected)
             findSerialPortDevice(); // A USB device has been attached. Try to open it as a Serial port

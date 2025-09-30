@@ -701,7 +701,7 @@ public class MultiPenClientCtrl implements IPenMsgListener
 
 						// 오프라인 데이터 리스트 페이지 단위로 받기
 						// deleteOnFinished 를 false 로 설정하였다면, 오프라인데이터를 받은 후 직접 삭제해주어야 한다.
-						if( prvSec != sectionId || prvOwn != ownerId || prvNote != noteId )
+						if( prvSec != sectionId || prvOwn != ownerId || prvNote != noteId )// 이전 세션 id나 노트 id가 같지않으면 던진다.
 						{
 							iPenCtrl.reqOfflineData(macAddress, sectionId, ownerId, noteId, false, Util.convertIntegers( pageIds ) );
 							pageIds.clear();

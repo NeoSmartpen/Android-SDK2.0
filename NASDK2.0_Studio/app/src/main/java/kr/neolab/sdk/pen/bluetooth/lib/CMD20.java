@@ -236,7 +236,6 @@ public class CMD20
      * The constant RES_OfflinePageRemove.
      */
     public static final int RES_OfflinePageRemove = 0xA7;
-
     /**
      * The constant REQ_PenFWUpgrade.
      */

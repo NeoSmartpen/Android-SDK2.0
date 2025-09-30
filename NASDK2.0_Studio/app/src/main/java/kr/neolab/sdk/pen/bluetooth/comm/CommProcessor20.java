@@ -2351,8 +2351,9 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					boolean isCompress = pack.getDataRangeInt( 8, 1 ) == 1 ? true: false;
 
 					NLog.i( "[CommProcessor20] offline file transfer is started ( oTotalDataSize : " + oTotalDataSize + ", strokeCount:"+strokeCount+" isCompress:" + isCompress + " )" );
-					if(oTotalDataSize > 0)
-						btConnection.onCreateMsg( new PenMsg( PenMsgType.OFFLINE_DATA_SEND_START ) );
+					if(oTotalDataSize > 0) {
+						btConnection.onCreateMsg(new PenMsg(PenMsgType.OFFLINE_DATA_SEND_START));
+					}
 					else {
 						extraData = null;
 						btConnection.onCreateMsg(new PenMsg(PenMsgType.OFFLINE_DATA_SEND_FAILURE));
@@ -2441,7 +2442,24 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				}
 			}
 			break;
+			/*
+			 * ------------------------------------------------------------------
+			 *
+			 * RES_OfflineDataSendSuccess (0xB3)
+			 *
+			 * ------------------------------------------------------------------
+			 */
+			/*
+			case CMD20.REQ_OfflineDataSendStatus:
+				resultCode = pack.getResultCode();
+				NLog.d("[CommProcessor20] received RES_OfflineDataSendSuccess(0xB3) command. resultCode=" + resultCode);
+				if ( resultCode == 0x00 )
+				{
 
+				}
+				break;
+
+			 */
 			/*
 			 * ------------------------------------------------------------------
 			 *

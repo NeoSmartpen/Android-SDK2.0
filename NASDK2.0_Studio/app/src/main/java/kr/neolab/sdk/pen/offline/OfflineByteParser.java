@@ -164,7 +164,7 @@ public class OfflineByteParser implements IFilterListener
         ArrayList<Fdot> tempDots = new ArrayList<Fdot>();
         int strokeIndex = 0;
         int checksumFailCount = 0;
-        for(int i = 0; i < strokeCount; i++)
+        OUTER_STROKE_LOOP: for(int i = 0; i < strokeCount; i++)
         {
             int pageId =  ByteConverter.byteArrayToInt( Packet.copyOfRange( data, 0 + strokeIndex, 4 ) );
             long lhPenDnTime =  ByteConverter.byteArrayToLong( Packet.copyOfRange( data, 4 + strokeIndex, 8 ) );
@@ -211,7 +211,11 @@ public class OfflineByteParser implements IFilterListener
                 int tiltX = (int) (data[strokeIndex + dotIndex + 9] & 0xFF);
                 int tiltY = (int) (data[strokeIndex + dotIndex + 10] & 0xFF);
                 int twist = ByteConverter.byteArrayToShort( Packet.copyOfRange( data, strokeIndex + dotIndex + 11, 2 ) );
-
+                if (strokeIndex + dotIndex + 16 > data.length) {
+                    NLog.e("[OfflineByteParser] insufficient bytes for lhCheckSum: need "
+                            + (strokeIndex + dotIndex + 16) + " but len=" + data.length);
+                    break OUTER_STROKE_LOOP;
+                }
                 lhCheckSum = data[strokeIndex + dotIndex + 15];
                 int color = lhPenTipColor;
 
@@ -284,7 +288,6 @@ public class OfflineByteParser implements IFilterListener
                     }
                     else
                     {
-
                         NLog.e( "[OfflineByteParser] lhCheckSum Fail Stroke cs : " + Integer.toHexString( (int) (lhCheckSum & 0xFF) ) + ", calc : " + Integer.toHexString( (int) (dotCalcCs & 0xFF) ) );
                         checksumFailCount++;
                     }

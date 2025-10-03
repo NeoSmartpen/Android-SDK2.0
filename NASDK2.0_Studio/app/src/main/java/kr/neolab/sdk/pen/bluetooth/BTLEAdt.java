@@ -1830,6 +1830,7 @@ public class BTLEAdt implements IPenAdt
                         }
                     }
                     offlineDataListener.onReceiveOfflineStrokes( offlineByteData.extraData, penAddress, offlineByteData.strokes, offlineByteData.sectionId, offlineByteData.ownerId, offlineByteData.noteId, resultSymbol.toArray(new Symbol[resultSymbol.size()]) );
+
                 }
                 break;
 

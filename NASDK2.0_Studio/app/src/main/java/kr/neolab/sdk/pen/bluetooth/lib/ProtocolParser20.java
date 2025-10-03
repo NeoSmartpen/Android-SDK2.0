@@ -868,7 +868,7 @@ public class ProtocolParser20
         }
 
         PacketBuilder sendbyte = new PacketBuilder( 14 + pageCount * 4);
-        sendbyte.setCommand( CMD20.REQ_OfflineDataRequest );
+        sendbyte.setCommand( CMD20.REQ_OfflineDataRequest ); // 펜에게 호출
 
         // isOffline data remove after transfer
         // 0: not send req2
@@ -892,7 +892,7 @@ public class ProtocolParser20
             for(int pageId: pageIds)
                 sendbyte.write( ByteConverter.intTobyte( pageId ) );
         }
-        NLog.d( "[ProtocolParser20] REQ buildReqOfflineData sectionId=" + sectionId + ";ownerId=" + ownerId + ";noteId=" + noteId + "Packet:" + sendbyte.showPacket() );
+        NLog.d( "[ProtocolParser20] REQ buildReqOfflineData sectionId=" + sectionId + ";ownerId=" + ownerId + ";noteId=" + noteId + ";deleteOnFinished=" + deleteOnFinished + ";pageIds=" + Arrays.toString(pageIds) + "Packet:" + sendbyte.showPacket() );
         return sendbyte.getPacket();
     }
 

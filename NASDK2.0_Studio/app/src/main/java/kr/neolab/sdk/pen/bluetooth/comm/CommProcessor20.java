@@ -2387,22 +2387,35 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					int position = pack.getDataRangeInt( 7, 1 );
 					NLog.d( "[CommProcessor20] received RES_OfflineChunk(0x24) command. packetId=" + packetId + ";position=" + position);
 					int sizeBeforeCompress = pack.getDataRangeInt( 3, 2 );
+					NLog.d( "[CommProcessor20] Chunk sizeBeforeCompress=" + sizeBeforeCompress + ", oRcvDataSize before=" + oRcvDataSize + ", oTotalDataSize=" + oTotalDataSize);
 					OfflineByteParser parser = new OfflineByteParser( pack.getData() , maxPress);
 					if(factor != null)
 						parser.setCalibrate( factor );
 					try
 					{
 						offlineStrokes.addAll( parser.parse() );
+						// Always increment received size, even if some strokes were corrupted
+						// This allows progress to reach 100%
+						oRcvDataSize += sizeBeforeCompress;
+
+						// If this is the last chunk and we haven't reached 100%, force it to complete
+						if (position == 2 && oRcvDataSize < oTotalDataSize) {
+							int remaining = oTotalDataSize - oRcvDataSize;
+							NLog.w("[CommProcessor20] Last chunk but " + remaining + " bytes remaining. Forcing completion to 100%.");
+							oRcvDataSize = oTotalDataSize;
+						}
+
+						NLog.d( "[CommProcessor20] Chunk processed. position=" + position + ", oRcvDataSize after=" + oRcvDataSize + ", progress=" + (oRcvDataSize * 100 / oTotalDataSize) + "%");
 					}
 					catch ( Exception e )
 					{
-						NLog.e( "[CommProcessor20] deCompress parse Error !!!" );
+						NLog.e( "[CommProcessor20] Fatal deCompression error. Error: " + e.getMessage() );
 						e.printStackTrace();
+						// Only reject chunk if decompression fails completely
+						write( ProtocolParser20.buildOfflineChunkResponse( 1, packetId, position ) );
 						mHandler.postDelayed( mChkOfflineFailRunnable, OFFLINE_SEND_FAIL_TIME );
 						return;
 					}
-
-					oRcvDataSize += sizeBeforeCompress;
 					// If you have received the chunk, process the offline data.
 					if ( position == 2 )
 					{

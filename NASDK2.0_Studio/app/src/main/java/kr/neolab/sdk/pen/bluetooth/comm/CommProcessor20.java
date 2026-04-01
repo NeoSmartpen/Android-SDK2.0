@@ -30,6 +30,7 @@ import kr.neolab.sdk.pen.bluetooth.lib.CMD20;
 import kr.neolab.sdk.pen.bluetooth.lib.IChunk;
 import kr.neolab.sdk.pen.bluetooth.lib.Packet;
 import kr.neolab.sdk.pen.bluetooth.lib.PenProfile;
+import kr.neolab.sdk.pen.bluetooth.lib.ProtocolNotSupportedException;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolParser20;
 import kr.neolab.sdk.pen.bluetooth.lib.ProtocolParser20.IParsedPacketListener;
 import kr.neolab.sdk.pen.filter.Fdot;
@@ -169,6 +170,8 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	private String currentPassword = "";
 
 	private int sensorType = 0;
+
+	private boolean isSensitivityFixed = false;
 
 	private int maxPress = 852;
 
@@ -771,8 +774,17 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 					boolean stat_hovermode = pack.getDataRangeInt( 19, 1 ) == 0 ? false : true;
 					stat_battery = pack.getDataRangeInt( 20, 1 );
 					boolean stat_offlinedata_save = pack.getDataRangeInt( 21, 1 ) == 0 ? false : true;
-					NLog.d( "[CommProcessor20] received RES_PenStatus(0x84) command. stat_battery="+stat_battery +",isLock="+isLock+",stat_offlinedata_save="+stat_offlinedata_save+",maxPress="+maxPress);
 					int stat_sensitivity = pack.getDataRangeInt( 22, 1 );
+					NLog.d( "[CommProcessor20] received RES_PenStatus(0x84) command. stat_battery="+stat_battery +",isLock="+isLock+",stat_offlinedata_save="+stat_offlinedata_save+",maxPress="+maxPress+",stat_sensitivity="+stat_sensitivity);
+					if( stat_sensitivity == 255 )
+					{
+						isSensitivityFixed = true;
+						NLog.w( "[CommProcessor20] sensitivity value is fixed at 255. sensitivity change is not supported on this pen.");
+					}
+					else
+					{
+						isSensitivityFixed = false;
+					}
 					//usb 23,1,
 					//down sampling 24,1,
 					//bt local name, 25, 16
@@ -3118,11 +3130,15 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 	 *
 	 * @param sensitivity the sensitivity
 	 */
-	public void reqSetPenSensitivityFSC( short sensitivity )
+	public void reqSetPenSensitivityFSC( short sensitivity ) throws ProtocolNotSupportedException
 	{
 		if(sensorType != 1)
 		{
 			btConnection.onCreateMsg( new PenMsg( PenMsgType.PEN_SETUP_SENSITIVITY_NOT_SUPPORT_DEVICE) );
+		}
+		else if(isSensitivityFixed)
+		{
+			throw new ProtocolNotSupportedException( "This pen's sensitivity is fixed and cannot be changed." );
 		}
 		else
 			write( ProtocolParser20.buildPenSensitivitySetupFSC( sensitivity ) );

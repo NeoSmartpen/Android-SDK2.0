@@ -42,6 +42,7 @@ public class OfflineByteParser implements IFilterListener
     private int sectionId, ownerId, noteId, pageId;
     private int strokeCount, sizeAfterCompress, sizeBeforeCompress;
     private boolean isCompressed = false;
+    private boolean hasCorruptedData = false;
 
     private final static int STROKE_HEADER_LENGTH = 27;
     private final static int BYTE_DOT_SIZE = 16;
@@ -83,6 +84,7 @@ public class OfflineByteParser implements IFilterListener
 
         stroke = null;
         strokes.clear();
+        hasCorruptedData = false;
 
 
        // Header parsing
@@ -104,6 +106,12 @@ public class OfflineByteParser implements IFilterListener
         NLog.i( "[OfflineByteParser] process finished" );
 
         data = null;
+
+        // Don't throw exception - just return whatever strokes we successfully parsed
+        // Corrupted strokes are skipped but process continues
+        if (hasCorruptedData) {
+            NLog.w("[OfflineByteParser] Chunk had corrupted data but continuing with valid strokes.");
+        }
 
 //        if ( strokes == null || strokes.size() <= 0 )
 //        {
@@ -194,6 +202,26 @@ public class OfflineByteParser implements IFilterListener
             strokeIndex += STROKE_HEADER_LENGTH;
             int dotIndex = 0;
             tempDots = new ArrayList<Fdot>();
+
+            // Validate dotCount is not negative (corrupted header)
+            if (dotCount < 0) {
+                NLog.e("[OfflineByteParser] Invalid negative dotCount " + dotCount + " for stroke " + i + ". Corrupted header detected.");
+                checksumFailCount++;
+                hasCorruptedData = true;
+                break OUTER_STROKE_LOOP;
+            }
+
+            // Validate that we have enough data for all dots in this stroke
+            int requiredBytes = strokeIndex + (dotCount * BYTE_DOT_SIZE);
+            if (requiredBytes > data.length) {
+                NLog.e("[OfflineByteParser] Insufficient data for stroke " + i + ": need "
+                        + requiredBytes + " bytes but only have " + data.length
+                        + " (dotCount=" + dotCount + "). Marking chunk as corrupted.");
+                checksumFailCount++;
+                hasCorruptedData = true;
+                break OUTER_STROKE_LOOP;
+            }
+
             for(int j = 0; j < dotCount; j++)
             {
                 int sectionId = this.sectionId;
@@ -288,8 +316,9 @@ public class OfflineByteParser implements IFilterListener
                     }
                     else
                     {
-                        NLog.e( "[OfflineByteParser] lhCheckSum Fail Stroke cs : " + Integer.toHexString( (int) (lhCheckSum & 0xFF) ) + ", calc : " + Integer.toHexString( (int) (dotCalcCs & 0xFF) ) );
+                        NLog.e( "[OfflineByteParser] lhCheckSum Fail Stroke cs : " + Integer.toHexString( (int) (lhCheckSum & 0xFF) ) + ", calc : " + Integer.toHexString( (int) (dotCalcCs & 0xFF) ) + ". Skipping this stroke and continuing.");
                         checksumFailCount++;
+                        // Don't add this stroke's dots - just skip it and continue with next stroke
                     }
 
                     tempDots = new ArrayList<Fdot>();
@@ -298,8 +327,11 @@ public class OfflineByteParser implements IFilterListener
             strokeIndex += dotIndex;
 
         }
-        if(checksumFailCount > 3)
-            throw new CheckSumException( "lhCheckSum Fail Count="+ checksumFailCount);
+        if(checksumFailCount > 0) {
+            NLog.w("[OfflineByteParser] Parsing completed with " + checksumFailCount + " checksum failures. Successfully parsed " + strokes.size() + " valid strokes out of " + strokeCount + " total.");
+        } else {
+            NLog.i("[OfflineByteParser] Parsing completed successfully. Parsed " + strokes.size() + " strokes.");
+        }
 
 
     }

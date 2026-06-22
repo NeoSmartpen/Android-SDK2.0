@@ -124,12 +124,12 @@ public class OfflineByteParser implements IFilterListener
             if(isCompressed)
             {
 
-                data = unzip(  Packet.copyOfRange(buffer, 21 -3, sizeAfterCompress),sizeBeforeCompress );
+                data = unzip(  Packet.copyOfRange(buffer, 18, sizeAfterCompress),sizeBeforeCompress );
                 NLog.d( "[OfflineByteParser] deCompressed length="+data.length);
             }
             else
             {
-                data = Arrays.copyOfRange(buffer, 21, 21+ sizeBeforeCompress-1);
+                data = Arrays.copyOfRange(buffer, 18, 18+ sizeBeforeCompress);
             }
 //        }
 //        catch ( Exception e )

@@ -124,12 +124,12 @@ public class OfflineByteParser implements IFilterListener
             if(isCompressed)
             {
 
-                data = unzip(  Packet.copyOfRange(buffer, 21 -3, sizeAfterCompress),sizeBeforeCompress );
+                data = unzip(  Packet.copyOfRange(buffer, 18, sizeAfterCompress),sizeBeforeCompress );
                 NLog.d( "[OfflineByteParser] deCompressed length="+data.length);
             }
             else
             {
-                data = Arrays.copyOfRange(buffer, 21, 21+ sizeBeforeCompress-1);
+                data = Arrays.copyOfRange(buffer, 18, 18+ sizeBeforeCompress);
             }
 //        }
 //        catch ( Exception e )
@@ -174,6 +174,10 @@ public class OfflineByteParser implements IFilterListener
 //            lhPenDnTime =TimeUtil.convertUTCToLocalTime( lhPenUpTime );
             int lhPenTipType =  ByteConverter.byteArrayToInt( Packet.copyOfRange( data, 20 + strokeIndex, 1 ) );
             int lhPenTipColor = Color.BLACK;
+
+
+            NLog.d( "lhPenDnTime : " +lhPenDnTime+ ",lhPenUpTime="+lhPenUpTime);
+
 
             byte[] cbyte =Packet.copyOfRange( data, 21 + strokeIndex, 4 );
             NLog.d( "a : " + Integer.toHexString( (int) ( cbyte[3] & 0xFF ) ) );

@@ -2694,6 +2694,16 @@ public class CommProcessor20 extends CommandManager implements IParsedPacketList
 				JSONArray jsonArray = null;
 				resultCode = pack.getResultCode();
 				NLog.d( "[CommProcessor20] RES_PenProfile resultCode: " + resultCode);
+				// 펜 펌웨어가 PROFILE_FAILURE 응답 시 data 가 비어 있는 경우가 있음 (resultCode != 0).
+				// NWP-F55 의 KEY_DEFAULT_CALIBRATION FAILURE 가 그 사례. 본 case 는 항상
+				// 9바이트 (profile_name 8 + res_type 1) 가 있다고 가정하고 읽었으므로 빈 data 가
+				// 오면 ArrayIndexOutOfBoundsException → ConnectionThread 사망. length 가드.
+				if ( pack.getDataLength() < 9 )
+				{
+					NLog.d( "[CommProcessor20] RES_PenProfile dataLength=" + pack.getDataLength()
+							+ " (< 9) — truncated failure response, skipping body parse" );
+					break;
+				}
 				String profile_name = pack.getDataRangeString( 0, 8 ).trim();
 				int res_type = pack.getDataRangeInt( 8, 1 );
 

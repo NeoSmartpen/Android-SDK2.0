@@ -16,13 +16,22 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PipedInputStream;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -153,6 +162,31 @@ public class BTLEAdt implements IPenAdt
     private static final UUID WriteCharacteristicsUuidV5 = UUID.fromString( "8bc8cc7d-88ca-56b0-af9a-9bf514d0d61a" );
     private static final UUID IndicateCharacteristicsUuidV5 = UUID.fromString( "64cd86b1-2256-5aeb-9f04-2caf6c60ae57" );
 
+    // === Audio (녹음 파일) service — 별도 service, UUID v5 펜에만 존재 ===
+    private static final UUID AudioServiceUuid     = UUID.fromString( "e97d1000-251d-470a-a062-fa1922dfa9a8" );
+    private static final UUID AudioCtrlCharUuid    = UUID.fromString( "e97d1001-251d-470a-a062-fa1922dfa9a8" );
+    private static final UUID AudioDataCharUuid    = UUID.fromString( "e97d1002-251d-470a-a062-fa1922dfa9a8" );
+
+    // === WiFi service (NWP_WiFi_Protocol_v1.0) — WiFi 모델 펜만 노출. adv 안 함, 연결 후 discover ===
+    // 명령/응답 처리는 kr.neolab.sdk.pen.wifi.ble.WifiBleSession 위임.
+    private static final UUID WifiServiceUuid      = kr.neolab.sdk.pen.wifi.ble.WifiBleSession.SERVICE_UUID;
+    private static final UUID WifiWriteCharUuid    = kr.neolab.sdk.pen.wifi.ble.WifiBleSession.CHAR_WRITE_UUID;
+    private static final UUID WifiNotifyCharUuid   = kr.neolab.sdk.pen.wifi.ble.WifiBleSession.CHAR_NOTIFY_UUID;
+
+    // Control characteristic 으로 write 하는 명령 첫 바이트
+    private static final byte AUDIO_CMD_LIST_FILES   = 0x01;
+    private static final byte AUDIO_CMD_READ_FILE    = 0x02;
+    private static final byte AUDIO_CMD_ABORT_FILE   = 0x03;
+    private static final byte AUDIO_CMD_DELETE_FILE  = 0x04;
+
+    // Control characteristic notify 의 응답 첫 바이트
+    private static final byte AUDIO_RSP_FILE_ENTRY  = 0x11; // [0x11][nameLen][name...][size:4LE]
+    private static final byte AUDIO_RSP_LIST_END    = 0x12;
+    private static final byte AUDIO_RSP_FILE_START  = 0x13; // [0x13][size:4LE]  ← name 없음
+    private static final byte AUDIO_RSP_FILE_END    = 0x14; // [0x14][totalSize:4LE]
+    private static final byte AUDIO_RSP_DELETE_OK   = 0x15;
+    private static final byte AUDIO_RSP_ERROR       = 0x1F;
+
     private UUID_VER curr_uuid_ver = UUID_VER.VER_2;
 
     private short curr_app_type = 0x1101;
@@ -170,6 +204,43 @@ public class BTLEAdt implements IPenAdt
     private BluetoothGatt mBluetoothGatt = null;
 
     private BluetoothGattCharacteristic mWriteGattChacteristic = null;
+
+    // === Audio service 관련 — 펜이 audio service 를 노출하지 않으면 null 유지 ===
+    private BluetoothGattCharacteristic mAudioCtrlCharacteristic  = null;
+    private BluetoothGattCharacteristic mAudioDataCharacteristic  = null;
+    /** LIST_FILES 응답 누적 — LIST_END 도착하면 emit 후 clear. 입력 순서 유지를 위해 LinkedHashMap. */
+    private final Map<String, Long> mAudioFilesAcc = new LinkedHashMap<>();
+    /** 현재 진행 중인 단일 다운로드 transfer 상태. 동시 다운로드 미지원. */
+    private AudioFileTransfer mCurrentAudioTransfer = null;
+    /** 다운로드 저장 디렉토리 — connect 시점에 외부 file dir 로 결정. */
+    private File mAudioDownloadDir = null;
+
+    // === WiFi service 관련 — WiFi 모델 펜만, 없으면 null 유지 ===
+    private BluetoothGattCharacteristic mWifiWriteCharacteristic  = null;
+    private BluetoothGattCharacteristic mWifiNotifyCharacteristic = null;
+    /** WiFi BLE 프로토콜 (0x40~0x44) 핸들러. null = WiFi 미지원 펜. */
+    private kr.neolab.sdk.pen.wifi.ble.WifiBleSession mWifiBleSession = null;
+
+    /** 단일 audio 파일 다운로드 진행 상태. */
+    private static final class AudioFileTransfer
+    {
+        final String name;
+        int expectedSize = 0;
+        int received = 0;
+        final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        boolean started = false;
+
+        AudioFileTransfer( String name ) { this.name = name; }
+    }
+
+    /**
+     * CCCD descriptor write 직렬화 큐. Android BluetoothGatt 는 한 번에 하나의 descriptor write
+     * 만 처리하므로 (펜 indicate + audio ctrl notify + audio data notify 3건 동시 발사 시 후속이
+     * silent 하게 누락됨) onDescriptorWrite 콜백에서 다음 큐 항목을 dequeue 한다.
+     */
+    private final java.util.ArrayDeque<BluetoothGattDescriptor> mPendingDescriptorWrites = new java.util.ArrayDeque<>();
+    /** 큐가 비고 첫 descriptor write 가 끝나면 StartConnection 호출. 중복 호출 방지. */
+    private boolean mStartConnectionFired = false;
 
     // The firmware team says 160 is the best, but when set to 256, if the MTU is successfully set, it will be faster than setting it to 160
     private final static int[] mtuLIst = { 512, 256, 160, 64, 23 };
@@ -1937,6 +2008,50 @@ public class BTLEAdt implements IPenAdt
         {
             super.onServicesDiscovered( gatt, status );
             NLog.d( "onServicesDiscovered status="+status );
+            // [Phase 1 진단] 새 펜 칩셋 호환성 검증용 — 모든 GATT service / characteristic UUID 덤프.
+            // 신규 WiFi 서비스 (3c6cca12-cc16-4a3d-aadc-4178b5e21270) 가 노출되는지 확인용.
+            // 프로토콜 spec NWP_WiFi_Protocol_v1.0.md 의 GATT 표와 대조.
+            try {
+                java.util.List<BluetoothGattService> all = gatt.getServices();
+                NLog.d( "[gatt-dump] discovered " + (all != null ? all.size() : 0) + " service(s)" );
+                if (all != null) {
+                    for (BluetoothGattService s : all) {
+                        java.util.UUID su = s.getUuid();
+                        java.util.List<BluetoothGattCharacteristic> chars = s.getCharacteristics();
+                        NLog.d( "[gatt-dump] service uuid=" + su + " type=" + s.getType()
+                                + " char_count=" + (chars != null ? chars.size() : 0) );
+                        if (chars != null) {
+                            for (BluetoothGattCharacteristic c : chars) {
+                                int p = c.getProperties();
+                                StringBuilder props = new StringBuilder();
+                                if ((p & BluetoothGattCharacteristic.PROPERTY_READ) != 0) props.append("READ ");
+                                if ((p & BluetoothGattCharacteristic.PROPERTY_WRITE) != 0) props.append("WRITE ");
+                                if ((p & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) props.append("WRITE_NR ");
+                                if ((p & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0) props.append("NOTIFY ");
+                                if ((p & BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0) props.append("INDICATE ");
+                                NLog.d( "[gatt-dump]   char uuid=" + c.getUuid()
+                                        + " props=[" + props.toString().trim() + "]" );
+                            }
+                        }
+                    }
+                }
+                // 명시적 신규 WiFi 서비스 검사 — 새 프로토콜 호환 여부 한 줄 요약.
+                java.util.UUID NEW_WIFI_SERVICE = java.util.UUID.fromString("3c6cca12-cc16-4a3d-aadc-4178b5e21270");
+                java.util.UUID NEW_WIFI_NOTIFY  = java.util.UUID.fromString("091671ed-be9a-4e3d-a1bb-d63663b95a8e");
+                java.util.UUID NEW_WIFI_WRITE   = java.util.UUID.fromString("d6a21632-8f15-41c7-8974-862538e6ac35");
+                BluetoothGattService wifiSvc = gatt.getService(NEW_WIFI_SERVICE);
+                if (wifiSvc != null) {
+                    boolean hasNotify = wifiSvc.getCharacteristic(NEW_WIFI_NOTIFY) != null;
+                    boolean hasWrite  = wifiSvc.getCharacteristic(NEW_WIFI_WRITE) != null;
+                    NLog.d( "[gatt-dump] ★ NEW WiFi service PRESENT — notifyChar=" + hasNotify
+                            + " writeChar=" + hasWrite + " (new firmware protocol v1.0 compatible)" );
+                } else {
+                    NLog.d( "[gatt-dump] ★ NEW WiFi service ABSENT — pen is either old chipset or "
+                            + "new WiFi service UUID 가 광고/노출 안 됨" );
+                }
+            } catch (Throwable t) {
+                NLog.e( "[gatt-dump] dump failed: " + t.getMessage() );
+            }
             if ( status == BluetoothGatt.GATT_SUCCESS )
             {
                 BluetoothGattService service;
@@ -1987,8 +2102,30 @@ public class BTLEAdt implements IPenAdt
         {
             super.onCharacteristicChanged( gatt, characteristic );
 
+            UUID changedUuid = characteristic.getUuid();
+            byte[] value = characteristic.getValue();
+
+            // Audio service notification 분기. ctrl / data 는 펜 protocol 과 무관하므로
+            // 일반 read pipeline 에 흘려보내면 안 됨.
+            if ( AudioCtrlCharUuid.equals( changedUuid ) )
+            {
+                handleAudioControlNotification( value );
+                return;
+            }
+            if ( AudioDataCharUuid.equals( changedUuid ) )
+            {
+                handleAudioDataNotification( value );
+                return;
+            }
+            // WiFi v1.0 notify — 0x40~0x44 응답/이벤트. WifiBleSession 의 SLIP decoder 로 라우팅.
+            if ( WifiNotifyCharUuid.equals( changedUuid ) )
+            {
+                if ( mWifiBleSession != null ) mWifiBleSession.onNotify( value );
+                return;
+            }
+
             NLog.d( "call onCharacteristicChanged" );
-            mConnectionThread.read( characteristic.getValue() );
+            mConnectionThread.read( value );
         }
 
         @Override
@@ -2003,10 +2140,29 @@ public class BTLEAdt implements IPenAdt
         {
             super.onDescriptorWrite( gatt, descriptor, status );
             NLog.d( "call onDescriptorWrite status : " + status );
-            NLog.d( "found service v2" );
 
-//            broadcastUpdate(ACTION_GATT_SERVICES_READY_TO_CONNECT);
-            StartConnection();
+            // 방금 완료된 write 는 큐에서 제거, 남은 게 있으면 다음 write 발사.
+            BluetoothGattDescriptor next = null;
+            synchronized ( mPendingDescriptorWrites )
+            {
+                if ( !mPendingDescriptorWrites.isEmpty() )
+                {
+                    mPendingDescriptorWrites.pollFirst();        // 방금 완료된 head 제거
+                    next = mPendingDescriptorWrites.peekFirst(); // 다음 항목
+                }
+            }
+            if ( next != null && mBluetoothGatt != null )
+            {
+                mBluetoothGatt.writeDescriptor( next );
+                return;
+            }
+            // 모든 descriptor write 완료 — pen indicate + audio notify 활성. 한 번만 StartConnection.
+            if ( !mStartConnectionFired )
+            {
+                mStartConnectionFired = true;
+                NLog.d( "all CCCD descriptors written → StartConnection" );
+                StartConnection();
+            }
         }
 
         @Override
@@ -2102,6 +2258,16 @@ public class BTLEAdt implements IPenAdt
         mBluetoothGatt.close();
         mBluetoothGatt = null;
 
+        // 재연결 시 큐 / 플래그 / audio 특성 ref 모두 초기화.
+        synchronized ( mPendingDescriptorWrites ) { mPendingDescriptorWrites.clear(); }
+        mStartConnectionFired = false;
+        mAudioCtrlCharacteristic = null;
+        mAudioDataCharacteristic = null;
+        mCurrentAudioTransfer = null;
+        mAudioFilesAcc.clear();
+        mWifiWriteCharacteristic = null;
+        mWifiNotifyCharacteristic = null;
+        mWifiBleSession = null;
     }
 
     private void setCharacteristicIndication ( BluetoothGattCharacteristic characteristic, boolean enabled )
@@ -2129,7 +2295,21 @@ public class BTLEAdt implements IPenAdt
             NLog.d( "Error : Characteristic is not notify or indicate" );
             return;
         }
-        mBluetoothGatt.writeDescriptor( desc );
+        // 큐에 적재 — 큐가 비어 있었으면 즉시 발사, 아니면 onDescriptorWrite 에서 dequeue.
+        enqueueDescriptorWrite( desc );
+    }
+
+    private void enqueueDescriptorWrite ( BluetoothGattDescriptor desc )
+    {
+        synchronized ( mPendingDescriptorWrites )
+        {
+            boolean empty = mPendingDescriptorWrites.isEmpty();
+            mPendingDescriptorWrites.add( desc );
+            if ( empty && mBluetoothGatt != null )
+            {
+                mBluetoothGatt.writeDescriptor( desc );
+            }
+        }
     }
 
     private void initCharacteristic ( int protocolVer )
@@ -2152,6 +2332,499 @@ public class BTLEAdt implements IPenAdt
             }
 
             setCharacteristicIndication( gattCharacteristic, true );
+
+            // Audio service 는 옵션 — UUID v5 펜에만 노출됨. 없으면 조용히 skip.
+            initAudioCharacteristics();
+            // WiFi service (NWP_WiFi_Protocol_v1.0) 는 WiFi 모델만. 없으면 조용히 skip.
+            initWifiCharacteristics();
+        }
+    }
+
+    /**
+     * Audio service / characteristic 을 best-effort 로 setup. 펌웨어 미지원 펜이면 null 유지.
+     * 두 char 모두 notify 활성화. notify 등록은 descriptor write 큐가 직렬화하므로 한 번에 하나씩.
+     * (펜 service 의 indicate 와 audio control 의 notify 등록 순서가 onDescriptorWrite 콜백을
+     * 직렬로 trigger 함 — 동시성 문제 없음.)
+     */
+    private void initAudioCharacteristics ()
+    {
+        if ( mBluetoothGatt == null ) return;
+        BluetoothGattService audioService = mBluetoothGatt.getService( AudioServiceUuid );
+        if ( audioService == null )
+        {
+            NLog.d( "audio service not present on this pen — recording 미지원" );
+            try
+            {
+                PenMsg msg = new PenMsg( PenMsgType.AUDIO_NOT_SUPPORTED, new JSONObject() );
+                msg.sppAddress = penAddress;
+                responseMsg( msg );
+            } catch ( Throwable ignored ) { }
+            return;
+        }
+        mAudioCtrlCharacteristic = audioService.getCharacteristic( AudioCtrlCharUuid );
+        mAudioDataCharacteristic = audioService.getCharacteristic( AudioDataCharUuid );
+        if ( mAudioCtrlCharacteristic == null || mAudioDataCharacteristic == null )
+        {
+            NLog.d( "audio characteristics partial — ctrl=" + (mAudioCtrlCharacteristic != null) + " data=" + (mAudioDataCharacteristic != null) );
+            return;
+        }
+        // 두 char 모두 notify enable. onDescriptorWrite 가 직렬로 처리하므로 둘 다 enable 됨.
+        mBluetoothGatt.setCharacteristicNotification( mAudioCtrlCharacteristic, true );
+        mBluetoothGatt.setCharacteristicNotification( mAudioDataCharacteristic, true );
+        setAudioCharacteristicNotification( mAudioCtrlCharacteristic );
+        setAudioCharacteristicNotification( mAudioDataCharacteristic );
+        NLog.d( "audio service ready" );
+    }
+
+    private void setAudioCharacteristicNotification ( BluetoothGattCharacteristic c )
+    {
+        BluetoothGattDescriptor desc = c.getDescriptor( CONFIG_DESCRIPTOR );
+        if ( desc == null ) return;
+        desc.setValue( BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE );
+        enqueueDescriptorWrite( desc );
+    }
+
+    /**
+     * WiFi service (NWP_WiFi_Protocol_v1.0 §2.1) best-effort setup.
+     * <p>없으면(WiFi 모델 아님) 조용히 skip — {@link #getWifiBleSession()} 는 null 반환.</p>
+     * <p>notify char 의 CCCD 는 audio 와 같은 descriptor write 큐로 직렬화.</p>
+     */
+    private void initWifiCharacteristics ()
+    {
+        if ( mBluetoothGatt == null ) return;
+        BluetoothGattService wifiSvc = mBluetoothGatt.getService( WifiServiceUuid );
+        if ( wifiSvc == null )
+        {
+            NLog.d( "[wifi-ble] WiFi service not present — non-WiFi pen" );
+            return;
+        }
+        mWifiWriteCharacteristic  = wifiSvc.getCharacteristic( WifiWriteCharUuid );
+        mWifiNotifyCharacteristic = wifiSvc.getCharacteristic( WifiNotifyCharUuid );
+        if ( mWifiWriteCharacteristic == null || mWifiNotifyCharacteristic == null )
+        {
+            NLog.d( "[wifi-ble] WiFi characteristics partial — write="
+                    + (mWifiWriteCharacteristic != null) + " notify="
+                    + (mWifiNotifyCharacteristic != null) );
+            mWifiWriteCharacteristic  = null;
+            mWifiNotifyCharacteristic = null;
+            return;
+        }
+        mBluetoothGatt.setCharacteristicNotification( mWifiNotifyCharacteristic, true );
+        // notify char props = NOTIFY + INDICATE (gatt-dump 확인). web 레퍼런스(ble-transport.js)는
+        // NOTIFY 모드로 검증 — 그쪽과 정렬해 NOTIFY 강제. 펜 펌웨어가 양쪽 모두 응답.
+        BluetoothGattDescriptor desc = mWifiNotifyCharacteristic.getDescriptor( CONFIG_DESCRIPTOR );
+        if ( desc != null )
+        {
+            desc.setValue( BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE );
+            enqueueDescriptorWrite( desc );
+        }
+        mWifiBleSession = new kr.neolab.sdk.pen.wifi.ble.WifiBleSession( frame -> writeWifiFrame( frame ) );
+        NLog.d( "[wifi-ble] WiFi service ready (session created)" );
+    }
+
+    /**
+     * WifiBleSession 이 SLIP-framed bytes 를 write 할 때 호출되는 콜백.
+     * write char 가 WRITE + WRITE_NR 둘 다 지원하지만 web 레퍼런스 코드와 정렬을 위해 기본 write
+     * (응답 콜백 있음) 사용. audio 처럼 NO_RESPONSE 로 가도 되지만 WiFi 트래픽이 sparse 해서
+     * 굳이 큐 직렬화 회피할 이유 없음.
+     */
+    private boolean writeWifiFrame ( byte[] frame )
+    {
+        if ( mBluetoothGatt == null || mWifiWriteCharacteristic == null )
+        {
+            NLog.d( "[wifi-ble] write skipped — gatt/char null" );
+            return false;
+        }
+        mWifiWriteCharacteristic.setWriteType( BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE );
+        mWifiWriteCharacteristic.setValue( frame );
+        boolean ok = mBluetoothGatt.writeCharacteristic( mWifiWriteCharacteristic );
+        NLog.d( "[wifi-ble] write " + (ok ? "ok" : "FAIL") + " bytes=" + frame.length );
+        return ok;
+    }
+
+    /**
+     * WiFi BLE 세션 접근자. {@code null} = WiFi 모델 아니거나 connect 진행 중. App 측 PenWifiSession
+     * 이 turnOn/turnOff/queryStatus 호출 시 이걸 통과.
+     */
+    public kr.neolab.sdk.pen.wifi.ble.WifiBleSession getWifiBleSession ()
+    {
+        return mWifiBleSession;
+    }
+
+    // ===================== Audio control 응답 파서 =====================
+
+    private void handleAudioControlNotification ( byte[] data )
+    {
+        if ( data == null || data.length < 1 ) return;
+        switch ( data[0] )
+        {
+            case AUDIO_RSP_FILE_ENTRY:
+                // [0x11][nameLen:1][name:nameLen][size:4LE]
+                if ( data.length < 2 ) return;
+                int nameLen = data[1] & 0xFF;
+                if ( data.length < 2 + nameLen + 4 )
+                {
+                    NLog.d( "[audio-list] FILE_ENTRY truncated — declared nameLen=" + nameLen
+                            + " but packet length=" + data.length );
+                    return;
+                }
+                String name = new String( data, 2, nameLen, StandardCharsets.US_ASCII );
+                long size = readUInt32LE( data, 2 + nameLen );
+                mAudioFilesAcc.put( name, size );
+                NLog.d( "[audio-list] entry #" + mAudioFilesAcc.size()
+                        + " name='" + name + "' size=" + size + " bytes" );
+                break;
+            case AUDIO_RSP_LIST_END:
+                NLog.d( "[audio-list] LIST_END received — total " + mAudioFilesAcc.size() + " file(s)" );
+                for ( Map.Entry<String, Long> e : mAudioFilesAcc.entrySet() )
+                {
+                    NLog.d( "[audio-list]   " + e.getKey() + " (" + e.getValue() + " bytes)" );
+                }
+                emitAudioFileList();
+                break;
+            case AUDIO_RSP_FILE_START:
+                // [0x13][size:4LE]
+                if ( data.length < 5 ) return;
+                if ( mCurrentAudioTransfer == null )
+                {
+                    NLog.d( "AUDIO_RSP_FILE_START with no pending transfer — ignored" );
+                    return;
+                }
+                mCurrentAudioTransfer.expectedSize = (int) readUInt32LE( data, 1 );
+                mCurrentAudioTransfer.started = true;
+                emitAudioDownloadStart();
+                break;
+            case AUDIO_RSP_FILE_END:
+                // [0x14][totalSize:4LE]  — 다운로드 완료 (전체 byte 다 받음)
+                finalizeCurrentAudioTransfer( true, null );
+                break;
+            case AUDIO_RSP_DELETE_OK:
+                emitAudioDeleted();
+                break;
+            case AUDIO_RSP_ERROR:
+                NLog.d( "AUDIO_RSP_ERROR received" );
+                if ( mCurrentAudioTransfer != null )
+                {
+                    finalizeCurrentAudioTransfer( false, "pen reported error" );
+                }
+                break;
+            default:
+                NLog.d( "Unknown audio ctrl response: " + (data[0] & 0xFF) );
+                break;
+        }
+    }
+
+    private void handleAudioDataNotification ( byte[] data )
+    {
+        if ( data == null || data.length == 0 ) return;
+        if ( mCurrentAudioTransfer == null || !mCurrentAudioTransfer.started )
+        {
+            NLog.d( "audio data frame ignored — no active transfer" );
+            return;
+        }
+        mCurrentAudioTransfer.buffer.write( data, 0, data.length );
+        mCurrentAudioTransfer.received += data.length;
+        emitAudioDownloadProgress();
+
+        // 펌웨어가 FILE_END 를 보내지 않을 수도 있어, 다 받았으면 강제 finalize.
+        if ( mCurrentAudioTransfer.expectedSize > 0
+                && mCurrentAudioTransfer.received >= mCurrentAudioTransfer.expectedSize )
+        {
+            finalizeCurrentAudioTransfer( true, null );
+        }
+    }
+
+    private void emitAudioFileList ()
+    {
+        try
+        {
+            JSONArray arr = new JSONArray();
+            for ( Iterator<Map.Entry<String, Long>> it = mAudioFilesAcc.entrySet().iterator(); it.hasNext(); )
+            {
+                Map.Entry<String, Long> e = it.next();
+                JSONObject o = new JSONObject();
+                o.put( JsonTag.AUDIO_FILE_NAME, e.getKey() );
+                o.put( JsonTag.AUDIO_FILE_SIZE, e.getValue() );
+                arr.put( o );
+            }
+            JSONObject job = new JSONObject().put( JsonTag.AUDIO_FILES, arr );
+            PenMsg msg = new PenMsg( PenMsgType.AUDIO_FILE_LIST, job );
+            msg.sppAddress = penAddress;
+            responseMsg( msg );
+        }
+        catch ( JSONException e )
+        {
+            NLog.e( "emitAudioFileList JSON failed", e );
+        }
+        finally
+        {
+            mAudioFilesAcc.clear();
+        }
+    }
+
+    private void emitAudioDownloadStart ()
+    {
+        if ( mCurrentAudioTransfer == null ) return;
+        try
+        {
+            JSONObject job = new JSONObject()
+                    .put( JsonTag.AUDIO_FILE_NAME, mCurrentAudioTransfer.name )
+                    .put( JsonTag.AUDIO_FILE_SIZE, mCurrentAudioTransfer.expectedSize );
+            PenMsg msg = new PenMsg( PenMsgType.AUDIO_FILE_DOWNLOAD_START, job );
+            msg.sppAddress = penAddress;
+            responseMsg( msg );
+        }
+        catch ( JSONException e )
+        {
+            NLog.e( "emitAudioDownloadStart JSON failed", e );
+        }
+    }
+
+    private long mLastProgressEmitMs = 0;
+    private void emitAudioDownloadProgress ()
+    {
+        if ( mCurrentAudioTransfer == null ) return;
+        long now = System.currentTimeMillis();
+        // 100ms throttle — BLE notify 폭주 시 UI 가 못 따라가지 않게.
+        if ( now - mLastProgressEmitMs < 100 && mCurrentAudioTransfer.received < mCurrentAudioTransfer.expectedSize )
+        {
+            return;
+        }
+        mLastProgressEmitMs = now;
+        try
+        {
+            JSONObject job = new JSONObject()
+                    .put( JsonTag.AUDIO_FILE_NAME, mCurrentAudioTransfer.name )
+                    .put( JsonTag.AUDIO_FILE_SIZE, mCurrentAudioTransfer.expectedSize )
+                    .put( JsonTag.AUDIO_FILE_RECEIVED, mCurrentAudioTransfer.received );
+            PenMsg msg = new PenMsg( PenMsgType.AUDIO_FILE_DOWNLOAD_PROGRESS, job );
+            msg.sppAddress = penAddress;
+            responseMsg( msg );
+        }
+        catch ( JSONException e )
+        {
+            NLog.e( "emitAudioDownloadProgress JSON failed", e );
+        }
+    }
+
+    private void finalizeCurrentAudioTransfer ( boolean success, String failReason )
+    {
+        AudioFileTransfer t = mCurrentAudioTransfer;
+        if ( t == null ) return;
+        mCurrentAudioTransfer = null;
+
+        if ( !success )
+        {
+            try
+            {
+                JSONObject job = new JSONObject()
+                        .put( JsonTag.AUDIO_FILE_NAME, t.name )
+                        .put( JsonTag.AUDIO_FAIL_REASON, failReason != null ? failReason : "" );
+                PenMsg msg = new PenMsg( PenMsgType.AUDIO_FILE_DOWNLOAD_FAILURE, job );
+                msg.sppAddress = penAddress;
+                responseMsg( msg );
+            }
+            catch ( JSONException ignored ) { }
+            return;
+        }
+
+        // 파일 저장.
+        File outDir = mAudioDownloadDir;
+        if ( outDir == null )
+        {
+            try
+            {
+                File base = context != null ? context.getExternalFilesDir( null ) : null;
+                if ( base != null ) outDir = new File( base, "pen_audio" );
+            }
+            catch ( Throwable ignored ) { }
+        }
+        if ( outDir == null )
+        {
+            NLog.d( "no audio download dir — emitting failure" );
+            try
+            {
+                JSONObject job = new JSONObject()
+                        .put( JsonTag.AUDIO_FILE_NAME, t.name )
+                        .put( JsonTag.AUDIO_FAIL_REASON, "no writable directory" );
+                PenMsg msg = new PenMsg( PenMsgType.AUDIO_FILE_DOWNLOAD_FAILURE, job );
+                msg.sppAddress = penAddress;
+                responseMsg( msg );
+            }
+            catch ( JSONException ignored ) { }
+            return;
+        }
+        if ( !outDir.exists() && !outDir.mkdirs() )
+        {
+            NLog.d( "audio dir mkdirs failed: " + outDir );
+        }
+
+        File outFile = new File( outDir, sanitizeFileName( t.name ) );
+        FileOutputStream fos = null;
+        try
+        {
+            fos = new FileOutputStream( outFile );
+            fos.write( t.buffer.toByteArray() );
+            fos.flush();
+
+            JSONObject job = new JSONObject()
+                    .put( JsonTag.AUDIO_FILE_NAME, t.name )
+                    .put( JsonTag.AUDIO_FILE_SIZE, t.received )
+                    .put( JsonTag.AUDIO_FILE_PATH, outFile.getAbsolutePath() );
+            PenMsg msg = new PenMsg( PenMsgType.AUDIO_FILE_DOWNLOAD_SUCCESS, job );
+            msg.sppAddress = penAddress;
+            responseMsg( msg );
+        }
+        catch ( IOException e )
+        {
+            NLog.e( "audio file save failed", e );
+            try
+            {
+                JSONObject job = new JSONObject()
+                        .put( JsonTag.AUDIO_FILE_NAME, t.name )
+                        .put( JsonTag.AUDIO_FAIL_REASON, "save failed: " + e.getMessage() );
+                PenMsg msg = new PenMsg( PenMsgType.AUDIO_FILE_DOWNLOAD_FAILURE, job );
+                msg.sppAddress = penAddress;
+                responseMsg( msg );
+            }
+            catch ( JSONException ignored ) { }
+        }
+        catch ( JSONException ignored ) { }
+        finally
+        {
+            if ( fos != null ) try { fos.close(); } catch ( IOException ignored ) { }
+        }
+    }
+
+    private void emitAudioDeleted ()
+    {
+        try
+        {
+            JSONObject job = new JSONObject().put( JsonTag.AUDIO_FILE_NAME, "" );
+            PenMsg msg = new PenMsg( PenMsgType.AUDIO_FILE_DELETED, job );
+            msg.sppAddress = penAddress;
+            responseMsg( msg );
+        }
+        catch ( JSONException ignored ) { }
+    }
+
+    private static long readUInt32LE ( byte[] buf, int off )
+    {
+        return ((long)(buf[off] & 0xFF))
+                | (((long)(buf[off + 1] & 0xFF)) << 8)
+                | (((long)(buf[off + 2] & 0xFF)) << 16)
+                | (((long)(buf[off + 3] & 0xFF)) << 24);
+    }
+
+    private static String sanitizeFileName ( String name )
+    {
+        if ( name == null || name.isEmpty() ) return "unnamed_" + System.currentTimeMillis() + ".bin";
+        return name.replaceAll( "[\\\\/:*?\"<>|]", "_" );
+    }
+
+    // ===================== Audio public API =====================
+
+    /**
+     * 펜에 저장된 audio 파일 목록 요청. 응답은 {@link PenMsgType#AUDIO_FILE_LIST}.
+     * audio service 미지원 펜이면 즉시 빈 리스트 emit.
+     */
+    public synchronized void reqAudioFileList ()
+    {
+        if ( mAudioCtrlCharacteristic == null )
+        {
+            NLog.d( "[audio-list] requested but audio control characteristic = null → emitting empty list" );
+            try
+            {
+                JSONObject job = new JSONObject().put( JsonTag.AUDIO_FILES, new JSONArray() );
+                PenMsg msg = new PenMsg( PenMsgType.AUDIO_FILE_LIST, job );
+                msg.sppAddress = penAddress;
+                responseMsg( msg );
+            }
+            catch ( JSONException ignored ) { }
+            return;
+        }
+        NLog.d( "[audio-list] sending LIST_FILES (0x01) to audio ctrl characteristic" );
+        mAudioFilesAcc.clear();
+        writeAudioCommand( new byte[] { AUDIO_CMD_LIST_FILES } );
+    }
+
+    /**
+     * 특정 파일 다운로드 요청. 응답: START → PROGRESS* → SUCCESS / FAILURE.
+     * 동시 다운로드 미지원 — 진행 중이면 무시.
+     */
+    public synchronized void reqAudioFile ( String name )
+    {
+        if ( mAudioCtrlCharacteristic == null || name == null || name.isEmpty() ) return;
+        if ( mCurrentAudioTransfer != null )
+        {
+            NLog.d( "audio download already in progress — ignored" );
+            return;
+        }
+        mCurrentAudioTransfer = new AudioFileTransfer( name );
+        byte[] nameBytes = name.getBytes( StandardCharsets.US_ASCII );
+        byte[] packet = new byte[ 2 + nameBytes.length ];
+        packet[0] = AUDIO_CMD_READ_FILE;
+        packet[1] = (byte) (nameBytes.length & 0xFF);
+        System.arraycopy( nameBytes, 0, packet, 2, nameBytes.length );
+        writeAudioCommand( packet );
+    }
+
+    /** 다운로드 중단. 응답 없음 — 펜은 더 이상 chunk 안 보냄. */
+    public synchronized void reqAudioFileAbort ()
+    {
+        if ( mAudioCtrlCharacteristic == null ) return;
+        writeAudioCommand( new byte[] { AUDIO_CMD_ABORT_FILE } );
+        if ( mCurrentAudioTransfer != null )
+        {
+            finalizeCurrentAudioTransfer( false, "aborted by client" );
+        }
+    }
+
+    /** 파일 삭제. 응답: {@link PenMsgType#AUDIO_FILE_DELETED}. */
+    public synchronized void reqAudioFileDelete ( String name )
+    {
+        if ( mAudioCtrlCharacteristic == null || name == null || name.isEmpty() ) return;
+        byte[] nameBytes = name.getBytes( StandardCharsets.US_ASCII );
+        byte[] packet = new byte[ 2 + nameBytes.length ];
+        packet[0] = AUDIO_CMD_DELETE_FILE;
+        packet[1] = (byte) (nameBytes.length & 0xFF);
+        System.arraycopy( nameBytes, 0, packet, 2, nameBytes.length );
+        writeAudioCommand( packet );
+    }
+
+    /** 외부에서 다운로드 디렉토리를 지정하고 싶으면 호출. null 이면 externalFilesDir/pen_audio 기본 사용. */
+    public synchronized void setAudioDownloadDir ( File dir ) { this.mAudioDownloadDir = dir; }
+
+    /** 펜이 audio service 를 노출 중이고 사용 가능한지. */
+    public synchronized boolean isAudioSupported () { return mAudioCtrlCharacteristic != null; }
+
+    private void writeAudioCommand ( byte[] payload )
+    {
+        writeAudioCommandInternal( payload, 0 );
+    }
+
+    /**
+     * Audio ctrl char write. Android GATT 는 동시에 하나의 op 만 허용 — main char write 가
+     * in-flight 일 때 audio write 가 곧장 false 로 거부될 수 있다. 그 경우 NASDK 가 retry
+     * 안 하면 명령이 사라지므로 짧은 백오프로 최대 3회까지 자동 재시도.
+     */
+    private void writeAudioCommandInternal ( final byte[] payload, final int attempt )
+    {
+        if ( mBluetoothGatt == null || mAudioCtrlCharacteristic == null ) return;
+        // 웹 샘플과 동일하게 writeWithoutResponse 사용. 안드로이드는 WRITE_TYPE_NO_RESPONSE
+        // 설정 시 onCharacteristicWrite 콜백 안 옴 — 큐 직렬화 부담 적음.
+        mAudioCtrlCharacteristic.setWriteType( BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE );
+        mAudioCtrlCharacteristic.setValue( payload );
+        boolean ok = mBluetoothGatt.writeCharacteristic( mAudioCtrlCharacteristic );
+        NLog.d( "audio cmd write " + (ok ? "ok" : "FAIL") + " first=" + (payload[0] & 0xFF)
+                + " len=" + payload.length + " attempt=" + (attempt + 1) );
+        if ( !ok && attempt < 2 )
+        {
+            final long delayMs = 150L * (attempt + 1);   // 150ms, 300ms
+            NLog.d( "audio cmd write retry in " + delayMs + "ms" );
+            mHandler.postDelayed( new Runnable() {
+                @Override public void run() { writeAudioCommandInternal( payload, attempt + 1 ); }
+            }, delayMs );
         }
     }
 

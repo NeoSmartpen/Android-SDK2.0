@@ -740,4 +740,17 @@ public interface IPenCtrl
      */
     void reqSetPerformance(int step) throws ProtocolNotSupportedException;
 
+    // ===== Audio (녹음 파일) — 별도 GATT service =====
+    /** 펜에 저장된 audio 파일 목록 요청. 응답: {@code PenMsgType.AUDIO_FILE_LIST}. */
+    default void reqAudioFileList () { }
+    /** 특정 audio 파일 다운로드 요청. */
+    default void reqAudioFile ( String name ) { }
+    /** 진행 중 다운로드 중단. */
+    default void reqAudioFileAbort () { }
+    /** 펜 측 audio 파일 삭제. */
+    default void reqAudioFileDelete ( String name ) { }
+    /** 다운로드 디렉토리 지정. */
+    default void setAudioDownloadDir ( java.io.File dir ) { }
+    /** 현재 연결된 펜이 audio service 를 노출하는지. */
+    default boolean isAudioSupported () { return false; }
 }

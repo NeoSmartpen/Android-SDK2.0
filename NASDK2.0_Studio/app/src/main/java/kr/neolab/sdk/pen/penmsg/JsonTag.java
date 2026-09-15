@@ -458,5 +458,11 @@ public class JsonTag
      */
     public final static String INT_RSSI = "rssi";
 
-
+    // === Audio file (녹음 파일) 관련 ===
+    public final static String AUDIO_FILES         = "files";
+    public final static String AUDIO_FILE_NAME     = "name";
+    public final static String AUDIO_FILE_SIZE     = "size";
+    public final static String AUDIO_FILE_RECEIVED = "received";
+    public final static String AUDIO_FILE_PATH     = "path";
+    public final static String AUDIO_FAIL_REASON   = "reason";
 }

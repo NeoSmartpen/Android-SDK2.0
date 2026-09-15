@@ -744,4 +744,19 @@ public interface IPenAdt
      * @throws ProtocolNotSupportedException
      */
     void reqSetPerformance(int step) throws ProtocolNotSupportedException;
+
+    // ===== Audio (녹음 파일) — UUID v5 펜의 별도 GATT service 사용 =====
+    // 모든 메서드 default 빈 구현 — BLE 외 transport (SPP/USB) 는 audio 미지원이므로 no-op.
+    /** 펜에 저장된 audio 파일 목록 요청. 응답: PenMsgType.AUDIO_FILE_LIST. */
+    default void reqAudioFileList () { }
+    /** 특정 audio 파일 다운로드 요청. 응답: AUDIO_FILE_DOWNLOAD_START/PROGRESS/SUCCESS or FAILURE. */
+    default void reqAudioFile ( String name ) { }
+    /** 진행 중 다운로드 중단. */
+    default void reqAudioFileAbort () { }
+    /** 펜 측 audio 파일 삭제. 응답: AUDIO_FILE_DELETED. */
+    default void reqAudioFileDelete ( String name ) { }
+    /** 다운로드 디렉토리 지정 (null 이면 externalFilesDir/pen_audio 기본). */
+    default void setAudioDownloadDir ( java.io.File dir ) { }
+    /** 현재 연결된 펜이 audio service 를 노출하는지. */
+    default boolean isAudioSupported () { return false; }
 }

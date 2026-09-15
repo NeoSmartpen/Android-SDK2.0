@@ -668,6 +668,19 @@ public class PenCtrl implements IPenCtrl {
 		currentAdt.reqSetPerformance(step);
 	}
 
+	// ===== Audio (녹음 파일) — BTLEAdt 로 위임 =====
+	@Override
+	public void reqAudioFileList ()                       { currentAdt.reqAudioFileList(); }
+	@Override
+	public void reqAudioFile ( String name )              { currentAdt.reqAudioFile( name ); }
+	@Override
+	public void reqAudioFileAbort ()                      { currentAdt.reqAudioFileAbort(); }
+	@Override
+	public void reqAudioFileDelete ( String name )        { currentAdt.reqAudioFileDelete( name ); }
+	@Override
+	public void setAudioDownloadDir ( java.io.File dir )  { currentAdt.setAudioDownloadDir( dir ); }
+	@Override
+	public boolean isAudioSupported ()                    { return currentAdt.isAudioSupported(); }
 }
 
 

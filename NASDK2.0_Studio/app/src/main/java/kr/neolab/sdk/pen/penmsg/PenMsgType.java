@@ -340,5 +340,22 @@ public class PenMsgType
      * The constant SYSTEM_INFO_PERFORMANCE_STEP.
      */
     public final static int SYSTEM_INFO_PERFORMANCE_STEP = 0x83;
+
+    // === Audio (녹음 파일) — 별도 GATT service e97d10xx 사용 ===
+
+    /** {@code reqAudioFileList()} 결과 — content JSON: {"files":[{"name":..,"size":..}, ...]} */
+    public final static int AUDIO_FILE_LIST              = 0xA0;
+    /** 한 파일 다운로드 시작 — content JSON: {"name":..,"size":..} */
+    public final static int AUDIO_FILE_DOWNLOAD_START    = 0xA1;
+    /** 한 파일 다운로드 진행 — content JSON: {"name":..,"size":..,"received":..} */
+    public final static int AUDIO_FILE_DOWNLOAD_PROGRESS = 0xA2;
+    /** 한 파일 다운로드 완료 — content JSON: {"name":..,"size":..,"path":..} */
+    public final static int AUDIO_FILE_DOWNLOAD_SUCCESS  = 0xA3;
+    /** 다운로드 실패 / 펌웨어 에러 — content JSON: {"name":..,"reason":..} */
+    public final static int AUDIO_FILE_DOWNLOAD_FAILURE  = 0xA4;
+    /** 파일 삭제 완료 — content JSON: {"name":..} */
+    public final static int AUDIO_FILE_DELETED           = 0xA5;
+    /** 펜이 audio service 를 노출하지 않음 (= 녹음 미지원 펌웨어) */
+    public final static int AUDIO_NOT_SUPPORTED          = 0xA6;
 }
 

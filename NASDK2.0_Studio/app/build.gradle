@@ -1,10 +1,19 @@
 apply plugin: 'com.android.library'
 android {
-    compileSdkVersion 23
+    // compileSdk 를 34 로 상향 — WifiNetworkSpecifier (API 29) / 신규 audio service / nearby-wifi
+    // 권한 등 새 API 컴파일에 필요. minSdk 21 은 유지 (구버전 단말은 wifi 패키지 런타임 가드).
+    compileSdkVersion 34
     namespace = "kr.neolab.sdk"
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 33
+    }
+
+    // androidx.annotation @NonNull / @Nullable / @RequiresApi + IPenAdt 의 default 메서드
+    // 사용을 위해 Java 8 활성화. D8 가 default 메서드를 desugar 처리.
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     buildTypes {
@@ -55,4 +64,7 @@ dependencies {
     implementation files('src/main/libs/ndac.jar')
     implementation files('src/main/libs/usbserial.jar')
 
+    // androidx.annotation — @NonNull / @Nullable / @RequiresApi (Wi-Fi 패키지 등에서 사용).
+    // app 모듈과 별개로 NASDK 가 직접 의존해야 컴파일 가능.
+    implementation 'androidx.annotation:annotation:1.8.2'
 }
